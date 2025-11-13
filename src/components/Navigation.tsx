@@ -1,11 +1,19 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Stethoscope } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Stethoscope, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const links = [
     { name: "Home", path: "/" },
@@ -41,9 +49,24 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            <Button asChild>
-              <Link to="/opportunities">Find Opportunities</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </Link>
+                </Button>
+                <Button onClick={handleSignOut} variant="ghost" size="sm">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Button asChild>
+                <Link to="/auth">Login</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -72,6 +95,36 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm font-medium rounded-md text-foreground/80 hover:bg-muted"
+                >
+                  <User className="inline mr-2 h-4 w-4" />
+                  Profile
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm font-medium rounded-md text-foreground/80 hover:bg-muted"
+                >
+                  <LogOut className="inline mr-2 h-4 w-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                onClick={() => setIsOpen(false)}
+                className="block px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground"
+              >
+                Login
+              </Link>
+            )}
           </div>
         )}
       </div>
