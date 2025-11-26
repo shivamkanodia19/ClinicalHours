@@ -44,11 +44,6 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/resume" className="text-muted-foreground hover:text-primary transition-colors">
-                  Resume
-                </Link>
-              </li>
-              <li>
                 <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                   Contact
                 </Link>
