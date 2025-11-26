@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Hospital, Clock, Star, Users, Search, MapPin } from "lucide-react";
+import { Hospital, Clock, Search, MapPin } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -11,11 +11,6 @@ const Home = () => {
       icon: Hospital,
       title: "Comprehensive Database",
       description: "Access hospitals, clinics, hospice centers, EMT programs, and volunteering opportunities.",
-    },
-    {
-      icon: Star,
-      title: "Community Reviews",
-      description: "Read honest reviews and ratings from fellow pre-med students about their experiences.",
     },
     {
       icon: Clock,
@@ -31,7 +26,6 @@ const Home = () => {
 
   const stats = [
     { value: "500+", label: "Opportunities" },
-    { value: "1,000+", label: "Student Reviews" },
     { value: "50+", label: "Cities" },
     { value: "95%", label: "Success Rate" },
   ];
@@ -70,7 +64,7 @@ const Home = () => {
       {/* Stats Section */}
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{stat.value}</div>
@@ -91,7 +85,7 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <Card key={index} className="border-border hover:border-primary transition-colors">
                 <CardHeader>
