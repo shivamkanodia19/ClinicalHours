@@ -214,24 +214,42 @@ export type Database = {
       }
       saved_opportunities: {
         Row: {
+          applied: boolean | null
+          contacted: boolean | null
           created_at: string
+          deadline: string | null
+          heard_back: boolean | null
           id: string
           notes: string | null
           opportunity_id: string
+          scheduled_interview: boolean | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
+          applied?: boolean | null
+          contacted?: boolean | null
           created_at?: string
+          deadline?: string | null
+          heard_back?: boolean | null
           id?: string
           notes?: string | null
           opportunity_id: string
+          scheduled_interview?: boolean | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
+          applied?: boolean | null
+          contacted?: boolean | null
           created_at?: string
+          deadline?: string | null
+          heard_back?: boolean | null
           id?: string
           notes?: string | null
           opportunity_id?: string
+          scheduled_interview?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
