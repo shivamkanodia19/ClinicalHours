@@ -19,7 +19,7 @@ export type Database = {
           acceptance_likelihood: Database["public"]["Enums"]["acceptance_likelihood"]
           address: string | null
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           email: string | null
           hours_required: string
@@ -38,7 +38,7 @@ export type Database = {
           acceptance_likelihood: Database["public"]["Enums"]["acceptance_likelihood"]
           address?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           email?: string | null
           hours_required: string
@@ -57,7 +57,7 @@ export type Database = {
           acceptance_likelihood?: Database["public"]["Enums"]["acceptance_likelihood"]
           address?: string | null
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           email?: string | null
           hours_required?: string
