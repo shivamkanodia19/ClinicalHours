@@ -455,13 +455,23 @@ const Dashboard = () => {
                           {opp.phone && (
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4" />
-                              <span>{opp.phone}</span>
+                              <a
+                                href={`tel:${opp.phone}`}
+                                className="text-primary hover:underline"
+                              >
+                                {opp.phone}
+                              </a>
                             </div>
                           )}
                           {opp.email && (
                             <div className="flex items-center gap-2">
                               <Mail className="h-4 w-4" />
-                              <span>{opp.email}</span>
+                              <a
+                                href={`mailto:${opp.email}`}
+                                className="text-primary hover:underline"
+                              >
+                                {opp.email}
+                              </a>
                             </div>
                           )}
                           {opp.website && (
