@@ -29,7 +29,7 @@ interface SavedOpportunity {
 type ViewMode = 'all' | 'saved';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
-const RADIUS_MILES = 100;
+const DEFAULT_RADIUS_MILES = 100;
 
 // Calculate distance between two points in miles
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -62,6 +62,7 @@ const OpportunityMap = () => {
   const [customPin, setCustomPin] = useState<{ lat: number; lng: number } | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isPinMode, setIsPinMode] = useState(false);
+  const [radiusMiles, setRadiusMiles] = useState(DEFAULT_RADIUS_MILES);
 
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
@@ -140,13 +141,16 @@ const OpportunityMap = () => {
     }
   }, []);
 
-  // Filter opportunities within radius
+  // Filter opportunities within radius (or show all if no center)
   const getFilteredOpportunities = useCallback(() => {
-    if (!activeCenter) return [];
-
     const baseOpportunities = viewMode === 'all' 
       ? opportunities 
       : savedOpportunities.map(s => s.opportunities).filter(Boolean);
+
+    // If no active center, show all opportunities
+    if (!activeCenter) {
+      return baseOpportunities.filter(opp => opp.latitude && opp.longitude);
+    }
 
     return baseOpportunities.filter(opp => {
       if (!opp.latitude || !opp.longitude) return false;
@@ -156,9 +160,9 @@ const OpportunityMap = () => {
         opp.latitude,
         opp.longitude
       );
-      return distance <= RADIUS_MILES;
+      return distance <= radiusMiles;
     });
-  }, [activeCenter, opportunities, savedOpportunities, viewMode]);
+  }, [activeCenter, opportunities, savedOpportunities, viewMode, radiusMiles]);
 
   // Initialize map
   useEffect(() => {
@@ -313,13 +317,24 @@ const OpportunityMap = () => {
       markersRef.current.push(marker);
     });
 
-    // Fit bounds to markers if there are any and we have a center
-    if (displayOpportunities.length > 0 && activeCenter) {
-      map.current.flyTo({
-        center: [activeCenter.lng, activeCenter.lat],
-        zoom: 7,
-        duration: 1000,
-      });
+    // Fit bounds to markers if there are any
+    if (displayOpportunities.length > 0) {
+      if (activeCenter) {
+        map.current.flyTo({
+          center: [activeCenter.lng, activeCenter.lat],
+          zoom: 7,
+          duration: 1000,
+        });
+      } else {
+        // Fit to all markers if no center
+        const bounds = new mapboxgl.LngLatBounds();
+        displayOpportunities.forEach((opp) => {
+          if (opp.latitude && opp.longitude) {
+            bounds.extend([opp.longitude, opp.latitude]);
+          }
+        });
+        map.current.fitBounds(bounds, { padding: 80, maxZoom: 6 });
+      }
     }
   }, [opportunities, savedOpportunities, viewMode, loading, activeCenter, getFilteredOpportunities]);
 
@@ -382,7 +397,7 @@ const OpportunityMap = () => {
     const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
       <div style="padding: 8px; font-family: system-ui, sans-serif;">
         <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1f2937;">📌 Custom Location</h3>
-        <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">Showing opportunities within ${RADIUS_MILES} miles</p>
+        <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">Showing opportunities within ${radiusMiles} miles</p>
       </div>
     `);
 
@@ -476,15 +491,33 @@ const OpportunityMap = () => {
       {/* Stats badge */}
       <div className="absolute top-4 right-16 z-10">
         <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm text-foreground">
-          {displayCount} within {RADIUS_MILES} mi
+          {displayCount} {activeCenter ? `within ${radiusMiles} mi` : 'total'}
         </Badge>
       </div>
 
-      {/* No location message */}
-      {!activeCenter && !loading && (
-        <div className="absolute top-28 left-4 z-10 bg-amber-500/90 backdrop-blur-sm rounded-lg p-3 border border-amber-600 max-w-xs">
-          <p className="text-sm text-amber-950 font-medium">
-            📍 Enable location access or drop a pin to see nearby opportunities
+      {/* Radius control - only show when we have a center */}
+      {activeCenter && (
+        <div className="absolute top-28 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border">
+          <label className="text-xs font-medium text-foreground mb-2 block">
+            Radius: {radiusMiles} miles
+          </label>
+          <input
+            type="range"
+            min="25"
+            max="500"
+            step="25"
+            value={radiusMiles}
+            onChange={(e) => setRadiusMiles(Number(e.target.value))}
+            className="w-32 h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+          />
+        </div>
+      )}
+
+      {/* Location prompt - only show briefly if no location */}
+      {!activeCenter && !loading && opportunities.length > 0 && (
+        <div className="absolute top-28 left-4 z-10 bg-primary/90 backdrop-blur-sm rounded-lg p-3 border border-primary max-w-xs">
+          <p className="text-sm text-primary-foreground font-medium">
+            📍 Showing all {displayCount} opportunities. Enable location or drop a pin to filter by distance.
           </p>
         </div>
       )}
