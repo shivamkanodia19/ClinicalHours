@@ -54,7 +54,8 @@ const OpportunityMap = () => {
   const customPinMarkerRef = useRef<mapboxgl.Marker | null>(null);
   
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [savedOpportunities, setSavedOpportunities] = useState<SavedOpportunity[]>([]);
@@ -64,27 +65,51 @@ const OpportunityMap = () => {
   const [isPinMode, setIsPinMode] = useState(false);
   const [radiusMiles, setRadiusMiles] = useState(DEFAULT_RADIUS_MILES);
 
+  // Combined loading state
+  const loading = mapLoading || dataLoading;
+
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
 
-  // Fetch all opportunities
+  // Fetch all opportunities with pagination to get all records
   useEffect(() => {
-    const fetchOpportunities = async () => {
+    const fetchAllOpportunities = async () => {
+      setDataLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('opportunities')
-          .select('*')
-          .not('latitude', 'is', null)
-          .not('longitude', 'is', null);
+        const allData: Opportunity[] = [];
+        let from = 0;
+        const batchSize = 1000;
+        let hasMore = true;
+        
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('opportunities')
+            .select('*')
+            .not('latitude', 'is', null)
+            .not('longitude', 'is', null)
+            .range(from, from + batchSize - 1);
 
-        if (error) throw error;
-        setOpportunities(data || []);
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            allData.push(...data);
+            from += batchSize;
+            hasMore = data.length === batchSize;
+          } else {
+            hasMore = false;
+          }
+        }
+        
+        console.log('Map: Loaded', allData.length, 'opportunities with coordinates');
+        setOpportunities(allData);
       } catch (err: any) {
         console.error('Error fetching opportunities:', err);
+      } finally {
+        setDataLoading(false);
       }
     };
 
-    fetchOpportunities();
+    fetchAllOpportunities();
   }, []);
 
   // Fetch saved opportunities if user is logged in
@@ -182,7 +207,7 @@ const OpportunityMap = () => {
 
     if (!MAPBOX_TOKEN) {
       setMapError('Mapbox token not configured');
-      setLoading(false);
+      setMapLoading(false);
       return;
     }
 
@@ -205,13 +230,13 @@ const OpportunityMap = () => {
       );
 
       map.current.on('load', () => {
-        setLoading(false);
+        setMapLoading(false);
       });
 
       map.current.on('error', (e) => {
         console.error('Map error:', e);
         setMapError('Error loading map');
-        setLoading(false);
+        setMapLoading(false);
       });
 
       // Handle map click for custom pin
@@ -227,7 +252,7 @@ const OpportunityMap = () => {
     } catch (err: any) {
       console.error('Map initialization error:', err);
       setMapError('Failed to initialize map');
-      setLoading(false);
+      setMapLoading(false);
     }
 
     return () => {
