@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      discussion_votes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          value: number
+          votable_id: string
+          votable_type: Database["public"]["Enums"]["votable_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          value: number
+          votable_id: string
+          votable_type: Database["public"]["Enums"]["votable_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          value?: number
+          votable_id?: string
+          votable_type?: Database["public"]["Enums"]["votable_type"]
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           acceptance_likelihood: Database["public"]["Enums"]["acceptance_likelihood"]
@@ -78,6 +105,51 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_questions: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          opportunity_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_questions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_questions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities_with_ratings"
             referencedColumns: ["id"]
           },
         ]
@@ -147,6 +219,51 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      question_answers: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_accepted: boolean | null
+          question_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_accepted?: boolean | null
+          question_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_accepted?: boolean | null
+          question_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_with_votes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reminders: {
         Row: {
@@ -356,6 +473,35 @@ export type Database = {
       }
     }
     Views: {
+      answers_with_votes: {
+        Row: {
+          author_name: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          is_accepted: boolean | null
+          question_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          vote_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_with_votes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities_with_ratings: {
         Row: {
           acceptance_likelihood:
@@ -390,6 +536,36 @@ export type Database = {
           },
         ]
       }
+      questions_with_votes: {
+        Row: {
+          answer_count: number | null
+          author_name: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          opportunity_id: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+          vote_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_questions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_questions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities_with_ratings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
@@ -397,6 +573,7 @@ export type Database = {
     Enums: {
       acceptance_likelihood: "high" | "medium" | "low"
       opportunity_type: "hospital" | "clinic" | "hospice" | "emt" | "volunteer"
+      votable_type: "question" | "answer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -526,6 +703,7 @@ export const Constants = {
     Enums: {
       acceptance_likelihood: ["high", "medium", "low"],
       opportunity_type: ["hospital", "clinic", "hospice", "emt", "volunteer"],
+      votable_type: ["question", "answer"],
     },
   },
 } as const

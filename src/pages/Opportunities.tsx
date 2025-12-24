@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown, Bell } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown, MessageCircle } from "lucide-react";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import opportunitiesAccent from "@/assets/opportunities-accent.png";
 import ReviewForm from "@/components/ReviewForm";
 import ReviewsList from "@/components/ReviewsList";
+import { QASection } from "@/components/QASection";
 
 interface Opportunity {
   id: string;
@@ -357,7 +359,7 @@ const Opportunities = () => {
                       />
                     </div>
 
-                    {/* Reviews Section */}
+                    {/* Community Section - Reviews & Q&A */}
                     <Collapsible
                       open={expandedReviews[opportunity.id]}
                       onOpenChange={() => toggleReviews(opportunity.id)}
@@ -369,14 +371,29 @@ const Opportunities = () => {
                               expandedReviews[opportunity.id] ? "rotate-180" : ""
                             }`}
                           />
-                          {expandedReviews[opportunity.id] ? "Hide Reviews" : "Show Reviews"}
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          {expandedReviews[opportunity.id] ? "Hide Community" : "Reviews & Q&A"}
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="pt-4">
-                        <ReviewsList
-                          opportunityId={opportunity.id}
-                          refreshTrigger={reviewRefreshTrigger}
-                        />
+                        <Tabs defaultValue="reviews" className="w-full">
+                          <TabsList className="grid w-full grid-cols-2 mb-4">
+                            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                            <TabsTrigger value="qa">Q&A</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="reviews">
+                            <ReviewsList
+                              opportunityId={opportunity.id}
+                              refreshTrigger={reviewRefreshTrigger}
+                            />
+                          </TabsContent>
+                          <TabsContent value="qa">
+                            <QASection
+                              opportunityId={opportunity.id}
+                              opportunityName={opportunity.name}
+                            />
+                          </TabsContent>
+                        </Tabs>
                       </CollapsibleContent>
                     </Collapsible>
                   </CardContent>
