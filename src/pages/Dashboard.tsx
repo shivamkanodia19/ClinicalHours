@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, MapPin, Phone, Mail, Globe } from "lucide-react";
+import { Loader2, Plus, Trash2, MapPin, Phone, Mail, Globe, Bell, CalendarPlus } from "lucide-react";
+import { ReminderDialog } from "@/components/ReminderDialog";
+import { downloadIcsFile, createOpportunityReminder } from "@/lib/calendar";
 import {
   Table,
   TableBody,
@@ -315,7 +317,7 @@ const Dashboard = () => {
                       <TableHead className="text-foreground">Interview</TableHead>
                       <TableHead className="text-foreground">Deadline</TableHead>
                       <TableHead className="text-foreground">Notes</TableHead>
-                      <TableHead className="text-foreground"></TableHead>
+                      <TableHead className="text-foreground">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -382,13 +384,22 @@ const Dashboard = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFromTracker(saved.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <ReminderDialog
+                              opportunityId={saved.opportunity_id}
+                              opportunityName={saved.opportunities.name}
+                              opportunityLocation={saved.opportunities.location}
+                              opportunityWebsite={saved.opportunities.website}
+                              userId={user?.id || ""}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFromTracker(saved.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

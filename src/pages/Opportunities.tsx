@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown } from "lucide-react";
+import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown, Bell } from "lucide-react";
+import { ReminderDialog } from "@/components/ReminderDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -345,6 +346,14 @@ const Opportunities = () => {
                         opportunityId={opportunity.id}
                         opportunityName={opportunity.name}
                         onReviewSubmitted={handleReviewSubmitted}
+                      />
+                      <ReminderDialog
+                        opportunityId={opportunity.id}
+                        opportunityName={opportunity.name}
+                        opportunityLocation={opportunity.location}
+                        opportunityDescription={opportunity.description || undefined}
+                        opportunityWebsite={opportunity.website || undefined}
+                        userId={user?.id || ""}
                       />
                     </div>
 
