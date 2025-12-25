@@ -51,7 +51,7 @@ const Home = () => {
             <source src={heroVideo} type="video/mp4" />
           </video>
           {/* Gradient Overlay for readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/30" />
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
