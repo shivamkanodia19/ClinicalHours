@@ -5,6 +5,7 @@ import { Hospital, Clock, Search, MapPin, Users, Star, ArrowRight } from "lucide
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-medical-purple.png";
+import heroVideo from "@/assets/hero-video.mp4";
 
 const Home = () => {
   const features = [
@@ -35,22 +36,28 @@ const Home = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Hero Section */}
+      {/* Hero Section with Video Background */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
-        {/* Background Image with Overlay */}
+        {/* Video Background */}
         <div className="absolute inset-0">
-          <img 
-            src={heroImage} 
-            alt="" 
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={heroImage}
             className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
+          >
+            <source src={heroVideo} type="video/mp4" />
+          </video>
+          {/* Gradient Overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/50" />
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl space-y-8">
             <div className="space-y-6">
-              <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium animate-fade-in-up">
+              <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium backdrop-blur-sm border border-primary/20 animate-fade-in-up">
                 🩺 The #1 Platform for Pre-Med Students
               </span>
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight animate-fade-in-up-delay-1">
@@ -70,7 +77,7 @@ const Home = () => {
                   Explore Opportunities
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="text-base px-8 py-6 bg-background/50 backdrop-blur-sm hover:bg-background/80">
+              <Button asChild size="lg" variant="outline" className="text-base px-8 py-6 bg-background/50 backdrop-blur-sm hover:bg-background/80 border-border/50">
                 <Link to="/about">
                   Learn More
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -81,13 +88,13 @@ const Home = () => {
             {/* Social Proof */}
             <div className="flex items-center gap-6 pt-4 animate-fade-in-up-delay-3">
               <div className="flex -space-x-3">
-                <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center backdrop-blur-sm">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
-                <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-background flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-primary/30 border-2 border-background flex items-center justify-center backdrop-blur-sm">
                   <Star className="h-5 w-5 text-primary" />
                 </div>
-                <div className="w-10 h-10 rounded-full bg-primary/40 border-2 border-background flex items-center justify-center text-primary font-semibold text-sm">
+                <div className="w-10 h-10 rounded-full bg-primary/40 border-2 border-background flex items-center justify-center text-primary font-semibold text-sm backdrop-blur-sm">
                   +
                 </div>
               </div>
