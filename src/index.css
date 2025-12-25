@@ -8,103 +8,109 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 7%;
-    --foreground: 270 25% 85%;
+    --background: 270 20% 98%;
+    --foreground: 270 30% 15%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 270 25% 85%;
+    --card: 0 0% 100%;
+    --card-foreground: 270 30% 15%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 270 25% 85%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 30% 15%;
 
-    --primary: 270 60% 65%;
-    --primary-foreground: 0 0% 7%;
+    --primary: 270 60% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 270 60% 65%;
+    --secondary: 270 30% 95%;
+    --secondary-foreground: 270 60% 45%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 270 15% 60%;
+    --muted: 270 20% 94%;
+    --muted-foreground: 270 15% 45%;
 
-    --accent: 270 60% 65%;
-    --accent-foreground: 0 0% 7%;
+    --accent: 270 50% 92%;
+    --accent-foreground: 270 60% 35%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 270 60% 65%;
+    --border: 270 20% 88%;
+    --input: 270 20% 88%;
+    --ring: 270 60% 55%;
 
     --radius: 0.75rem;
     
     /* Custom design tokens */
-    --hero-gradient-start: 270 60% 65%;
-    --hero-gradient-end: 270 60% 55%;
-    --success: 270 60% 65%;
-    --success-foreground: 0 0% 7%;
+    --hero-gradient-start: 270 60% 55%;
+    --hero-gradient-end: 280 65% 65%;
+    --success: 145 60% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    /* Purple accent shades */
+    --purple-50: 270 40% 98%;
+    --purple-100: 270 50% 95%;
+    --purple-200: 270 50% 90%;
+    --purple-300: 270 55% 80%;
+    --purple-400: 270 60% 65%;
+    --purple-500: 270 60% 55%;
+    --purple-600: 270 65% 45%;
+    --purple-700: 270 70% 35%;
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-sm: 0 1px 2px 0 hsl(270 30% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(270 30% 15% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(270 30% 15% / 0.1);
+    --shadow-purple: 0 4px 14px -3px hsl(270 60% 55% / 0.25);
     
     /* Transitions */
     --transition-base: all 0.2s ease-in-out;
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-primary: 270 60% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 30% 95%;
+    --sidebar-accent-foreground: 270 60% 35%;
+    --sidebar-border: 270 20% 88%;
+    --sidebar-ring: 270 60% 55%;
   }
 
   .dark {
-    --background: 0 0% 3%;
-    --foreground: 270 30% 90%;
+    --background: 270 15% 8%;
+    --foreground: 270 20% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 270 30% 90%;
+    --card: 270 15% 12%;
+    --card-foreground: 270 20% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 270 30% 90%;
+    --popover: 270 15% 12%;
+    --popover-foreground: 270 20% 95%;
 
     --primary: 270 60% 65%;
-    --primary-foreground: 0 0% 3%;
+    --primary-foreground: 270 15% 8%;
 
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 270 60% 65%;
+    --secondary: 270 20% 18%;
+    --secondary-foreground: 270 60% 75%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 270 20% 65%;
+    --muted: 270 15% 20%;
+    --muted-foreground: 270 15% 60%;
 
-    --accent: 270 60% 65%;
-    --accent-foreground: 0 0% 3%;
+    --accent: 270 30% 25%;
+    --accent-foreground: 270 50% 85%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 270 30% 90%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 270 15% 20%;
+    --input: 270 15% 20%;
     --ring: 270 60% 65%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --sidebar-background: 270 15% 10%;
+    --sidebar-foreground: 270 20% 95%;
+    --sidebar-primary: 270 60% 65%;
+    --sidebar-primary-foreground: 270 15% 8%;
+    --sidebar-accent: 270 20% 18%;
+    --sidebar-accent-foreground: 270 50% 85%;
+    --sidebar-border: 270 15% 20%;
+    --sidebar-ring: 270 60% 65%;
   }
 }
 
@@ -116,4 +122,58 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up-delay-1 {
+  animation: fade-in-up 0.6s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-2 {
+  animation: fade-in-up 0.6s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-3 {
+  animation: fade-in-up 0.6s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
 }
