@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Upload, Loader2, ExternalLink } from "lucide-react";
+import { Upload, Loader2, ExternalLink, Settings } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -375,6 +376,20 @@ const Profile = () => {
                       </a>
                     </p>
                   )}
+                </div>
+              </div>
+
+              {/* Settings */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Settings</h3>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <ThemeToggle />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Switch between light and dark mode. Your preference will be saved.
+                  </p>
                 </div>
               </div>
 
