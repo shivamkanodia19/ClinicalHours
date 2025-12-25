@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Hospital, Clock, Search, MapPin, Users, Star, ArrowRight, Building2, TrendingUp } from "lucide-react";
+import { Hospital, Clock, Search, MapPin, Users, Star, ArrowRight, Building2, TrendingUp, ClipboardCheck, MessageCircle } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import AnimatedCounter from "@/components/AnimatedCounter";
@@ -12,7 +12,35 @@ import heroVideo from "@/assets/hero-video.mp4";
 const Home = () => {
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
   const { ref: featuresRef, isInView: featuresInView } = useInView({ threshold: 0.1 });
+  const { ref: howItWorksRef, isInView: howItWorksInView } = useInView({ threshold: 0.1 });
   const { ref: ctaRef, isInView: ctaInView } = useInView({ threshold: 0.2 });
+
+  const howItWorksSteps = [
+    {
+      icon: Search,
+      step: 1,
+      title: "Discover Opportunities",
+      description: "Browse clinical opportunities sorted by distance. Filter by type and see acceptance likelihood at a glance.",
+    },
+    {
+      icon: ClipboardCheck,
+      step: 2,
+      title: "Track Your Progress",
+      description: "Save opportunities to your personal dashboard. Track every stage: contacted, applied, heard back, interview.",
+    },
+    {
+      icon: Star,
+      step: 3,
+      title: "Read Real Reviews",
+      description: "See ratings from real students on staff friendliness, learning value, and overall experience.",
+    },
+    {
+      icon: MessageCircle,
+      step: 4,
+      title: "Ask the Community",
+      description: "Post questions about any opportunity and get answers from students who've volunteered there.",
+    },
+  ];
 
   const features = [
     {
@@ -203,6 +231,80 @@ const Home = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section ref={howItWorksRef} className="py-24 bg-gradient-to-b from-primary/5 via-background to-primary/5 relative overflow-hidden">
+        {/* Decorative background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-[10%] w-72 h-72 rounded-full bg-primary/5 blur-3xl animate-float" />
+          <div className="absolute bottom-20 right-[10%] w-64 h-64 rounded-full bg-primary/10 blur-3xl animate-float-delay-2" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className={`text-center max-w-2xl mx-auto mb-16 ${howItWorksInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm uppercase tracking-wider mb-4">
+              How It Works
+            </span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mt-3 mb-6">
+              From Discovery to Acceptance
+            </h2>
+            <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+              Four simple steps to find and secure your perfect clinical experience.
+            </p>
+          </div>
+
+          {/* Steps Container */}
+          <div className="relative max-w-6xl mx-auto">
+            {/* Connecting Line - Desktop */}
+            <div className="hidden md:block absolute top-16 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20">
+              <div 
+                className={`h-full bg-gradient-to-r from-primary via-primary to-primary transition-all duration-1000 ease-out ${
+                  howItWorksInView ? 'w-full' : 'w-0'
+                }`}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
+              {howItWorksSteps.map((item, index) => (
+                <div
+                  key={index}
+                  className={`relative flex flex-col items-center text-center group ${
+                    howItWorksInView ? `animate-stagger-${index + 1}` : 'opacity-0'
+                  }`}
+                >
+                  {/* Step Number Badge */}
+                  <div className="relative mb-6">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-1 group-hover:from-primary/30 group-hover:via-primary/20 transition-all duration-300">
+                      <div className="w-full h-full rounded-full bg-card border border-border/50 flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                        <item.icon className="h-12 w-12 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                    </div>
+                    {/* Step Number */}
+                    <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-lg shadow-lg group-hover:scale-110 transition-transform">
+                      {item.step}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed max-w-[250px]">
+                    {item.description}
+                  </p>
+
+                  {/* Connecting Arrow - Mobile */}
+                  {index < howItWorksSteps.length - 1 && (
+                    <div className="md:hidden mt-6 text-primary/40">
+                      <ArrowRight className="h-8 w-8 rotate-90" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
