@@ -193,39 +193,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Our Story Section */}
-      <section ref={storyRef} className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/2 right-0 w-[600px] h-[600px] rounded-full bg-gradient-radial from-primary/5 to-transparent blur-3xl -translate-y-1/2" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className={`max-w-5xl mx-auto ${storyInView ? 'animate-pop-in' : 'opacity-0 translate-y-12'}`}>
-            <Card className="bg-card/80 backdrop-blur-sm border-border/50 overflow-hidden">
-              <div className="flex flex-col md:flex-row">
-                <div className="md:w-1/3 p-8 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                  <img src={communityImage} alt="" className="w-full max-w-[200px] rounded-lg opacity-90" />
-                </div>
-                <CardContent className="md:w-2/3 p-8 space-y-6">
-                  <div>
-                    <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-sm uppercase tracking-wider mb-4">
-                      Our Story
-                    </span>
-                    <h2 className="text-3xl md:text-4xl font-bold">How It Started</h2>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    As college students—one pre-med, one engineering—we saw how frustrating it was to find real clinical experience. The pre-med among us spent weeks calling hospitals and clinics, only to learn that many didn't accept volunteers, had limited spots, or required certifications that were hard to get. After hearing this struggle firsthand, we realized there had to be a better way.
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Together, we set out to build a centralized platform where students could share verified opportunities and insights to make the process smoother for everyone pursuing healthcare. Today, we're building ClinicalHours to help pre-meds across the country gain the experience they need—without the confusion.
-                  </p>
-                </CardContent>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section ref={featuresRef} className="py-24 relative bg-gradient-to-b from-background via-primary/5 to-background">
         {/* Decorative background */}
@@ -381,6 +348,39 @@ const Home = () => {
                 </Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Story Section */}
+      <section ref={storyRef} className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 right-0 w-[600px] h-[600px] rounded-full bg-gradient-radial from-primary/5 to-transparent blur-3xl -translate-y-1/2" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className={`max-w-5xl mx-auto ${storyInView ? 'animate-pop-in' : 'opacity-0 translate-y-12'}`}>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50 overflow-hidden">
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-1/3 p-8 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                  <img src={communityImage} alt="" className="w-full max-w-[200px] rounded-lg opacity-90" />
+                </div>
+                <CardContent className="md:w-2/3 p-8 space-y-6">
+                  <div>
+                    <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-sm uppercase tracking-wider mb-4">
+                      Our Story
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-bold">How It Started</h2>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    As college students—one pre-med, one engineering—we saw how frustrating it was to find real clinical experience. The pre-med among us spent weeks calling hospitals and clinics, only to learn that many didn't accept volunteers, had limited spots, or required certifications that were hard to get. After hearing this struggle firsthand, we realized there had to be a better way.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Together, we set out to build a centralized platform where students could share verified opportunities and insights to make the process smoother for everyone pursuing healthcare. Today, we're building ClinicalHours to help pre-meds across the country gain the experience they need—without the confusion.
+                  </p>
+                </CardContent>
+              </div>
+            </Card>
           </div>
         </div>
       </section>
