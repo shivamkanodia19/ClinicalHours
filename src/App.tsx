@@ -16,6 +16,7 @@ import MapView from "./pages/MapView";
 import AdminImportHospitals from "./pages/AdminImportHospitals";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
 import { useAutoImportHospitals } from "./hooks/useAutoImportHospitals";
 
@@ -41,6 +42,7 @@ function AppContent() {
           <Route path="/admin/import-hospitals" element={<AdminImportHospitals />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/verify" element={<VerifyEmail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_verification_tokens: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           acceptance_likelihood: Database["public"]["Enums"]["acceptance_likelihood"]
@@ -162,6 +192,7 @@ export type Database = {
           city: string | null
           clinical_hours: number | null
           created_at: string
+          email_verified: boolean | null
           full_name: string
           gpa: number | null
           graduation_year: number | null
@@ -183,6 +214,7 @@ export type Database = {
           city?: string | null
           clinical_hours?: number | null
           created_at?: string
+          email_verified?: boolean | null
           full_name: string
           gpa?: number | null
           graduation_year?: number | null
@@ -204,6 +236,7 @@ export type Database = {
           city?: string | null
           clinical_hours?: number | null
           created_at?: string
+          email_verified?: boolean | null
           full_name?: string
           gpa?: number | null
           graduation_year?: number | null
