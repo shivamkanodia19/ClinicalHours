@@ -123,7 +123,7 @@ const Auth = () => {
           <div className="mt-12 space-y-4">
             <div className="flex items-center gap-3 text-primary-foreground/80">
               <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
-              <span>1000+ Clinical Opportunities</span>
+              <span>4500+ Clinical Opportunities</span>
             </div>
             <div className="flex items-center gap-3 text-primary-foreground/80">
               <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
