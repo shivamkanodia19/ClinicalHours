@@ -15,7 +15,7 @@ const Terms = () => {
         
         <main className="container mx-auto px-4 py-12 max-w-4xl">
           <h1 className="text-4xl font-bold mb-2">Terms and Conditions</h1>
-          <p className="text-muted-foreground mb-8">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          <p className="text-muted-foreground mb-8">Last updated: December 26, 2025</p>
           
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
             {/* Introduction */}

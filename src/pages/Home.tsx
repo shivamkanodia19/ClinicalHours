@@ -78,7 +78,7 @@ const Home = () => {
   ];
 
   const stats = [
-    { value: 4500, suffix: "+", label: "Clinical Opportunities", icon: Building2 },
+    { value: 4700, suffix: "+", label: "Clinical Opportunities", icon: Building2 },
     { value: 3000, suffix: "+", label: "Locations Covered", icon: MapPin },
     { value: 100, suffix: "%", label: "Free to Use", icon: Heart },
   ];
@@ -135,7 +135,7 @@ const Home = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up-delay-3">
               <Button asChild size="lg" className="text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-pulse-glow">
-                <Link to="/opportunities">
+                <Link to="/map">
                   <Search className="mr-2 h-5 w-5" />
                   Explore Opportunities
                 </Link>

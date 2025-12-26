@@ -28,8 +28,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/projects" className="text-muted-foreground hover:text-primary transition-colors">
-                  Projects
+                <Link to="/map" className="text-muted-foreground hover:text-primary transition-colors">
+                  Map View
                 </Link>
               </li>
             </ul>

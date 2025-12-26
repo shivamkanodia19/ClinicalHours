@@ -62,7 +62,7 @@ const Contact = () => {
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Get In Touch</h1>
             <p className="text-lg text-muted-foreground">
-              Have questions about clinical opportunities or want to contribute to the platform? I'd love to hear from
+              Have questions about clinical opportunities or want to contribute to the platform? We'd love to hear from
               you.
             </p>
           </div>
@@ -97,8 +97,8 @@ const Contact = () => {
             {/* Contact Form */}
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>Send a Message</CardTitle>
-                <CardDescription>Fill out the form below and I'll respond as soon as possible.</CardDescription>
+              <CardTitle>Send a Message</CardTitle>
+                <CardDescription>Fill out the form below and we'll respond as soon as possible.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">

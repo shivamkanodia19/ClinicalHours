@@ -27,6 +27,8 @@ const Auth = () => {
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [signedUpUserId, setSignedUpUserId] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -160,6 +162,96 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      
+      if (error) throw error;
+      
+      setResetEmailSent(true);
+      toast.success("Password reset email sent!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // Show forgot password screen
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+        <div className="w-full max-w-md text-center space-y-6">
+          <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <Mail className="w-10 h-10 text-primary" />
+          </div>
+          {resetEmailSent ? (
+            <>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground mb-2">Check Your Email</h1>
+                <p className="text-muted-foreground">
+                  We've sent a password reset link to <strong className="text-foreground">{email}</strong>
+                </p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4 text-left">
+                <p className="text-sm text-muted-foreground">
+                  Click the link in the email to reset your password. If you don't see it, check your spam folder.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground mb-2">Forgot Password?</h1>
+                <p className="text-muted-foreground">
+                  Enter your email and we'll send you a link to reset your password.
+                </p>
+              </div>
+              <form onSubmit={handleForgotPassword} className="space-y-4 text-left">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="h-11"
+                  />
+                </div>
+                <Button type="submit" className="w-full h-11" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </Button>
+              </form>
+            </>
+          )}
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setShowForgotPassword(false);
+              setResetEmailSent(false);
+              setEmail("");
+            }}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Show verification message screen
   if (showVerificationMessage) {
@@ -249,7 +341,11 @@ const Auth = () => {
           <div className="mt-12 space-y-4">
             <div className="flex items-center gap-3 text-primary-foreground/80">
               <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
-              <span>4500+ Clinical Opportunities</span>
+              <span>4700+ Clinical Opportunities</span>
+            </div>
+            <div className="flex items-center gap-3 text-primary-foreground/80">
+              <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
+              <span>4700+ Clinical Opportunities</span>
             </div>
             <div className="flex items-center gap-3 text-primary-foreground/80">
               <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
@@ -313,7 +409,16 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                   <Input
                     id="signin-password"
                     type="password"
