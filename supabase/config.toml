@@ -8,6 +8,3 @@ verify_jwt = false
 
 [functions.import-hospitals]
 verify_jwt = false
-
-[functions.chat]
-verify_jwt = false
