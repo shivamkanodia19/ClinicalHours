@@ -22,9 +22,8 @@ const Navigation = () => {
   ];
 
   const authenticatedLinks = [
-    { name: "Home", path: "/" },
-    { name: "Opportunities", path: "/opportunities" },
     { name: "Dashboard", path: "/dashboard" },
+    { name: "Opportunities", path: "/opportunities" },
     { name: "Map", path: "/map" },
     { name: "Contact", path: "/contact" },
   ];

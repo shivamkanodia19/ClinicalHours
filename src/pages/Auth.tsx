@@ -33,7 +33,7 @@ const Auth = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        navigate("/dashboard");
       }
     });
   }, [navigate]);
@@ -71,7 +71,7 @@ const Auth = () => {
         email: validatedData.email,
         password: validatedData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: validatedData.fullName,
           },
@@ -150,7 +150,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast.success("Logged in successfully!");
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);

@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Hospital, Clock, Search, MapPin, Users, Star, ArrowRight, Building2, TrendingUp, ClipboardCheck, MessageCircle, Heart, Target } from "lucide-react";
@@ -6,11 +7,21 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { useInView } from "@/hooks/useInView";
+import { useAuth } from "@/hooks/useAuth";
 import heroImage from "@/assets/hero-medical-purple.png";
 import heroVideo from "@/assets/hero-video.mp4";
 import communityImage from "@/assets/community-illustration.png";
 
 const Home = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
   const { ref: storyRef, isInView: storyInView } = useInView({ threshold: 0.2 });
   const { ref: featuresRef, isInView: featuresInView } = useInView({ threshold: 0.1 });
