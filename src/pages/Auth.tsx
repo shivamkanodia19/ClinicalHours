@@ -345,7 +345,7 @@ const Auth = () => {
             </div>
             <div className="flex items-center gap-3 text-primary-foreground/80">
               <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
-              <span>4700+ Clinical Opportunities</span>
+              <span>Nationwide Hospital Network</span>
             </div>
             <div className="flex items-center gap-3 text-primary-foreground/80">
               <div className="w-2 h-2 rounded-full bg-primary-foreground/60" />
