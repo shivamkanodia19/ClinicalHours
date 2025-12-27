@@ -161,7 +161,8 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: user?.id,
           full_name: profile.full_name,
           city: profile.city,
           state: profile.state,
@@ -177,8 +178,7 @@ const Profile = () => {
           research_experience: profile.research_experience,
           linkedin_url: profile.linkedin_url,
           resume_url: profile.resume_url,
-        })
-        .eq("id", user?.id);
+        });
 
       if (error) throw error;
 
