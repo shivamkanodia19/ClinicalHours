@@ -8,134 +8,100 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Refined Modern Palette - Soft, cohesive, professional */
-    /* Warm cream base with soft navy accents and dusty blue highlights */
-    --background: 45 30% 96%;
-    --foreground: 220 25% 25%;
+    /* Squarespace-inspired Black & White Theme */
+    /* Clean, minimal, sophisticated */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
 
-    --card: 45 25% 98%;
-    --card-foreground: 220 20% 30%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 30%;
+    --popover-foreground: 0 0% 12%;
 
-    --primary: 215 55% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 12%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 45 20% 92%;
-    --secondary-foreground: 220 20% 35%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 45 15% 90%;
-    --muted-foreground: 220 15% 50%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 195 45% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 65% 55%;
+    --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 45 15% 85%;
-    --input: 45 15% 88%;
-    --ring: 215 55% 45%;
+    --border: 0 0% 88%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 20%;
 
-    --radius: 0.75rem;
+    --radius: 0rem;
     
     /* Custom design tokens */
-    --hero-gradient-start: 220 30% 25%;
-    --hero-gradient-end: 215 55% 45%;
     --success: 160 50% 42%;
     --success-foreground: 0 0% 100%;
     
-    /* Navy shades - for depth and contrast */
-    --navy-50: 220 25% 95%;
-    --navy-100: 220 25% 88%;
-    --navy-200: 220 25% 75%;
-    --navy-300: 220 28% 60%;
-    --navy-400: 220 30% 45%;
-    --navy-500: 220 32% 35%;
-    --navy-600: 220 35% 25%;
-    --navy-700: 220 40% 18%;
-    
-    /* Soft blue shades - primary accent */
-    --blue-50: 215 50% 97%;
-    --blue-100: 215 50% 92%;
-    --blue-200: 215 50% 82%;
-    --blue-300: 215 52% 68%;
-    --blue-400: 215 55% 55%;
-    --blue-500: 215 55% 45%;
-    --blue-600: 215 55% 38%;
-    
-    /* Warm cream shades - backgrounds */
-    --cream-50: 45 40% 99%;
-    --cream-100: 45 35% 97%;
-    --cream-200: 45 30% 94%;
-    --cream-300: 45 25% 88%;
-    --cream-400: 45 20% 80%;
-    
-    /* Soft teal accent */
-    --teal-300: 195 40% 65%;
-    --teal-400: 195 45% 55%;
-    --teal-500: 195 50% 45%;
-    
-    /* Shadows - soft and warm */
-    --shadow-sm: 0 1px 3px 0 hsl(220 30% 30% / 0.04), 0 1px 2px -1px hsl(220 30% 30% / 0.04);
-    --shadow-md: 0 4px 6px -1px hsl(220 30% 30% / 0.06), 0 2px 4px -2px hsl(220 30% 30% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(220 30% 30% / 0.08), 0 4px 6px -4px hsl(220 30% 30% / 0.06);
-    --shadow-xl: 0 20px 25px -5px hsl(220 30% 30% / 0.08), 0 8px 10px -6px hsl(220 30% 30% / 0.06);
-    --shadow-primary: 0 4px 14px -3px hsl(215 55% 45% / 0.25);
+    /* Shadows - subtle and clean */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.06);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.08);
     
     /* Transitions */
     --transition-base: all 0.2s ease-in-out;
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 220 35% 22%;
-    --sidebar-foreground: 45 30% 95%;
-    --sidebar-primary: 215 55% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 30% 30%;
-    --sidebar-accent-foreground: 45 30% 92%;
-    --sidebar-border: 220 30% 30%;
-    --sidebar-ring: 215 55% 55%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
-    /* Dark mode - Rich navy with warm accents */
-    --background: 220 35% 12%;
-    --foreground: 45 25% 92%;
+    /* Dark mode - inverted black/white */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 220 30% 16%;
-    --card-foreground: 45 25% 92%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 30% 16%;
-    --popover-foreground: 45 25% 92%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 215 60% 58%;
-    --primary-foreground: 220 35% 10%;
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 220 25% 22%;
-    --secondary-foreground: 45 20% 88%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 22% 20%;
-    --muted-foreground: 45 15% 65%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 195 50% 50%;
-    --accent-foreground: 220 35% 10%;
+    --accent: 0 0% 85%;
+    --accent-foreground: 0 0% 8%;
 
     --destructive: 0 55% 50%;
-    --destructive-foreground: 45 25% 92%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 220 25% 22%;
-    --input: 220 25% 22%;
-    --ring: 215 60% 58%;
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 80%;
     
-    --sidebar-background: 220 38% 10%;
-    --sidebar-foreground: 45 25% 92%;
-    --sidebar-primary: 215 60% 58%;
-    --sidebar-primary-foreground: 220 35% 10%;
-    --sidebar-accent: 220 25% 18%;
-    --sidebar-accent-foreground: 45 20% 88%;
-    --sidebar-border: 220 25% 20%;
-    --sidebar-ring: 215 60% 58%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 95%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 80%;
   }
 }
 

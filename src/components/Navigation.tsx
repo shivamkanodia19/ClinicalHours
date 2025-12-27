@@ -1,15 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo.png";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+
+  // Check if we're on the home page for transparent nav
+  const isHomePage = location.pathname === "/";
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -32,53 +45,88 @@ const Navigation = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Determine nav styles based on scroll and page
+  const navBackground = isHomePage && !isScrolled
+    ? "bg-transparent"
+    : "bg-foreground";
+
+  const textColor = isHomePage && !isScrolled
+    ? "text-background"
+    : "text-background";
+
+  const logoColor = isHomePage && !isScrolled
+    ? "text-background"
+    : "text-background";
+
+  const borderStyle = isHomePage && !isScrolled
+    ? "border-transparent"
+    : "border-background/10";
+
   return (
-    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBackground} ${borderStyle} border-b`}>
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 font-bold text-2xl text-primary">
-            <img src={logo} alt="ClinicalHours" className="h-12 w-12" />
-            <span>ClinicalHours</span>
+          <Link to="/" className={`flex items-center gap-3 text-xl tracking-tight ${logoColor}`}>
+            <span className="font-light">Clinical</span>
+            <span className="font-normal">Hours</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-8">
             {links.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(link.path) ? "text-primary" : "text-foreground/80"
-                }`}
+                className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 ${
+                  isActive(link.path) ? "opacity-100" : "opacity-80"
+                } ${textColor}`}
               >
                 {link.name}
               </Link>
             ))}
             {user ? (
               <>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                </Button>
-                <Button onClick={handleSignOut} variant="ghost" size="sm">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </Button>
+                <Link
+                  to="/profile"
+                  className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                >
+                  Log Out
+                </button>
               </>
             ) : (
-              <Button asChild>
-                <Link to="/auth">Login</Link>
-              </Button>
+              <>
+                <Link
+                  to="/auth"
+                  className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                >
+                  Log In
+                </Link>
+                <Button 
+                  asChild 
+                  size="sm"
+                  className={`text-xs uppercase tracking-widest rounded-none px-6 py-5 ${
+                    isHomePage && !isScrolled
+                      ? "bg-background text-foreground hover:bg-background/90"
+                      : "bg-background text-foreground hover:bg-background/90"
+                  }`}
+                >
+                  <Link to="/auth">Get Started</Link>
+                </Button>
+              </>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-md hover:bg-muted transition-colors"
+            className={`md:hidden p-2 transition-colors ${textColor}`}
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -86,17 +134,15 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-4 space-y-3 border-t border-border">
+          <div className="md:hidden py-6 space-y-4 border-t border-background/10">
             {links.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive(link.path)
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground/80 hover:bg-muted"
-                }`}
+                className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 ${
+                  isActive(link.path) ? "opacity-100" : "opacity-80"
+                } ${textColor}`}
               >
                 {link.name}
               </Link>
@@ -106,9 +152,8 @@ const Navigation = () => {
                 <Link
                   to="/profile"
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2 text-sm font-medium rounded-md text-foreground/80 hover:bg-muted"
+                  className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
                 >
-                  <User className="inline mr-2 h-4 w-4" />
                   Profile
                 </Link>
                 <button
@@ -116,20 +161,28 @@ const Navigation = () => {
                     handleSignOut();
                     setIsOpen(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm font-medium rounded-md text-foreground/80 hover:bg-muted"
+                  className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
                 >
-                  <LogOut className="inline mr-2 h-4 w-4" />
-                  Logout
+                  Log Out
                 </button>
               </>
             ) : (
-              <Link
-                to="/auth"
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground"
-              >
-                Login
-              </Link>
+              <>
+                <Link
+                  to="/auth"
+                  onClick={() => setIsOpen(false)}
+                  className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/auth"
+                  onClick={() => setIsOpen(false)}
+                  className={`inline-block text-xs font-normal uppercase tracking-widest py-3 px-6 mt-2 bg-background text-foreground ${textColor}`}
+                >
+                  Get Started
+                </Link>
+              </>
             )}
           </div>
         )}

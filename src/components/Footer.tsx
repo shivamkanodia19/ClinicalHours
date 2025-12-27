@@ -1,34 +1,32 @@
 import { Link } from "react-router-dom";
-import { Mail, Linkedin } from "lucide-react";
-import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
-    <footer className="bg-muted/50 border-t border-border mt-20">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-foreground border-t border-background/10">
+      <div className="container mx-auto px-6 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 font-bold text-lg text-primary">
-              <img src={logo} alt="ClinicalHours" className="h-6 w-6" />
-              <span>ClinicalHours</span>
+          <div className="space-y-6">
+            <div className="text-xl text-background">
+              <span className="font-light">Clinical</span>
+              <span className="font-normal">Hours</span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-background/50 font-light leading-relaxed">
               Empowering pre-med students to find and secure clinical opportunities.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className="text-xs uppercase tracking-[0.2em] text-background/40 mb-6">Quick Links</h3>
+            <ul className="space-y-4 text-sm">
               <li>
-                <Link to="/opportunities" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/opportunities" className="text-background/70 hover:text-background transition-colors font-light">
                   Find Opportunities
                 </Link>
               </li>
               <li>
-                <Link to="/map" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/map" className="text-background/70 hover:text-background transition-colors font-light">
                   Map View
                 </Link>
               </li>
@@ -37,20 +35,20 @@ const Footer = () => {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold mb-4">Resources</h3>
-            <ul className="space-y-2 text-sm">
+            <h3 className="text-xs uppercase tracking-[0.2em] text-background/40 mb-6">Resources</h3>
+            <ul className="space-y-4 text-sm">
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/contact" className="text-background/70 hover:text-background transition-colors font-light">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/terms" className="text-background/70 hover:text-background transition-colors font-light">
                   Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/privacy" className="text-background/70 hover:text-background transition-colors font-light">
                   Privacy Policy
                 </Link>
               </li>
@@ -59,30 +57,34 @@ const Footer = () => {
 
           {/* Connect */}
           <div>
-            <h3 className="font-semibold mb-4">Connect</h3>
-            <div className="flex gap-4">
-              <a
-                href="mailto:contact@clinicalhours.com"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Email"
-              >
-                <Mail className="h-5 w-5" />
-              </a>
-              <a
-                href="https://linkedin.com/company/clinicalhours"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a>
-            </div>
+            <h3 className="text-xs uppercase tracking-[0.2em] text-background/40 mb-6">Connect</h3>
+            <ul className="space-y-4 text-sm">
+              <li>
+                <a
+                  href="mailto:contact@clinicalhours.com"
+                  className="text-background/70 hover:text-background transition-colors font-light"
+                >
+                  contact@clinicalhours.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://linkedin.com/company/clinicalhours"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-background/70 hover:text-background transition-colors font-light"
+                >
+                  LinkedIn
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} ClinicalHours. All rights reserved.</p>
+        <div className="mt-20 pt-8 border-t border-background/10 text-center">
+          <p className="text-xs text-background/40 uppercase tracking-[0.2em]">
+            &copy; {new Date().getFullYear()} ClinicalHours. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

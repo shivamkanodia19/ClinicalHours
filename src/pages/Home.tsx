@@ -1,14 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Hospital, Clock, MapPin, Users, Star, ArrowRight, Building2, ClipboardCheck, MessageCircle, Heart, Target } from "lucide-react";
+import { Hospital, Clock, MapPin, Users, Star, Building2, ClipboardCheck, MessageCircle, Heart, Target } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { useInView } from "@/hooks/useInView";
 import { useAuth } from "@/hooks/useAuth";
-import heroImage from "@/assets/hero-medical-purple.png";
 import heroVideo from "@/assets/hero-video.mp4";
 import communityImage from "@/assets/community-illustration.png";
 
@@ -96,11 +93,11 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Navigation />
 
-      {/* Hero Section - Squarespace-inspired centered layout */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      {/* Hero Section - Full-screen immersive Squarespace style */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-foreground">
         {/* Video Background */}
         <div className="absolute inset-0 overflow-hidden">
           <video
@@ -108,61 +105,48 @@ const Home = () => {
             muted
             loop
             playsInline
-            poster={heroImage}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover opacity-40"
           >
             <source src={heroVideo} type="video/mp4" />
           </video>
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-foreground/60" />
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h1 className={`font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-medium text-background leading-[1.1] tracking-tight ${statsInView || true ? 'animate-fade-in-up' : ''}`}>
-              Find Your Clinical Future
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-normal text-background leading-[1.05] tracking-tight animate-fade-in-up">
+              Find Your<br />Clinical Future
             </h1>
-            <p className="text-lg md:text-xl text-background/80 max-w-2xl mx-auto leading-relaxed animate-fade-in-up-delay-1">
-              The crowdsourced platform helping pre-med students discover clinical opportunities with real insights from students who've been there.
+            <p className="text-lg md:text-xl text-background/70 max-w-xl mx-auto leading-relaxed font-light animate-fade-in-up-delay-1">
+              The crowdsourced platform helping pre-med students discover clinical opportunities.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-fade-in-up-delay-2">
-              <Button 
-                asChild 
-                size="lg" 
-                className="text-base px-10 py-6 bg-background text-foreground hover:bg-background/90 rounded-sm"
+            <div className="pt-8 animate-fade-in-up-delay-2">
+              <Link 
+                to="/auth"
+                className="inline-block text-sm uppercase tracking-widest px-12 py-5 bg-background text-foreground hover:bg-background/90 transition-colors"
               >
-                <Link to="/map">
-                  Explore Opportunities
-                </Link>
-              </Button>
-              <Button 
-                asChild 
-                size="lg" 
-                variant="outline" 
-                className="text-base px-10 py-6 bg-transparent text-background border-background/40 hover:bg-background/10 hover:border-background rounded-sm"
-              >
-                <Link to="/auth">
-                  Get Started
-                </Link>
-              </Button>
+                Get Started
+              </Link>
+              <p className="mt-6 text-xs text-background/50 uppercase tracking-widest">
+                Free forever. No credit card required.
+              </p>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-fade-in-up-delay-3">
-          <div className="w-px h-16 bg-gradient-to-b from-background/60 to-transparent" />
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-fade-in-up-delay-3">
+          <div className="w-px h-20 bg-gradient-to-b from-background/40 to-transparent" />
         </div>
       </section>
 
       {/* Stats Section - Minimal, clean */}
       <section 
         ref={statsRef}
-        className="py-24 bg-background"
+        className="py-32 bg-background"
       >
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-center items-center gap-16 md:gap-24">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-center items-center gap-20 md:gap-32">
             {stats.map((stat, index) => (
               <div 
                 key={index} 
@@ -171,7 +155,7 @@ const Home = () => {
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="text-5xl md:text-6xl font-display font-medium text-foreground mb-2">
+                <div className="text-6xl md:text-7xl font-display font-normal text-foreground mb-3">
                   {statsInView ? (
                     <AnimatedCounter 
                       end={stat.value} 
@@ -182,56 +166,56 @@ const Home = () => {
                     `0${stat.suffix}`
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground uppercase tracking-widest">{stat.label}</div>
+                <div className="text-xs text-foreground/50 uppercase tracking-[0.2em]">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section - Clean cards */}
-      <section ref={featuresRef} className="py-24 bg-secondary/30">
-        <div className="container mx-auto px-4">
-          <div className={`text-center max-w-2xl mx-auto mb-20 ${featuresInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-medium mb-6">
+      {/* Features Section - Clean cards on dark background */}
+      <section ref={featuresRef} className="py-32 bg-foreground">
+        <div className="container mx-auto px-6">
+          <div className={`text-center max-w-2xl mx-auto mb-24 ${featuresInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal text-background mb-8">
               Built for Pre-Med Success
             </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+            <p className="text-background/60 text-lg leading-relaxed font-light">
               Everything you need to find, evaluate, and secure clinical opportunities.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-background/10 max-w-6xl mx-auto">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className={`p-8 bg-background rounded-sm border border-border/50 hover:border-primary/30 transition-colors ${
+                className={`p-12 bg-foreground hover:bg-foreground/90 transition-colors ${
                   featuresInView ? 'animate-fade-in-up' : 'opacity-0'
                 }`}
                 style={{ animationDelay: `${index * 80}ms` }}
               >
-                <feature.icon className="h-8 w-8 text-primary mb-6" />
-                <h3 className="text-xl font-medium mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                <feature.icon className="h-8 w-8 text-background/60 mb-8" strokeWidth={1} />
+                <h3 className="text-xl font-normal text-background mb-4">{feature.title}</h3>
+                <p className="text-background/50 leading-relaxed font-light">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section - Horizontal steps */}
-      <section ref={howItWorksRef} className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className={`text-center max-w-2xl mx-auto mb-20 ${howItWorksInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-medium mb-6">
+      {/* How It Works Section */}
+      <section ref={howItWorksRef} className="py-32 bg-background">
+        <div className="container mx-auto px-6">
+          <div className={`text-center max-w-2xl mx-auto mb-24 ${howItWorksInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal text-foreground mb-8">
               How It Works
             </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+            <p className="text-foreground/50 text-lg leading-relaxed font-light">
               Four steps to your clinical experience.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-5xl mx-auto">
             {howItWorksSteps.map((item, index) => (
               <div
                 key={index}
@@ -240,16 +224,16 @@ const Home = () => {
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <item.icon className="h-7 w-7 text-primary" />
+                <div className="w-20 h-20 mx-auto mb-8 border border-foreground/10 flex items-center justify-center">
+                  <item.icon className="h-8 w-8 text-foreground/60" strokeWidth={1} />
                 </div>
-                <div className="text-sm text-muted-foreground uppercase tracking-widest mb-2">
+                <div className="text-xs text-foreground/40 uppercase tracking-[0.2em] mb-4">
                   Step {item.step}
                 </div>
-                <h3 className="font-display text-2xl font-medium mb-3">
+                <h3 className="font-display text-2xl font-normal text-foreground mb-4">
                   {item.title}
                 </h3>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-foreground/50 leading-relaxed font-light">
                   {item.description}
                 </p>
               </div>
@@ -258,49 +242,46 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section - Simple and bold */}
-      <section ref={ctaRef} className="py-32 bg-foreground">
-        <div className="container mx-auto px-4">
-          <div className={`max-w-3xl mx-auto text-center space-y-8 ${ctaInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-medium text-background leading-tight">
+      {/* CTA Section */}
+      <section ref={ctaRef} className="py-40 bg-foreground">
+        <div className="container mx-auto px-6">
+          <div className={`max-w-3xl mx-auto text-center space-y-10 ${ctaInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h2 className="font-display text-4xl md:text-5xl lg:text-7xl font-normal text-background leading-tight">
               Ready to Start?
             </h2>
-            <p className="text-xl text-background/70 max-w-xl mx-auto">
+            <p className="text-xl text-background/60 max-w-xl mx-auto font-light">
               Join students discovering clinical opportunities through our platform.
             </p>
-            <div className="pt-4">
-              <Button 
-                asChild 
-                size="lg" 
-                className="text-base px-12 py-7 bg-background text-foreground hover:bg-background/90 rounded-sm"
+            <div className="pt-6">
+              <Link 
+                to="/auth"
+                className="inline-block text-sm uppercase tracking-widest px-16 py-6 bg-background text-foreground hover:bg-background/90 transition-colors"
               >
-                <Link to="/auth">
-                  Get Started Free
-                </Link>
-              </Button>
+                Get Started Free
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Our Story Section - Clean layout */}
-      <section ref={storyRef} className="py-24 bg-background">
-        <div className="container mx-auto px-4">
+      {/* Our Story Section */}
+      <section ref={storyRef} className="py-32 bg-background">
+        <div className="container mx-auto px-6">
           <div className={`max-w-5xl mx-auto ${storyInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="order-2 md:order-1 space-y-6">
-                <div className="text-sm text-muted-foreground uppercase tracking-widest">Our Story</div>
-                <h2 className="font-display text-4xl md:text-5xl font-medium">How It Started</h2>
-                <p className="text-muted-foreground leading-relaxed">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
+              <div className="order-2 md:order-1 space-y-8">
+                <div className="text-xs text-foreground/40 uppercase tracking-[0.2em]">Our Story</div>
+                <h2 className="font-display text-4xl md:text-5xl font-normal text-foreground">How It Started</h2>
+                <p className="text-foreground/50 leading-relaxed font-light">
                   As college students—one pre-med, one engineering—we saw how frustrating it was to find real clinical experience. The pre-med among us spent weeks calling hospitals and clinics, only to learn that many didn't accept volunteers, had limited spots, or required certifications that were hard to get.
                 </p>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-foreground/50 leading-relaxed font-light">
                   Together, we set out to build a centralized platform where students could share verified opportunities and insights to make the process smoother for everyone pursuing healthcare.
                 </p>
               </div>
               <div className="order-1 md:order-2 flex justify-center">
-                <div className="w-64 h-64 bg-secondary/50 rounded-sm flex items-center justify-center">
-                  <img src={communityImage} alt="" className="w-48 opacity-80" />
+                <div className="w-80 h-80 bg-foreground/5 flex items-center justify-center">
+                  <img src={communityImage} alt="" className="w-56 opacity-60" />
                 </div>
               </div>
             </div>
