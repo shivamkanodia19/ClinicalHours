@@ -46,21 +46,23 @@ const Navigation = () => {
   const isActive = (path: string) => location.pathname === path;
 
   // Determine nav styles based on scroll and page
-  const navBackground = isHomePage && !isScrolled
-    ? "bg-transparent"
-    : "bg-foreground";
+  // Home page: transparent nav with white text, scrolled = black bg with white text
+  // Other pages: use theme colors
+  const navBackground = isHomePage
+    ? (isScrolled ? "bg-black" : "bg-transparent")
+    : "bg-background";
 
-  const textColor = isHomePage && !isScrolled
-    ? "text-background"
-    : "text-background";
+  const textColor = isHomePage
+    ? "text-white"
+    : "text-foreground";
 
-  const logoColor = isHomePage && !isScrolled
-    ? "text-background"
-    : "text-background";
+  const logoColor = isHomePage
+    ? "text-white"
+    : "text-foreground";
 
   const borderStyle = isHomePage && !isScrolled
     ? "border-transparent"
-    : "border-background/10";
+    : (isHomePage ? "border-white/10" : "border-border");
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBackground} ${borderStyle} border-b`}>
@@ -112,9 +114,9 @@ const Navigation = () => {
                   asChild 
                   size="sm"
                   className={`text-xs uppercase tracking-widest rounded-none px-6 py-5 ${
-                    isHomePage && !isScrolled
-                      ? "bg-background text-foreground hover:bg-background/90"
-                      : "bg-background text-foreground hover:bg-background/90"
+                    isHomePage
+                      ? "bg-white text-black hover:bg-white/90"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
                   }`}
                 >
                   <Link to="/auth">Get Started</Link>
@@ -134,7 +136,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-6 space-y-4 border-t border-background/10">
+          <div className={`md:hidden py-6 space-y-4 border-t ${isHomePage ? "border-white/10" : "border-border"}`}>
             {links.map((link) => (
               <Link
                 key={link.path}
@@ -178,7 +180,9 @@ const Navigation = () => {
                 <Link
                   to="/auth"
                   onClick={() => setIsOpen(false)}
-                  className={`inline-block text-xs font-normal uppercase tracking-widest py-3 px-6 mt-2 bg-background text-foreground ${textColor}`}
+                  className={`inline-block text-xs font-normal uppercase tracking-widest py-3 px-6 mt-2 ${
+                    isHomePage ? "bg-white text-black" : "bg-primary text-primary-foreground"
+                  }`}
                 >
                   Get Started
                 </Link>
