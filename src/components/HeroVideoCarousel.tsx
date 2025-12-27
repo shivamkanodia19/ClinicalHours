@@ -17,7 +17,7 @@ const HeroVideoCarousel = () => {
     const nextVideo = videoRefs.current[nextIndex];
     if (nextVideo) {
       nextVideo.currentTime = 0;
-      nextVideo.pause();
+      nextVideo.play().catch(() => {});
     }
     
     setSlideDirection("left");
@@ -26,7 +26,7 @@ const HeroVideoCarousel = () => {
     setTimeout(() => {
       setActiveVideo(nextIndex);
       setSlideDirection("none");
-    }, 800);
+    }, 600);
   }, [activeVideo]);
 
   // Play active video when it changes
@@ -55,24 +55,28 @@ const HeroVideoCarousel = () => {
         
         let transform = "translate-x-full"; // Off screen right by default
         let opacity = "opacity-0";
+        let zIndex = "z-0";
         
         if (isActive) {
           if (slideDirection === "left") {
-            transform = "-translate-x-full";
+            transform = "-translate-x-1/2";
             opacity = "opacity-0";
+            zIndex = "z-10";
           } else {
             transform = "translate-x-0";
             opacity = "opacity-100";
+            zIndex = "z-10";
           }
         } else if (isNext && slideDirection === "left") {
           transform = "translate-x-0";
           opacity = "opacity-100";
+          zIndex = "z-5";
         }
 
         return (
           <div
             key={index}
-            className={`absolute inset-0 transition-all duration-700 ease-out ${transform} ${opacity}`}
+            className={`absolute inset-0 transition-all duration-500 ease-out ${transform} ${opacity} ${zIndex}`}
           >
             <video
               ref={(el) => (videoRefs.current[index] = el)}
