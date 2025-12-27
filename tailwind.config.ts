@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         'display': ['Playfair Display', 'Georgia', 'serif'],
+        'mono': ['Courier New', 'Courier', 'monospace'],
         'sans': ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       colors: {

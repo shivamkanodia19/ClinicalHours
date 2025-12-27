@@ -76,8 +76,8 @@ const Contact = () => {
                   <CardTitle className="text-lg">Email</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <a href="mailto:contact@clinicalhours.com" className="text-sm text-primary hover:underline">
-                    contact@clinicalhours.com
+                  <a href="mailto:support@clinicalhours.org" className="text-sm text-primary hover:underline">
+                    support@clinicalhours.org
                   </a>
                 </CardContent>
               </Card>
