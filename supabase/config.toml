@@ -7,16 +7,16 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.import-hospitals]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-verification-email]
-verify_jwt = false
+verify_jwt = true
 
 [functions.verify-email]
 verify_jwt = false
 
 [functions.send-password-reset]
-verify_jwt = false
+verify_jwt = true
 
 [functions.reset-password]
 verify_jwt = false

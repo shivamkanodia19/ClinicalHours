@@ -16,17 +16,61 @@ interface SendVerificationEmailRequest {
   origin: string;
 }
 
+// Rate limiting per user to prevent abuse
+const userRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const USER_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_EMAILS_PER_USER = 5; // 5 verification emails per user per hour
+
+function isUserRateLimited(userId: string): boolean {
+  const now = Date.now();
+  const record = userRateLimitMap.get(userId);
+
+  if (!record || now > record.resetTime) {
+    userRateLimitMap.set(userId, { count: 1, resetTime: now + USER_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (record.count >= MAX_EMAILS_PER_USER) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
+// Clean up old entries periodically
+function cleanupRateLimitMap(): void {
+  const now = Date.now();
+  for (const [key, value] of userRateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      userRateLimitMap.delete(key);
+    }
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cleanup old entries occasionally
+  if (Math.random() < 0.01) {
+    cleanupRateLimitMap();
+  }
+
   try {
-    const { userId, email, fullName, origin }: SendVerificationEmailRequest = await req.json();
+    // Verify JWT - this function requires authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    console.log(`Sending verification email to ${email} for user ${userId}`);
-
+    const token = authHeader.replace('Bearer ', '');
+    
     // Create Supabase client with service role
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -34,8 +78,50 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
+    // Verify the JWT and get user
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (userError || !user) {
+      console.error('Invalid token or user not found:', userError);
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { userId, email, fullName, origin }: SendVerificationEmailRequest = await req.json();
+
+    // Validate that the request is for the authenticated user (or user can only send to themselves)
+    if (userId !== user.id) {
+      console.error(`User ${user.id} attempted to send verification email for different user ${userId}`);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log(`Sending verification email to ${email} for user ${userId}`);
+
+    // Check rate limit
+    if (isUserRateLimited(userId)) {
+      console.warn(`Rate limit exceeded for user: ${userId}`);
+      return new Response(
+        JSON.stringify({ error: "Too many verification emails sent. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email) || email.length > 254) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Generate a secure token
-    const token = crypto.randomUUID() + "-" + crypto.randomUUID();
+    const verificationToken = crypto.randomUUID() + "-" + crypto.randomUUID();
     
     // Set expiration to 24 hours from now
     const expiresAt = new Date();
@@ -53,7 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
       .insert({
         user_id: userId,
         email: email,
-        token: token,
+        token: verificationToken,
         expires_at: expiresAt.toISOString(),
       });
 
@@ -62,8 +148,31 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to create verification token");
     }
 
-    // Create verification link
-    const verificationLink = `${origin}/verify?token=${token}`;
+    // Validate origin
+    const allowedOrigins = [
+      'https://sysbtcikrbrrgafffody.lovableproject.com',
+      'https://lovable.dev',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:8080',
+    ];
+    
+    const isAllowedOrigin = origin && (
+      allowedOrigins.includes(origin) || 
+      origin.endsWith('.lovableproject.com') || 
+      origin.endsWith('.lovable.dev')
+    );
+    
+    const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
+    const verificationLink = `${safeOrigin}/verify?token=${verificationToken}`;
+
+    // Sanitize fullName for HTML
+    const safeName = fullName
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
     // Send branded email via Resend HTTP API
     const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -99,7 +208,7 @@ const handler = async (req: Request): Promise<Response> => {
                     <!-- Content -->
                     <tr>
                       <td style="padding: 40px;">
-                        <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 24px; font-weight: 600;">Welcome, ${fullName}! 👋</h2>
+                        <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 24px; font-weight: 600;">Welcome, ${safeName}! 👋</h2>
                         <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
                           Thank you for joining ClinicalHours! Please verify your email address to complete your registration and start discovering clinical opportunities.
                         </p>
@@ -160,7 +269,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-verification-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
