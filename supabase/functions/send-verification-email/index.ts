@@ -90,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
                     <!-- Header -->
                     <tr>
-                      <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); border-radius: 16px 16px 0 0;">
+                      <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border-radius: 16px 16px 0 0;">
                         <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">ClinicalHours</h1>
                         <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">Your Path to Clinical Experience</p>
                       </td>
@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <table role="presentation" style="width: 100%; border-collapse: collapse;">
                           <tr>
                             <td align="center" style="padding: 20px 0;">
-                              <a href="${verificationLink}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);">
+                              <a href="${verificationLink}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
                                 Verify Email Address
                               </a>
                             </td>
@@ -122,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <!-- Alternative Link -->
                         <div style="margin-top: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
                           <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 12px;">If the button doesn't work, copy and paste this link:</p>
-                          <p style="margin: 0; color: #374151; font-size: 12px; word-break: break-all;">${verificationLink}</p>
+                          <p style="margin: 0; color: #7c3aed; font-size: 12px; word-break: break-all;">${verificationLink}</p>
                         </div>
                       </td>
                     </tr>

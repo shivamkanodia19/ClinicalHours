@@ -184,7 +184,7 @@ const Opportunities = () => {
               </p>
             </div>
             <div className="w-32 h-32 flex-shrink-0">
-              <img src={opportunitiesAccent} alt="" className="w-full h-full object-contain opacity-70 grayscale brightness-90 contrast-110" />
+              <img src={opportunitiesAccent} alt="" className="w-full h-full object-contain opacity-70" />
             </div>
           </div>
 
