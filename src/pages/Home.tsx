@@ -139,13 +139,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 animate-fade-in-up-delay-3">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-px h-20 bg-gradient-to-b from-white/60 via-white/40 to-transparent animate-scroll-indicator" />
-            <div className="w-1 h-1 rounded-full bg-white/60 animate-bounce" />
-          </div>
-        </div>
       </section>
 
       {/* Stats Section - Minimal, clean */}
