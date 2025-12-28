@@ -205,7 +205,7 @@ const Terms = () => {
                 If you have any questions about these Terms and Conditions, please contact us at:
               </p>
               <p className="text-muted-foreground mt-4">
-                <strong>Email:</strong> contact@clinicalhours.com
+                <strong>Email:</strong> support@clinicalhours.org
               </p>
             </section>
           </div>

@@ -151,7 +151,7 @@ const VerifyEmail = () => {
                   Back to Sign Up
                 </Button>
                 <p className="text-xs text-center text-muted-foreground mt-2">
-                  Need help? Contact us at support@clinicalhours.com
+                  Need help? Contact us at support@clinicalhours.org
                 </p>
               </div>
             </div>

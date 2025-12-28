@@ -147,7 +147,7 @@ const Privacy = () => {
                 <li>Opt out of promotional communications</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                You can manage most preferences directly through your account settings or by contacting us at contact@clinicalhours.com.
+                You can manage most preferences directly through your account settings or by contacting us at support@clinicalhours.org.
               </p>
             </section>
 
@@ -179,8 +179,8 @@ const Privacy = () => {
               </p>
               <p className="text-muted-foreground mt-2">
                 <strong>Email:</strong>{" "}
-                <a href="mailto:contact@clinicalhours.com" className="text-primary hover:underline">
-                  contact@clinicalhours.com
+                <a href="mailto:support@clinicalhours.org" className="text-primary hover:underline">
+                  support@clinicalhours.org
                 </a>
               </p>
             </section>

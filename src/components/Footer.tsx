@@ -61,10 +61,10 @@ const Footer = () => {
             <ul className="space-y-4 text-sm">
               <li>
                 <a
-                  href="mailto:contact@clinicalhours.com"
+                  href="mailto:support@clinicalhours.org"
                   className="text-background/70 hover:text-background transition-colors font-light"
                 >
-                  contact@clinicalhours.com
+                  support@clinicalhours.org
                 </a>
               </li>
               <li>
