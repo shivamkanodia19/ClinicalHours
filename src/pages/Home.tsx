@@ -1,4 +1,5 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Hospital, Clock, MapPin, Users, Star, Building2, ClipboardCheck, MessageCircle, Heart, Target } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -10,6 +11,7 @@ import communityImage from "@/assets/community-illustration.png";
 
 const Home = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   
   // Call all hooks first (Rules of Hooks - must be called in same order every render)
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
@@ -18,10 +20,12 @@ const Home = () => {
   const { ref: howItWorksRef, isInView: howItWorksInView } = useInView({ threshold: 0.1 });
   const { ref: ctaRef, isInView: ctaInView } = useInView({ threshold: 0.2 });
 
-  // Redirect authenticated users to dashboard (after all hooks are called)
-  if (!loading && user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Redirect authenticated users to dashboard (using useEffect to avoid hook order issues)
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   const howItWorksSteps = [
     {
