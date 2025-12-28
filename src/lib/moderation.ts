@@ -23,13 +23,25 @@ export async function moderateContent(
   content: string,
   contentType: ContentType
 ): Promise<ModerationResult> {
+  // Validate input
+  if (!content || typeof content !== 'string') {
+    return {
+      approved: true,
+      flagged_categories: [],
+    };
+  }
+
   try {
-    // Get the Supabase URL and anon key
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // Get the Supabase URL and anon key safely
+    const supabaseUrl = typeof import.meta !== 'undefined' && import.meta.env 
+      ? import.meta.env.VITE_SUPABASE_URL 
+      : undefined;
+    const supabaseAnonKey = typeof import.meta !== 'undefined' && import.meta.env 
+      ? import.meta.env.VITE_SUPABASE_ANON_KEY 
+      : undefined;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Supabase environment variables not configured');
+      console.warn('Supabase environment variables not configured, skipping moderation');
       // Fail open - allow content if configuration is missing
       return {
         approved: true,
