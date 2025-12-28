@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Mail, MapPin, Loader2 } from "lucide-react";
+import { Mail, MapPin, Loader2, Linkedin, Clock, MessageCircle, HelpCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
@@ -72,44 +72,126 @@ const Contact = () => {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 scroll-mt-28">Get In Touch</h1>
-            <p className="text-lg text-muted-foreground">
-              Have questions about clinical opportunities or want to contribute to the platform? We'd love to hear from
-              you.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Have questions about clinical opportunities, want to contribute to the platform, or need help with your account? We're here to help and would love to hear from you.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
             {/* Contact Info Cards */}
             <div className="space-y-4">
               <Card>
                 <CardHeader>
                   <Mail className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Email</CardTitle>
+                  <CardDescription>Send us an email anytime</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <a href="mailto:support@clinicalhours.org" className="text-sm text-primary hover:underline">
+                  <a 
+                    href="mailto:support@clinicalhours.org" 
+                    className="text-sm text-primary hover:underline font-medium"
+                  >
                     support@clinicalhours.org
                   </a>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    We typically respond within 24-48 hours
+                  </p>
                 </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader>
+                  <Linkedin className="h-8 w-8 text-primary mb-2" />
+                  <CardTitle className="text-lg">LinkedIn</CardTitle>
+                  <CardDescription>Connect with us on LinkedIn</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <a
+                    href="https://linkedin.com/company/clinicalhours"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-2"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                    Follow ClinicalHours
+                  </a>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Stay updated with platform news and updates
+                  </p>
+                </CardContent>
+              </Card>
 
               <Card>
                 <CardHeader>
                   <MapPin className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-lg">Location</CardTitle>
+                  <CardDescription>Based in Dallas, Texas</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">Dallas, Texas</p>
+                  <p className="text-sm text-muted-foreground">Dallas, Texas, United States</p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* What We Can Help With */}
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <HelpCircle className="h-8 w-8 text-primary mb-2" />
+                  <CardTitle className="text-lg">What We Can Help With</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>Questions about finding clinical opportunities</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>Account or profile issues</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>Reporting incorrect opportunity information</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>Partnership or collaboration inquiries</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>Feature requests or feedback</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span>General questions about the platform</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <Clock className="h-8 w-8 text-primary mb-2" />
+                  <CardTitle className="text-lg">Response Time</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    We aim to respond to all inquiries within <strong className="text-foreground">24-48 hours</strong> during business days. For urgent matters, please include "URGENT" in your subject line.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
             {/* Contact Form */}
             <Card className="md:col-span-2">
               <CardHeader>
-              <CardTitle>Send a Message</CardTitle>
-                <CardDescription>Fill out the form below and we'll respond as soon as possible.</CardDescription>
+                <div className="flex items-center gap-3 mb-2">
+                  <Send className="h-6 w-6 text-primary" />
+                  <CardTitle>Send a Message</CardTitle>
+                </div>
+                <CardDescription>Fill out the form below and we'll respond as soon as possible. All fields are required.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -161,17 +243,80 @@ const Contact = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      "Send Message"
-                    )}
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          Send Message
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      By submitting this form, you agree to our{" "}
+                      <a href="/privacy" className="text-primary hover:underline">
+                        Privacy Policy
+                      </a>
+                      {" "}and{" "}
+                      <a href="/terms" className="text-primary hover:underline">
+                        Terms of Service
+                      </a>
+                      .
+                    </p>
+                  </div>
                 </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mt-12">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="h-6 w-6 text-primary" />
+                  <CardTitle>Frequently Asked Questions</CardTitle>
+                </div>
+                <CardDescription>Quick answers to common questions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">How do I add a new clinical opportunity?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      If you know of a clinical opportunity that's not listed on our platform, please contact us with the details. We'll verify the information and add it to help other students.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">Can I update information about an existing opportunity?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Yes! If you notice incorrect information about an opportunity, please let us know. We rely on our community to keep the platform accurate and up-to-date.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">How can I contribute to ClinicalHours?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      We welcome contributions! You can help by submitting reviews, sharing opportunities, answering questions, or suggesting new features. Reach out to discuss partnership opportunities.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">Is ClinicalHours free to use?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Yes, ClinicalHours is completely free for students. Our mission is to make clinical opportunities accessible to all pre-med students, regardless of their background or resources.
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">I'm having trouble with my account. What should I do?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      If you're experiencing account issues, please contact us with your email address and a description of the problem. We'll help you resolve it as quickly as possible.
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
