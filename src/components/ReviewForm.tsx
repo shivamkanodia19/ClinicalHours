@@ -56,16 +56,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
-    // Simple check: if profile is loading, wait. If incomplete, show gate.
-    if (profileLoading) {
-      return; // Button is disabled while loading
-    }
-
-    if (!isComplete) {
-      setShowProfileGate(true);
-      return;
-    }
-
+    // No profile check here - let user fill out the form first
     setOpen(true);
   };
 
@@ -81,8 +72,21 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
-    // No re-check needed - if they got past the initial check, they're good
-    // Only backend moderation runs from here
+    // Check profile completion at submission time
+    if (profileLoading) {
+      toast.error("Please wait while we verify your profile");
+      setLoading(false);
+      return;
+    }
+
+    if (!isComplete) {
+      setShowProfileGate(true);
+      setOpen(false);
+      setLoading(false);
+      return;
+    }
+
+    // Profile is complete - proceed with moderation and submission
 
     // Client-side rate limiting (5 reviews per hour per user)
     const rateLimitKey = `review:${user.id}`;

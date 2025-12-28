@@ -184,27 +184,13 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     });
   }, [answerDisplayCount]);
 
-  const checkProfileAndProceed = (action: string, callback: () => void) => {
-    // Simple check: wait for loading, then check completion
-    if (profileLoading) {
-      return; // Don't proceed while loading
-    }
-    
-    if (!isComplete) {
-      setGateAction(action);
-      setShowProfileGate(true);
-      return;
-    }
-    
-    callback();
-  };
-
   const handleShowAskForm = () => {
     if (!userId) {
       toast({ title: "Please sign in to ask a question", variant: "destructive" });
       return;
     }
-    checkProfileAndProceed("ask a question", () => setShowAskForm(true));
+    // No profile check here - let user fill out the form first
+    setShowAskForm(true);
   };
 
   const handleAskQuestion = async () => {
@@ -216,8 +202,19 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // No re-check needed - if they got past the initial check, they're good
-    // Only backend moderation runs from here
+    // Check profile completion at submission time
+    if (profileLoading) {
+      toast({ title: "Please wait while we verify your profile", variant: "default" });
+      return;
+    }
+
+    if (!isComplete) {
+      setGateAction("ask a question");
+      setShowProfileGate(true);
+      return;
+    }
+
+    // Profile is complete - proceed with moderation and submission
 
     // Client-side rate limiting (10 questions per hour per user)
     const rateLimitKey = `question:${user.id}`;
@@ -288,8 +285,9 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Simple check at entry point only
+    // Check profile completion at submission time
     if (profileLoading) {
+      toast({ title: "Please wait while we verify your profile", variant: "default" });
       return;
     }
 
@@ -298,6 +296,8 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       setShowProfileGate(true);
       return;
     }
+
+    // Profile is complete - proceed with moderation and submission
 
     // Client-side rate limiting (20 answers per hour per user)
     const rateLimitKey = `answer:${user.id}`;
