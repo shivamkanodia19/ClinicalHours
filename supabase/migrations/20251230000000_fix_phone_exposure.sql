@@ -74,3 +74,11 @@ GRANT SELECT ON public.public_profiles TO anon;
 -- Add comment to profiles table phone column documenting privacy
 COMMENT ON COLUMN public.profiles.phone IS 'Private field - only accessible by profile owner. Never exposed through views or public queries.';
 
+-- Ensure RLS is strictly enforced - revoke and re-grant to rely on RLS policies
+-- This prevents any potential bypass through explicit grants
+REVOKE ALL ON public.profiles FROM authenticated;
+REVOKE ALL ON public.profiles FROM anon;
+-- Re-grant SELECT, but RLS policy "Users can view own profile only" will enforce access
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT SELECT ON public.profiles TO anon;
+
