@@ -2,12 +2,26 @@
 
 This guide explains how to apply the database performance optimizations to your Supabase project.
 
+## For Lovable Cloud Users
+
+Since you're using Lovable, you have two options:
+
+### Option A: Through Lovable Interface (If Available)
+1. In Lovable, look for a "Database" or "Migrations" section
+2. The migration file is already in your repo at: `supabase/migrations/20251229000000_performance_optimization.sql`
+3. Lovable may automatically detect and apply migrations, or provide a UI to run them
+
+### Option B: Direct Supabase Dashboard (Recommended for Lovable)
+Since Lovable uses Supabase, you can access your Supabase project directly:
+
 ## Option 1: Using Supabase Dashboard (Recommended - Easiest)
 
 ### Step 1: Access Supabase Dashboard
 1. Go to [https://supabase.com/dashboard](https://supabase.com/dashboard)
-2. Sign in to your account
+2. Sign in to your account (use the same account that Lovable uses for Supabase)
 3. Select your project (project ID: `sysbtcikrbrrgafffody`)
+   - If you don't see it, Lovable may have created it under a different account
+   - Check your Lovable project settings for the Supabase project link
 
 ### Step 2: Open SQL Editor
 1. In the left sidebar, click on **"SQL Editor"**
