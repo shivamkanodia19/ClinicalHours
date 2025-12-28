@@ -209,7 +209,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Profile Completeness Card */}
           <Card className={isProfileComplete ? "border-primary/50 bg-primary/5" : "border-destructive/30 bg-destructive/5"}>

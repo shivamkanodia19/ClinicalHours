@@ -174,7 +174,7 @@ const Opportunities = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1">
