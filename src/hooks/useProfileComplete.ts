@@ -54,9 +54,16 @@ export function useProfileComplete(): ProfileCompletenessResult {
       const missing: string[] = [];
       REQUIRED_FIELDS.forEach(({ key, label }) => {
         const value = data?.[key as keyof typeof data];
-        if (!value || (typeof value === "string" && value.trim() === "")) {
+        const isEmpty = !value || (typeof value === "string" && value.trim() === "");
+        if (isEmpty) {
           missing.push(label);
         }
+      });
+
+      console.log("Profile completeness check:", {
+        profile: data,
+        missingFields: missing,
+        isComplete: missing.length === 0
       });
 
       setMissingFields(missing);

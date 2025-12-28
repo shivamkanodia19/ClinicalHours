@@ -72,7 +72,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   const [showProfileGate, setShowProfileGate] = useState(false);
   const [gateAction, setGateAction] = useState("participate");
   const { toast } = useToast();
-  const { isComplete, missingFields } = useProfileComplete();
+  const { isComplete, isLoading: profileLoading, missingFields } = useProfileComplete();
 
   useEffect(() => {
     fetchQuestions();
@@ -185,11 +185,22 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   }, [answerDisplayCount]);
 
   const checkProfileAndProceed = (action: string, callback: () => void) => {
+    // Wait for profile to finish loading before checking
+    if (profileLoading) {
+      console.log("Profile still loading, waiting...");
+      return; // Don't proceed while loading
+    }
+    
+    console.log("Profile check - isComplete:", isComplete, "missingFields:", missingFields);
+    
     if (!isComplete) {
+      console.log("Profile incomplete, showing gate. Missing fields:", missingFields);
       setGateAction(action);
       setShowProfileGate(true);
       return;
     }
+    
+    console.log("Profile complete, proceeding with action:", action);
     callback();
   };
 
@@ -212,6 +223,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
     // Re-check profile completion before submission
     // This ensures users who complete their profile after opening the form can still submit
+    // Wait for profile to finish loading
+    if (profileLoading) {
+      toast({ title: "Please wait while we verify your profile", variant: "default" });
+      return;
+    }
+    
     if (!isComplete) {
       setGateAction("ask a question");
       setShowProfileGate(true);
@@ -284,6 +301,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({ title: "Please sign in to answer", variant: "destructive" });
+      return;
+    }
+
+    // Wait for profile to finish loading
+    if (profileLoading) {
+      toast({ title: "Please wait while we verify your profile", variant: "default" });
       return;
     }
 
