@@ -74,6 +74,16 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
+    // Client-side rate limiting (5 reviews per hour per user)
+    const rateLimitKey = `review:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 5, 60 * 60 * 1000);
+    
+    if (!rateLimit.allowed) {
+      const minutesUntilReset = Math.ceil((rateLimit.resetAt - Date.now()) / 60000);
+      toast.error(`Rate limit exceeded. Please wait ${minutesUntilReset} minute(s) before submitting another review.`);
+      return;
+    }
+
     setLoading(true);
     try {
       // Check for existing review

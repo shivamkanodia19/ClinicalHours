@@ -10,6 +10,7 @@ import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { ProfileGate } from "@/components/ProfileGate";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rateLimit";
 import {
   Collapsible,
   CollapsibleContent,
@@ -208,6 +209,20 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
+    // Client-side rate limiting (10 questions per hour per user)
+    const rateLimitKey = `question:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000);
+    
+    if (!rateLimit.allowed) {
+      const minutesUntilReset = Math.ceil((rateLimit.resetAt - Date.now()) / 60000);
+      toast({ 
+        title: "Rate limit exceeded", 
+        description: `Please wait ${minutesUntilReset} minute(s) before asking another question.`,
+        variant: "destructive" 
+      });
+      return;
+    }
+
     const { error } = await supabase.from("opportunity_questions").insert({
       opportunity_id: opportunityId,
       user_id: user.id,
@@ -241,6 +256,20 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
+    // Client-side rate limiting (20 answers per hour per user)
+    const rateLimitKey = `answer:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 20, 60 * 60 * 1000);
+    
+    if (!rateLimit.allowed) {
+      const minutesUntilReset = Math.ceil((rateLimit.resetAt - Date.now()) / 60000);
+      toast({ 
+        title: "Rate limit exceeded", 
+        description: `Please wait ${minutesUntilReset} minute(s) before posting another answer.`,
+        variant: "destructive" 
+      });
+      return;
+    }
+
     const { error } = await supabase.from("question_answers").insert({
       question_id: questionId,
       user_id: user.id,
@@ -261,6 +290,20 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({ title: "Please sign in to vote", variant: "destructive" });
+      return;
+    }
+
+    // Client-side rate limiting (50 votes per hour per user)
+    const rateLimitKey = `vote:${user.id}`;
+    const rateLimit = checkRateLimit(rateLimitKey, 50, 60 * 60 * 1000);
+    
+    if (!rateLimit.allowed) {
+      const minutesUntilReset = Math.ceil((rateLimit.resetAt - Date.now()) / 60000);
+      toast({ 
+        title: "Rate limit exceeded", 
+        description: `Please wait ${minutesUntilReset} minute(s) before voting again.`,
+        variant: "destructive" 
+      });
       return;
     }
 
