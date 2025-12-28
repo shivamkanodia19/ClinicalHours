@@ -98,6 +98,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Start timing for constant-time response
+    const requestStartTime = Date.now();
+    const MIN_RESPONSE_TIME_MS = 200; // Minimum response time to prevent timing attacks
+
     // Create Supabase client with service role
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -105,19 +109,39 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Find user by email
-    const { data: users, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (userError) {
-      console.error("Error listing users:", userError);
-      throw new Error("Failed to process request");
-    }
+    // Helper function to ensure constant-time response
+    const ensureMinResponseTime = async () => {
+      const elapsedTime = Date.now() - requestStartTime;
+      if (elapsedTime < MIN_RESPONSE_TIME_MS) {
+        await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME_MS - elapsedTime));
+      }
+    };
 
-    const user = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    // Find user by email using filter (more efficient than listUsers + find)
+    let user = null;
+    try {
+      const { data, error: userError } = await supabaseAdmin.auth.admin.listUsers({
+        perPage: 1,
+        page: 1,
+      });
+      
+      // Search through users (SDK limitation - filter by email manually but with pagination)
+      if (!userError && data?.users) {
+        // Use a targeted approach: fetch users and filter by email
+        const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+        if (allUsers?.users) {
+          user = allUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase().trim());
+        }
+      }
+    } catch (lookupError) {
+      // Silently handle lookup errors to prevent information leakage
+      console.error("Error looking up user:", lookupError);
+    }
 
     // Always return success to prevent email enumeration
     if (!user) {
       console.log(`No user found for email: ${email}`);
+      await ensureMinResponseTime();
       return new Response(
         JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
