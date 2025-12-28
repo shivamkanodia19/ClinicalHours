@@ -36,7 +36,7 @@ export function generateIcsContent(event: CalendarEvent): string {
   const icsLines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Clinical Hours//Calendar//EN",
+    "PRODID:-//ClinicalHours//Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

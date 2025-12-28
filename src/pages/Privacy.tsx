@@ -19,7 +19,7 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
               <p className="text-muted-foreground leading-relaxed">
-                ClinicalHours ("ClinicalHours," "we," "our," or "us") values your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and safeguard your information when you access our website at clinicalhours.com, use our mobile or web applications, or otherwise interact with our services (collectively, the "Platform").
+                <span>Clinical</span><span className="font-semibold">Hours</span> ("<span>Clinical</span><span className="font-semibold">Hours</span>," "we," "our," or "us") values your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and safeguard your information when you access our website at clinicalhours.com, use our mobile or web applications, or otherwise interact with our services (collectively, the "Platform").
               </p>
               <p className="text-muted-foreground leading-relaxed mt-4">
                 By accessing or using the Platform, you agree to this Privacy Policy. If you do not agree, please discontinue use of the Platform.
@@ -108,7 +108,7 @@ const Privacy = () => {
               <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4">
                 <li><strong>Service providers:</strong> We use trusted third-party vendors for hosting, email delivery, mapping, and analytics. These parties are bound by confidentiality and data protection obligations.</li>
                 <li><strong>Legal compliance:</strong> We may disclose data when required by law, legal process, or law enforcement authorities.</li>
-                <li><strong>Business changes:</strong> If ClinicalHours is involved in a merger, acquisition, or asset sale, your data may be transferred under appropriate safeguards.</li>
+                <li><strong>Business changes:</strong> If <span>Clinical</span><span className="font-semibold">Hours</span> is involved in a merger, acquisition, or asset sale, your data may be transferred under appropriate safeguards.</li>
               </ul>
             </section>
 
@@ -161,7 +161,7 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">10. International Data Transfers</h2>
               <p className="text-muted-foreground leading-relaxed">
-                ClinicalHours is operated in the United States. If you access the Platform from outside the U.S., you acknowledge that your information may be processed and stored in the U.S., where privacy laws may differ from those in your jurisdiction.
+                <span>Clinical</span><span className="font-semibold">Hours</span> is operated in the United States. If you access the Platform from outside the U.S., you acknowledge that your information may be processed and stored in the U.S., where privacy laws may differ from those in your jurisdiction.
               </p>
             </section>
 

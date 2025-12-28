@@ -8,8 +8,8 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-6">
             <div className="text-xl text-background">
-              <span className="font-light">Clinical</span>
-              <span className="font-normal">Hours</span>
+              <span>Clinical</span>
+              <span className="font-semibold">Hours</span>
             </div>
             <p className="text-sm text-background/50 font-light leading-relaxed">
               Empowering pre-med students to find and secure clinical opportunities.
@@ -83,7 +83,7 @@ const Footer = () => {
 
         <div className="mt-20 pt-8 border-t border-background/10 text-center">
           <p className="text-xs text-background/40 uppercase tracking-[0.2em]">
-            &copy; {new Date().getFullYear()} ClinicalHours. All rights reserved.
+            &copy; {new Date().getFullYear()} <span>Clinical</span><span className="font-semibold">Hours</span>. All rights reserved.
           </p>
         </div>
       </div>

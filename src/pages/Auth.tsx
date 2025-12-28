@@ -345,7 +345,7 @@ const Auth = () => {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground mb-6">
-            ClinicalHours
+            <span>Clinical</span><span className="font-bold">Hours</span>
           </h1>
           <p className="text-xl xl:text-2xl text-primary-foreground/90 mb-4 font-medium">
             Find Your Path to Clinical Experience

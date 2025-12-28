@@ -22,10 +22,10 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Welcome to ClinicalHours ("we," "our," or "us"). By accessing or using our website at clinicalhours.com and related services (the "Platform"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our Platform.
+                Welcome to <span>Clinical</span><span className="font-semibold">Hours</span> ("we," "our," or "us"). By accessing or using our website at clinicalhours.com and related services (the "Platform"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our Platform.
               </p>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                ClinicalHours is a free platform designed to help pre-medical students discover and track clinical experience opportunities across the United States.
+                <span>Clinical</span><span className="font-semibold">Hours</span> is a free platform designed to help pre-medical students discover and track clinical experience opportunities across the United States.
               </p>
             </section>
 
@@ -33,7 +33,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">2. User Responsibilities</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                By using ClinicalHours, you agree to:
+                By using <span>Clinical</span><span className="font-semibold">Hours</span>, you agree to:
               </p>
               <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                 <li>Provide accurate and truthful information when creating an account and submitting content</li>
@@ -61,7 +61,7 @@ const Terms = () => {
               
               <h3 className="text-xl font-medium mb-3 mt-6">4.1 User-Generated Content</h3>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Users may submit reviews, questions, answers, and other content ("User Content"). By submitting User Content, you grant ClinicalHours a non-exclusive, worldwide, royalty-free license to use, display, and distribute such content on the Platform.
+                Users may submit reviews, questions, answers, and other content ("User Content"). By submitting User Content, you grant <span>Clinical</span><span className="font-semibold">Hours</span> a non-exclusive, worldwide, royalty-free license to use, display, and distribute such content on the Platform.
               </p>
               
               <h3 className="text-xl font-medium mb-3">4.2 Prohibited Content</h3>
@@ -128,7 +128,7 @@ const Terms = () => {
               
               <h3 className="text-xl font-medium mb-3 mt-6">6.1 Opportunity Information</h3>
               <p className="text-muted-foreground leading-relaxed">
-                ClinicalHours aggregates and displays clinical opportunity information from various sources and user contributions. We do not guarantee the accuracy, completeness, or availability of any opportunity listed on our Platform. Availability, requirements, and details may change without notice. <strong>Always verify information directly with the healthcare facility before applying.</strong>
+                <span>Clinical</span><span className="font-semibold">Hours</span> aggregates and displays clinical opportunity information from various sources and user contributions. We do not guarantee the accuracy, completeness, or availability of any opportunity listed on our Platform. Availability, requirements, and details may change without notice. <strong>Always verify information directly with the healthcare facility before applying.</strong>
               </p>
               
               <h3 className="text-xl font-medium mb-3 mt-6">6.2 No Professional Advice</h3>
@@ -138,7 +138,7 @@ const Terms = () => {
               
               <h3 className="text-xl font-medium mb-3 mt-6">6.3 User-Generated Content</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Reviews, ratings, and community Q&A represent the opinions of individual users and do not reflect the views of ClinicalHours. We do not verify the accuracy of user-submitted content.
+                Reviews, ratings, and community Q&A represent the opinions of individual users and do not reflect the views of <span>Clinical</span><span className="font-semibold">Hours</span>. We do not verify the accuracy of user-submitted content.
               </p>
               
               <h3 className="text-xl font-medium mb-3 mt-6">6.4 Service Availability</h3>
@@ -151,7 +151,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">7. Limitation of Liability</h2>
               <p className="text-muted-foreground leading-relaxed">
-                To the fullest extent permitted by law, ClinicalHours and its founders, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to:
+                To the fullest extent permitted by law, <span>Clinical</span><span className="font-semibold">Hours</span> and its founders, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to:
               </p>
               <ul className="list-disc pl-6 space-y-2 text-muted-foreground mt-4">
                 <li>Loss of data or information</li>
@@ -170,7 +170,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">8. Intellectual Property</h2>
               <p className="text-muted-foreground leading-relaxed">
-                The ClinicalHours name, logo, and all original content, features, and functionality of the Platform are owned by ClinicalHours and are protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.
+                The <span>Clinical</span><span className="font-semibold">Hours</span> name, logo, and all original content, features, and functionality of the Platform are owned by <span>Clinical</span><span className="font-semibold">Hours</span> and are protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.
               </p>
             </section>
 
