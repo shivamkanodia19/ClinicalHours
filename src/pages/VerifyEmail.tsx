@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, Mail } from "lucide-react";
+import { logger } from "@/lib/logger";
 import logo from "@/assets/logo.png";
 
 const VerifyEmail = () => {

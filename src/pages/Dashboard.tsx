@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,6 +112,8 @@ const Dashboard = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [totalOpportunities, setTotalOpportunities] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [opportunityToDelete, setOpportunityToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -616,7 +619,7 @@ const Dashboard = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeFromTracker(saved.id)}
+                              onClick={() => handleRemoveClick(saved.id)}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
