@@ -17,9 +17,8 @@ import {
   Loader2, Plus, Trash2, MapPin, Phone, Mail, Globe, 
   Map, Building2, ClipboardCheck, User, BookOpen, 
   Lightbulb, Target, Heart, MessageCircle, ArrowRight,
-  Bookmark, CheckCircle2, Clock, TrendingUp, HelpCircle
+  Bookmark, CheckCircle2, Clock, TrendingUp
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { downloadIcsFile, createOpportunityReminder } from "@/lib/calendar";
 import {
@@ -763,35 +762,16 @@ const Dashboard = () => {
                           <Badge variant="outline" className="capitalize">
                             {opp.type}
                           </Badge>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge className={getAcceptanceColor(opp.acceptance_likelihood)}>
-                                {opp.acceptance_likelihood} acceptance
-                                <HelpCircle className="ml-1 h-3 w-3 inline" />
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">
-                                Acceptance likelihood indicates how likely you are to be accepted based on typical requirements and past student experiences.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
+                          <Badge className={getAcceptanceColor(opp.acceptance_likelihood)}>
+                            {opp.acceptance_likelihood} acceptance
+                          </Badge>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
                             <span>{opp.location}</span>
                             {opp.distance && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="text-primary cursor-help">({opp.distance} miles away)</span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">
-                                    Distance calculated from your current location using GPS coordinates. Enable location access for accurate distances.
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
+                              <span className="text-primary">({opp.distance} miles away)</span>
                             )}
                           </div>
                           {opp.phone && (
