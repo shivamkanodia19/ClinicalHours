@@ -91,8 +91,14 @@ export function useProfileComplete(): ProfileCompletenessResult {
     return () => window.removeEventListener('focus', handleFocus);
   }, [user]);
 
+  // Only consider profile complete if:
+  // 1. User exists
+  // 2. Profile has been loaded (not loading)
+  // 3. No missing fields
+  const isComplete = !isLoading && !!user && missingFields.length === 0 && !!profile;
+
   return {
-    isComplete: missingFields.length === 0 && !!user,
+    isComplete,
     isLoading,
     missingFields,
     profile,

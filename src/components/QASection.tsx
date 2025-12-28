@@ -191,7 +191,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return; // Don't proceed while loading
     }
     
-    console.log("Profile check - isComplete:", isComplete, "missingFields:", missingFields);
+    // Double-check: if still loading or no user, don't proceed
+    if (profileLoading || !userId) {
+      return;
+    }
+    
+    console.log("Profile check - isComplete:", isComplete, "missingFields:", missingFields, "profileLoading:", profileLoading);
     
     if (!isComplete) {
       console.log("Profile incomplete, showing gate. Missing fields:", missingFields);
@@ -225,11 +230,15 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     // This ensures users who complete their profile after opening the form can still submit
     // Wait for profile to finish loading
     if (profileLoading) {
+      console.log("Profile still loading during question submission, waiting...");
       toast({ title: "Please wait while we verify your profile", variant: "default" });
       return;
     }
     
+    console.log("Pre-submission profile check - isComplete:", isComplete, "missingFields:", missingFields, "profileLoading:", profileLoading);
+    
     if (!isComplete) {
+      console.log("Profile incomplete at submission time, showing gate");
       setGateAction("ask a question");
       setShowProfileGate(true);
       return;
