@@ -56,6 +56,11 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
+    // Simple check: if profile is loading, wait. If incomplete, show gate.
+    if (profileLoading) {
+      return; // Button is disabled while loading
+    }
+
     if (!isComplete) {
       setShowProfileGate(true);
       return;
@@ -76,21 +81,8 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
-    // Re-check profile completion before submission
-    // This ensures users who complete their profile after opening the dialog can still submit
-    // Wait for profile to finish loading
-    if (profileLoading) {
-      toast.error("Please wait while we verify your profile");
-      setLoading(false);
-      return;
-    }
-    
-    if (!isComplete) {
-      setShowProfileGate(true);
-      setOpen(false);
-      setLoading(false);
-      return;
-    }
+    // No re-check needed - if they got past the initial check, they're good
+    // Only backend moderation runs from here
 
     // Client-side rate limiting (5 reviews per hour per user)
     const rateLimitKey = `review:${user.id}`;
@@ -132,26 +124,15 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         }
       });
 
-      // Moderate content before submission
-      // Always run moderation if there's a comment
+      // Moderate content before submission (backend moderation)
       if (comment?.trim()) {
-        console.log("Running moderation check for review comment...");
         const moderationResult = await moderateContent(comment.trim(), 'review');
-        console.log("Moderation result:", moderationResult);
         
         if (!moderationResult.approved) {
-          console.error("Moderation rejected:", moderationResult);
           toast.error(moderationResult.reason || "Your review does not meet our community guidelines. Please revise and try again.");
           setLoading(false);
           return;
         }
-        
-        // Log if content was flagged but still approved (shouldn't happen, but for debugging)
-        if (moderationResult.flagged_categories.length > 0 && moderationResult.approved) {
-          console.warn("Content was flagged but still approved:", moderationResult.flagged_categories);
-        }
-      } else {
-        console.log("No comment to moderate, skipping moderation check");
       }
 
       // Set moderation status to approved (content has passed moderation)

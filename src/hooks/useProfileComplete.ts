@@ -60,12 +60,6 @@ export function useProfileComplete(): ProfileCompletenessResult {
         }
       });
 
-      console.log("Profile completeness check:", {
-        profile: data,
-        missingFields: missing,
-        isComplete: missing.length === 0
-      });
-
       setMissingFields(missing);
     } catch (error) {
       logger.error("Error fetching profile for completeness check", error);
@@ -91,11 +85,8 @@ export function useProfileComplete(): ProfileCompletenessResult {
     return () => window.removeEventListener('focus', handleFocus);
   }, [user]);
 
-  // Only consider profile complete if:
-  // 1. User exists
-  // 2. Profile has been loaded (not loading)
-  // 3. No missing fields
-  const isComplete = !isLoading && !!user && missingFields.length === 0 && !!profile;
+  // Simple boolean: profile is complete if loaded, user exists, and no missing fields
+  const isComplete = !isLoading && !!user && !!profile && missingFields.length === 0;
 
   return {
     isComplete,
