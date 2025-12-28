@@ -1,0 +1,391 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Clock, Phone, Mail, Star, Loader2, Plus, Check, ArrowLeft } from "lucide-react";
+import { ReminderDialog } from "@/components/ReminderDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import ReviewForm from "@/components/ReviewForm";
+import ReviewsList from "@/components/ReviewsList";
+import { QASection } from "@/components/QASection";
+import { logger } from "@/lib/logger";
+
+interface Opportunity {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  latitude: number | null;
+  longitude: number | null;
+  hours_required: string;
+  acceptance_likelihood: string;
+  description: string | null;
+  requirements: string[];
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  avg_rating?: number;
+  review_count?: number;
+}
+
+const OpportunityDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    const fetchOpportunity = async () => {
+      if (!id) return;
+
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("opportunities_with_ratings")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setOpportunity({
+            id: data.id,
+            name: data.name,
+            type: data.type,
+            location: data.location,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            hours_required: data.hours_required,
+            acceptance_likelihood: data.acceptance_likelihood,
+            description: data.description,
+            requirements: data.requirements || [],
+            phone: data.phone,
+            email: data.email,
+            website: data.website,
+            avg_rating: data.avg_rating,
+            review_count: data.review_count,
+          });
+        }
+      } catch (error) {
+        logger.error("Error fetching opportunity", error);
+        toast({
+          title: "Error",
+          description: "Failed to load opportunity. Please try again.",
+          variant: "destructive",
+        });
+        navigate("/opportunities");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOpportunity();
+  }, [id, navigate, toast]);
+
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!user || !id) return;
+
+      const { data } = await supabase
+        .from("saved_opportunities")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("opportunity_id", id)
+        .single();
+
+      setSaved(!!data);
+    };
+
+    checkSaved();
+  }, [user, id]);
+
+  const handleAddToTracker = async () => {
+    if (!user || !id) return;
+
+    setSaving(true);
+    const { error } = await supabase.from("saved_opportunities").insert({
+      user_id: user.id,
+      opportunity_id: id,
+    });
+
+    setSaving(false);
+
+    if (error) {
+      if (error.code === "23505") {
+        toast({
+          title: "Already in tracker",
+          description: "This opportunity is already in your tracker.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to add to tracker. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    setSaved(true);
+    toast({
+      title: "Added to tracker!",
+      description: "View it in your Dashboard to track your progress.",
+    });
+  };
+
+  const handleReviewSubmitted = () => {
+    setReviewRefreshTrigger((prev) => prev + 1);
+    // Refresh opportunity data to update rating
+    if (id) {
+      supabase
+        .from("opportunities_with_ratings")
+        .select("*")
+        .eq("id", id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setOpportunity((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    avg_rating: data.avg_rating,
+                    review_count: data.review_count,
+                  }
+                : null
+            );
+          }
+        });
+    }
+  };
+
+  const getAcceptanceColor = (rate: string) => {
+    switch (rate.toLowerCase()) {
+      case "high":
+        return "bg-success text-success-foreground";
+      case "medium":
+        return "bg-primary text-primary-foreground";
+      case "low":
+        return "bg-destructive text-destructive-foreground";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Loading opportunity...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!opportunity) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">Opportunity not found</p>
+            <Button onClick={() => navigate("/opportunities")}>Back to Opportunities</Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/opportunities")}
+          className="mb-6"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Opportunities
+        </Button>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-3xl mb-2">{opportunity.name}</CardTitle>
+                <CardDescription className="flex items-center gap-2 text-base">
+                  <MapPin className="h-4 w-4" />
+                  {opportunity.location}
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{opportunity.type}</Badge>
+                <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
+                  {opportunity.acceptance_likelihood} Acceptance
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {opportunity.description && (
+              <div>
+                <h3 className="font-semibold mb-2">Description</h3>
+                <p className="text-muted-foreground">{opportunity.description}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>{opportunity.hours_required}</span>
+              </div>
+              {opportunity.avg_rating && (
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-primary fill-primary" />
+                  <span>
+                    {opportunity.avg_rating.toFixed(1)} (
+                    {opportunity.review_count && opportunity.review_count > 0
+                      ? `${opportunity.review_count} review${opportunity.review_count !== 1 ? "s" : ""}`
+                      : "No reviews"}
+                    )
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {opportunity.requirements.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2">Requirements</h3>
+                <div className="flex flex-wrap gap-2">
+                  {opportunity.requirements.map((req, idx) => (
+                    <Badge key={idx} variant="secondary">
+                      {req}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3 pt-2">
+              {opportunity.phone && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`tel:${opportunity.phone}`}>
+                    <Phone className="mr-2 h-4 w-4" />
+                    Call
+                  </a>
+                </Button>
+              )}
+              {opportunity.email && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`mailto:${opportunity.email}`}>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Email
+                  </a>
+                </Button>
+              )}
+              {opportunity.website && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={opportunity.website} target="_blank" rel="noopener noreferrer">
+                    Visit Website
+                  </a>
+                </Button>
+              )}
+
+              {saved ? (
+                <Button variant="secondary" size="sm" disabled>
+                  <Check className="mr-2 h-4 w-4" />
+                  In Tracker
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleAddToTracker}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="mr-2 h-4 w-4" />
+                  )}
+                  Add to Tracker
+                </Button>
+              )}
+
+              <ReviewForm
+                opportunityId={opportunity.id}
+                opportunityName={opportunity.name}
+                onReviewSubmitted={handleReviewSubmitted}
+              />
+              <ReminderDialog
+                opportunityId={opportunity.id}
+                opportunityName={opportunity.name}
+                opportunityLocation={opportunity.location}
+                opportunityDescription={opportunity.description || undefined}
+                opportunityWebsite={opportunity.website || undefined}
+                userId={user?.id || ""}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Community</CardTitle>
+            <CardDescription>
+              Reviews and questions from other students
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="reviews" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="qa">Q&A</TabsTrigger>
+              </TabsList>
+              <TabsContent value="reviews">
+                <ReviewsList
+                  opportunityId={opportunity.id}
+                  refreshTrigger={reviewRefreshTrigger}
+                />
+              </TabsContent>
+              <TabsContent value="qa">
+                <QASection
+                  opportunityId={opportunity.id}
+                  opportunityName={opportunity.name}
+                />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+export default OpportunityDetail;
+

@@ -7,26 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown, MessageCircle, Loader2, Plus, Check } from "lucide-react";
+import { Search, MapPin, Clock, Star, Loader2, Plus, Check } from "lucide-react";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { supabase } from "@/integrations/supabase/client";
 import opportunitiesAccent from "@/assets/opportunities-accent.png";
-import ReviewForm from "@/components/ReviewForm";
-import ReviewsList from "@/components/ReviewsList";
-import { QASection } from "@/components/QASection";
 import { logger } from "@/lib/logger";
 
 const Opportunities = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [expandedReviews, setExpandedReviews] = useState<Record<string, boolean>>({});
-  const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(new Set());
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const { user, loading: authLoading } = useAuth();
@@ -149,16 +142,6 @@ const Opportunities = () => {
     }
   };
 
-  const toggleReviews = (opportunityId: string) => {
-    setExpandedReviews((prev) => ({
-      ...prev,
-      [opportunityId]: !prev[opportunityId],
-    }));
-  };
-
-  const handleReviewSubmitted = () => {
-    setReviewRefreshTrigger((prev) => prev + 1);
-  };
 
   if (authLoading || !user) {
     return (
@@ -241,7 +224,11 @@ const Opportunities = () => {
               </div>
 
               {opportunities.map((opportunity) => (
-                <Card key={opportunity.id} className="hover:border-primary transition-colors">
+                <Card 
+                  key={opportunity.id} 
+                  className="hover:border-primary transition-colors cursor-pointer"
+                  onClick={() => navigate(`/opportunities/${opportunity.id}`)}
+                >
                   <CardHeader>
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1">
@@ -266,7 +253,7 @@ const Opportunities = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {opportunity.description && (
-                      <p className="text-muted-foreground">{opportunity.description}</p>
+                      <p className="text-muted-foreground line-clamp-2">{opportunity.description}</p>
                     )}
 
                     <div className="flex flex-wrap gap-4 text-sm">
@@ -288,41 +275,21 @@ const Opportunities = () => {
                       <div>
                         <p className="text-sm font-medium mb-2">Requirements:</p>
                         <div className="flex flex-wrap gap-2">
-                          {opportunity.requirements.map((req, idx) => (
+                          {opportunity.requirements.slice(0, 3).map((req, idx) => (
                             <Badge key={idx} variant="secondary">
                               {req}
                             </Badge>
                           ))}
+                          {opportunity.requirements.length > 3 && (
+                            <Badge variant="secondary">
+                              +{opportunity.requirements.length - 3} more
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     )}
 
-                    <div className="flex flex-wrap gap-3 pt-2">
-                      {opportunity.phone && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`tel:${opportunity.phone}`}>
-                            <Phone className="mr-2 h-4 w-4" />
-                            Call
-                          </a>
-                        </Button>
-                      )}
-                      {opportunity.email && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`mailto:${opportunity.email}`}>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Email
-                          </a>
-                        </Button>
-                      )}
-                      {opportunity.website && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={opportunity.website} target="_blank" rel="noopener noreferrer">
-                            Visit Website
-                          </a>
-                        </Button>
-                      )}
-                      
-                      {/* Add to Tracker Button */}
+                    <div className="flex flex-wrap gap-3 pt-2" onClick={(e) => e.stopPropagation()}>
                       {savedOpportunityIds.has(opportunity.id) ? (
                         <Button variant="secondary" size="sm" disabled>
                           <Check className="mr-2 h-4 w-4" />
@@ -343,59 +310,14 @@ const Opportunities = () => {
                           Add to Tracker
                         </Button>
                       )}
-                      
-                      <ReviewForm
-                        opportunityId={opportunity.id}
-                        opportunityName={opportunity.name}
-                        onReviewSubmitted={handleReviewSubmitted}
-                      />
-                      <ReminderDialog
-                        opportunityId={opportunity.id}
-                        opportunityName={opportunity.name}
-                        opportunityLocation={opportunity.location}
-                        opportunityDescription={opportunity.description || undefined}
-                        opportunityWebsite={opportunity.website || undefined}
-                        userId={user?.id || ""}
-                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate(`/opportunities/${opportunity.id}`)}
+                      >
+                        View Details
+                      </Button>
                     </div>
-
-                    {/* Community Section - Reviews & Q&A */}
-                    <Collapsible
-                      open={expandedReviews[opportunity.id]}
-                      onOpenChange={() => toggleReviews(opportunity.id)}
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="w-full mt-4">
-                          <ChevronDown
-                            className={`h-4 w-4 mr-2 transition-transform ${
-                              expandedReviews[opportunity.id] ? "rotate-180" : ""
-                            }`}
-                          />
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          {expandedReviews[opportunity.id] ? "Hide Community" : "Reviews & Q&A"}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-4">
-                        <Tabs defaultValue="reviews" className="w-full">
-                          <TabsList className="grid w-full grid-cols-2 mb-4">
-                            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                            <TabsTrigger value="qa">Q&A</TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="reviews">
-                            <ReviewsList
-                              opportunityId={opportunity.id}
-                              refreshTrigger={reviewRefreshTrigger}
-                            />
-                          </TabsContent>
-                          <TabsContent value="qa">
-                            <QASection
-                              opportunityId={opportunity.id}
-                              opportunityName={opportunity.name}
-                            />
-                          </TabsContent>
-                        </Tabs>
-                      </CollapsibleContent>
-                    </Collapsible>
                   </CardContent>
                 </Card>
               ))}
