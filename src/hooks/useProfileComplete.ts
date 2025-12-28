@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
 
 interface ProfileCompletenessResult {
   isComplete: boolean;
@@ -60,7 +61,7 @@ export function useProfileComplete(): ProfileCompletenessResult {
 
         setMissingFields(missing);
       } catch (error) {
-        console.error("Error fetching profile for completeness check:", error);
+        logger.error("Error fetching profile for completeness check", error);
         setMissingFields(REQUIRED_FIELDS.map(f => f.label));
       } finally {
         setIsLoading(false);

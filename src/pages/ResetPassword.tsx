@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Lock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { logger } from "@/lib/logger";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -44,10 +45,15 @@ const ResetPassword = () => {
       setStatus("success");
       toast.success("Password reset successfully!");
     } catch (error: any) {
-      console.error("Error resetting password:", error);
+      logger.error("Error resetting password", error);
       setStatus("error");
-      setErrorMessage(error.message || "Failed to reset password");
-      toast.error(error.message || "Failed to reset password");
+      const errorMessage = error?.message?.includes("expired") || error?.message?.includes("invalid")
+        ? "This reset link is invalid or has expired. Please request a new one."
+        : error?.message?.includes("password")
+        ? "Password does not meet requirements"
+        : "Failed to reset password. Please try again.";
+      setErrorMessage(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

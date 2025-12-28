@@ -48,7 +48,7 @@ const VerifyEmail = () => {
       setEmail(data.email || "");
       setStatus("success");
     } catch (error: any) {
-      console.error("Verification error:", error);
+      logger.error("Verification error", error);
       setStatus("error");
       setErrorMessage(error.message || "Failed to verify email. Please try again.");
     }

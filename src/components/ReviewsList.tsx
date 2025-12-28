@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Star, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
+import { logger } from "@/lib/logger";
 
 interface Review {
   id: string;

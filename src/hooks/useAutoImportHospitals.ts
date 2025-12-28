@@ -22,16 +22,16 @@ export function useAutoImportHospitals() {
           .eq('type', 'hospital');
 
         if (countError) {
-          console.error('Error checking hospital count:', countError);
+          logger.error('Error checking hospital count', countError);
           return;
         }
 
         const currentCount = count || 0;
-        console.log(`Current hospital count: ${currentCount}`);
+        logger.info(`Current hospital count: ${currentCount}`);
 
         // If we already have enough hospitals, skip import
         if (currentCount >= MIN_HOSPITALS_THRESHOLD) {
-          console.log('Hospitals already imported, skipping auto-import');
+          logger.info('Hospitals already imported, skipping auto-import');
           return;
         }
 
@@ -46,7 +46,7 @@ export function useAutoImportHospitals() {
 
         // Import in batches
         while (offset < TOTAL_HOSPITALS) {
-          console.log(`Importing batch starting at offset ${offset}...`);
+          logger.info(`Importing batch starting at offset ${offset}...`);
           
           const response = await supabase.functions.invoke('import-hospitals', {
             body: { 
@@ -56,14 +56,14 @@ export function useAutoImportHospitals() {
           });
 
           if (response.error) {
-            console.error('Import batch error:', response.error);
+            logger.error('Import batch error', response.error);
             break;
           }
 
           const data = response.data;
           totalImported += data.imported || 0;
           
-          console.log(`Batch complete: imported ${data.imported}, skipped ${data.skipped}, failed ${data.failed}`);
+          logger.info(`Batch complete: imported ${data.imported}, skipped ${data.skipped}, failed ${data.failed}`);
 
           // Show progress every 1000 hospitals
           if (totalImported > 0 && totalImported % 1000 < BATCH_SIZE) {
@@ -90,7 +90,7 @@ export function useAutoImportHospitals() {
         });
 
       } catch (error) {
-        console.error('Auto-import error:', error);
+        logger.error('Auto-import error', error);
       }
     }
 

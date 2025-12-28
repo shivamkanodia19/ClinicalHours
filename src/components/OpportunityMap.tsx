@@ -137,10 +137,10 @@ const OpportunityMap = () => {
           }
         }
         
-        console.log('Map: Loaded', allData.length, 'opportunities with coordinates');
+        logger.debug('Map: Loaded', allData.length, 'opportunities with coordinates');
         setOpportunities(allData);
       } catch (err: any) {
-        console.error('Error fetching opportunities:', err);
+        logger.error('Error fetching opportunities', err);
       } finally {
         setDataLoading(false);
       }
@@ -179,7 +179,7 @@ const OpportunityMap = () => {
         });
         setSavedOpportunities(validData);
       } catch (err: any) {
-        console.error('Error fetching saved opportunities:', err);
+        logger.error('Error fetching saved opportunities', err);
       }
     };
 
@@ -195,11 +195,11 @@ const OpportunityMap = () => {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          console.log('Map: User location detected:', loc);
+          logger.debug('Map: User location detected', loc);
           setUserLocation(loc);
         },
         (error) => {
-          console.error('Map: Error getting location:', error);
+          logger.error('Map: Error getting location', error);
         },
         {
           enableHighAccuracy: true,
@@ -431,7 +431,7 @@ const OpportunityMap = () => {
       });
 
       map.current.on('error', (e) => {
-        console.error('Map error:', e);
+        logger.error('Map error', e);
         setMapError('Error loading map');
         setMapLoading(false);
       });
@@ -454,7 +454,7 @@ const OpportunityMap = () => {
         setIsPinMode(false);
       });
     } catch (err: any) {
-      console.error('Map initialization error:', err);
+      logger.error('Map initialization error', err);
       setMapError('Failed to initialize map');
       setMapLoading(false);
     }
@@ -481,7 +481,7 @@ const OpportunityMap = () => {
     const filtered = getFilteredOpportunities();
     const geojson = opportunitiesToGeoJSON(filtered);
     
-    console.log('Map: Updating source with', filtered.length, 'filtered opportunities');
+    logger.debug('Map: Updating source with', filtered.length, 'filtered opportunities');
     source.setData(geojson);
 
     // Fit bounds to data if there are points

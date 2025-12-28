@@ -29,6 +29,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -124,7 +134,13 @@ const Dashboard = () => {
           });
         },
         (error) => {
-          console.error("Error getting location:", error);
+          // Silently fail - location is optional for dashboard
+          logger.error("Error getting location", error);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
         }
       );
     }
@@ -247,7 +263,14 @@ const Dashboard = () => {
     }
   };
 
-  const removeFromTracker = async (savedId: string) => {
+  const handleRemoveClick = (savedId: string) => {
+    setOpportunityToDelete(savedId);
+    setDeleteDialogOpen(true);
+  };
+
+  const removeFromTracker = async () => {
+    if (!opportunityToDelete) return;
+    const savedId = opportunityToDelete;
     try {
       const { error } = await supabase
         .from("saved_opportunities")
@@ -261,6 +284,8 @@ const Dashboard = () => {
         description: "Opportunity removed from your tracker",
       });
 
+      setDeleteDialogOpen(false);
+      setOpportunityToDelete(null);
       fetchData();
     } catch (error: any) {
       toast({
@@ -756,6 +781,23 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </main>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from Tracker</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this opportunity from your tracker? You can add it back later if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={removeFromTracker}>
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

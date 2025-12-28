@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Hospital, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 const US_STATES = [
   { value: "all", label: "All States" },
@@ -123,8 +124,8 @@ export default function AdminImportHospitals() {
         toast.error(data.error || "Import failed");
       }
     } catch (error) {
-      console.error("Import error:", error);
-      toast.error("Failed to import hospitals. Check console for details.");
+      logger.error("Import error", error);
+      toast.error("Failed to import hospitals. Please try again.");
       setResults({
         success: false,
         imported: 0,

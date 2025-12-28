@@ -69,13 +69,32 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
+    if (!user?.id) {
+      toast.error("Please sign in to submit a review");
+      return;
+    }
+
     setLoading(true);
     try {
+      // Check for existing review
+      const { data: existingReview } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("opportunity_id", opportunityId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (existingReview) {
+        toast.error("You have already submitted a review for this opportunity");
+        setOpen(false);
+        return;
+      }
+
       const reviewData: any = {
         opportunity_id: opportunityId,
-        user_id: user?.id,
+        user_id: user.id,
         rating: overallRating,
-        comment: comment || null,
+        comment: comment?.trim() || null,
       };
 
       // Add optional ratings if they were provided
@@ -95,8 +114,13 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       setRatings(ratings.map((r) => ({ ...r, value: 0 })));
       onReviewSubmitted();
     } catch (error: any) {
-      console.error("Error submitting review:", error);
-      toast.error("Failed to submit review: " + error.message);
+      // Sanitize error message
+      const errorMessage = error?.code === "23505" 
+        ? "You have already submitted a review for this opportunity"
+        : error?.message?.includes("duplicate") || error?.message?.includes("already exists")
+        ? "You have already submitted a review for this opportunity"
+        : "Failed to submit review. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -109,7 +133,15 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
           key={star}
           type="button"
           onClick={() => onChange(star)}
-          className="focus:outline-none transition-transform hover:scale-110"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onChange(star);
+            }
+          }}
+          className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-transform hover:scale-110"
+          aria-label={`Rate ${star} out of 5 stars`}
+          aria-pressed={star <= value}
         >
           <Star
             className={`h-6 w-6 ${

@@ -9,6 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { ProfileGate } from "@/components/ProfileGate";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
+import { logger } from "@/lib/logger";
 import {
   Collapsible,
   CollapsibleContent,
@@ -122,7 +123,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       .limit(displayCount);
 
     if (error) {
-      console.error("Error fetching questions:", error);
+      logger.error("Error fetching questions", error);
     } else {
       setQuestions(data || []);
     }
@@ -155,7 +156,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       .limit(limit);
 
     if (error) {
-      console.error("Error fetching answers:", error);
+      logger.error("Error fetching answers", error);
     } else {
       setAnswers(prev => ({ ...prev, [questionId]: data || [] }));
     }

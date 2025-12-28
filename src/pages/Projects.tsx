@@ -8,10 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 
 interface Project {
   id: string;
@@ -60,7 +71,7 @@ const Projects = () => {
       if (error) throw error;
       setProjects(data || []);
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      logger.error("Error fetching projects", error);
       toast({
         title: "Error",
         description: "Failed to load projects",
@@ -105,7 +116,7 @@ const Projects = () => {
       setFormData({ title: "", description: "", impact: "", year: new Date().getFullYear(), tags: "" });
       fetchProjects();
     } catch (error) {
-      console.error("Error saving project:", error);
+      logger.error("Error saving project", error);
       toast({
         title: "Error",
         description: "Failed to save project",
@@ -126,17 +137,24 @@ const Projects = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
+  const handleDeleteClick = (id: string) => {
+    setProjectToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!projectToDelete) return;
 
     try {
-      const { error } = await supabase.from("user_projects").delete().eq("id", id);
+      const { error } = await supabase.from("user_projects").delete().eq("id", projectToDelete);
 
       if (error) throw error;
       toast({ title: "Project deleted successfully" });
       fetchProjects();
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
     } catch (error) {
-      console.error("Error deleting project:", error);
+      logger.error("Error deleting project", error);
       toast({
         title: "Error",
         description: "Failed to delete project",
@@ -276,7 +294,7 @@ const Projects = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(project.id)}
+                          onClick={() => handleDeleteClick(project.id)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -310,6 +328,23 @@ const Projects = () => {
           )}
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this project? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

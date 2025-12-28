@@ -14,6 +14,7 @@ import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { REQUIRED_FIELDS } from "@/hooks/useProfileComplete";
 import { toast } from "sonner";
 import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const Profile = () => {
       if (error) throw error;
       return data?.signedUrl || null;
     } catch (error) {
-      console.error("Error getting signed URL:", error);
+      logger.error("Error getting signed URL", error);
       return null;
     }
   }, []);

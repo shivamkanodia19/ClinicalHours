@@ -19,6 +19,7 @@ import opportunitiesAccent from "@/assets/opportunities-accent.png";
 import ReviewForm from "@/components/ReviewForm";
 import ReviewsList from "@/components/ReviewsList";
 import { QASection } from "@/components/QASection";
+import { logger } from "@/lib/logger";
 
 const Opportunities = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -83,7 +84,7 @@ const Opportunities = () => {
           });
         },
         (error) => {
-          console.error("Error getting location:", error);
+          logger.error("Error getting location", error);
           toast({
             title: "Location access denied",
             description: "Unable to sort by distance. Showing all opportunities.",
@@ -194,12 +195,17 @@ const Opportunities = () => {
               <Input
                 placeholder="Search by name or location..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, 100); // Limit to 100 chars
+                  setSearchTerm(value);
+                }}
                 className="pl-10"
+                maxLength={100}
+                aria-label="Search opportunities by name or location"
               />
             </div>
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full md:w-[200px]">
+              <SelectTrigger className="w-full md:w-[200px]" aria-label="Filter opportunities by type">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>

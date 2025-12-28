@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 
 interface Opportunity {
   id: string;
@@ -75,6 +76,9 @@ export function useOpportunities({
   const fetchAllOpportunities = useCallback(async () => {
     setLoading(true);
     try {
+      // Validate and sanitize search term
+      const sanitizedSearchTerm = searchTerm?.trim().slice(0, 100) || "";
+      
       let query = supabase
         .from("opportunities_with_ratings")
         .select("*");
@@ -84,9 +88,11 @@ export function useOpportunities({
         query = query.eq("type", filterType);
       }
 
-      // Apply search filter (on name and location)
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%`);
+      // Apply search filter (on name and location) - using parameterized query
+      if (sanitizedSearchTerm) {
+        // Escape special characters for ilike pattern
+        const escapedSearch = sanitizedSearchTerm.replace(/[%_\\]/g, "\\$&");
+        query = query.or(`name.ilike.%${escapedSearch}%,location.ilike.%${escapedSearch}%`);
       }
 
       const { data, error } = await query;
@@ -137,7 +143,7 @@ export function useOpportunities({
       setAllOpportunities(processedData);
       setTotalCount(processedData.length);
     } catch (error) {
-      console.error("Error fetching opportunities:", error);
+      logger.error("Error fetching opportunities", error);
       toast({
         title: "Error",
         description: "Failed to load opportunities. Please try again.",

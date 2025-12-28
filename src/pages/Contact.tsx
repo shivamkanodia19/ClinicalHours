@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, MapPin, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -37,10 +38,13 @@ const Contact = () => {
       });
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error: any) {
-      console.error("Error sending message:", error);
+      logger.error("Error sending message", error);
+      const errorMessage = error?.message?.includes("rate limit") || error?.message?.includes("too many")
+        ? "Too many requests. Please wait a moment and try again."
+        : "Failed to send message. Please try again later.";
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -49,7 +53,14 @@ const Contact = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // Sanitize and limit input lengths
+    let sanitizedValue = value;
+    if (name === "name") sanitizedValue = value.slice(0, 100);
+    if (name === "email") sanitizedValue = value.slice(0, 255);
+    if (name === "subject") sanitizedValue = value.slice(0, 200);
+    if (name === "message") sanitizedValue = value.slice(0, 5000);
+    setFormData({ ...formData, [name]: sanitizedValue });
   };
 
   return (

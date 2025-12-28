@@ -50,12 +50,12 @@ const Auth = () => {
       });
 
       if (error) {
-        console.error("Error sending verification email:", error);
+        // Error logged silently - user will see toast message
         return false;
       }
       return true;
     } catch (error) {
-      console.error("Error sending verification email:", error);
+      // Error logged silently - user will see toast message
       return false;
     }
   };
@@ -107,10 +107,16 @@ const Auth = () => {
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
-      } else if (error.message?.includes("User already registered")) {
+      } else if (error.message?.includes("User already registered") || error.message?.includes("already registered")) {
         toast.error("An account with this email already exists. Please sign in.");
       } else {
-        toast.error(error.message || "Error creating account");
+        // Sanitize error message
+        const errorMessage = error?.message?.includes("password")
+          ? "Password does not meet requirements"
+          : error?.message?.includes("email")
+          ? "Invalid email address"
+          : "Unable to create account. Please try again.";
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -155,7 +161,13 @@ const Auth = () => {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error(error.message || "Error signing in");
+        // Sanitize error message - don't expose system details
+        const errorMessage = error?.message?.includes("Invalid login")
+          ? "Invalid email or password"
+          : error?.message?.includes("Email not confirmed")
+          ? "Please verify your email before signing in"
+          : "Unable to sign in. Please check your credentials and try again.";
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -181,7 +193,11 @@ const Auth = () => {
       setResetEmailSent(true);
       toast.success("If an account exists, a password reset email will be sent.");
     } catch (error: any) {
-      toast.error(error.message || "Failed to send reset email");
+      // Sanitize error message
+      const errorMessage = error?.message?.includes("rate limit") || error?.message?.includes("too many")
+        ? "Too many requests. Please wait a moment and try again."
+        : "Failed to send reset email. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
