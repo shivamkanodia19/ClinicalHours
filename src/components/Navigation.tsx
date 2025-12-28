@@ -70,8 +70,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className={`flex items-center gap-3 text-xl tracking-tight font-heading ${logoColor}`}>
-            <span className="font-semibold">Clinical</span>
-            <span className="font-semibold">Hours</span>
+            <span className="font-semibold">ClinicalHours</span>
           </Link>
 
           {/* Desktop Navigation */}
