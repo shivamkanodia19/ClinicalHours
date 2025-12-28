@@ -69,9 +69,9 @@ const Navigation = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className={`flex items-center gap-3 text-xl tracking-tight ${logoColor}`}>
-            <span className="font-light">Clinical</span>
-            <span className="font-normal">Hours</span>
+          <Link to="/" className={`flex items-center gap-3 text-xl tracking-tight font-heading ${logoColor}`}>
+            <span className="font-medium">Clinical</span>
+            <span className="font-semibold">Hours</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -80,7 +80,7 @@ const Navigation = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 ${
+                className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 font-heading ${
                   isActive(link.path) ? "opacity-100" : "opacity-80"
                 } ${textColor}`}
               >
@@ -91,13 +91,13 @@ const Navigation = () => {
               <>
                 <Link
                   to="/profile"
-                  className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                  className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
                   Profile
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                  className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
                   Log Out
                 </button>
@@ -106,7 +106,7 @@ const Navigation = () => {
               <>
                 <Link
                   to="/auth"
-                  className={`text-xs font-normal uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                  className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
                   Log In
                 </Link>
@@ -142,7 +142,7 @@ const Navigation = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 ${
+                className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 font-heading ${
                   isActive(link.path) ? "opacity-100" : "opacity-80"
                 } ${textColor}`}
               >
@@ -154,7 +154,7 @@ const Navigation = () => {
                 <Link
                   to="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                  className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
                   Profile
                 </Link>
@@ -163,7 +163,7 @@ const Navigation = () => {
                     handleSignOut();
                     setIsOpen(false);
                   }}
-                  className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                  className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
                   Log Out
                 </button>
@@ -173,14 +173,14 @@ const Navigation = () => {
                 <Link
                   to="/auth"
                   onClick={() => setIsOpen(false)}
-                  className={`block text-xs font-normal uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 ${textColor}`}
+                  className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
                   Log In
                 </Link>
                 <Link
                   to="/auth"
                   onClick={() => setIsOpen(false)}
-                  className={`inline-block text-xs font-normal uppercase tracking-widest py-3 px-6 mt-2 ${
+                  className={`inline-block text-xs font-semibold uppercase tracking-widest py-3 px-6 mt-2 font-heading ${
                     isHomePage ? "bg-white text-black" : "bg-primary text-primary-foreground"
                   }`}
                 >

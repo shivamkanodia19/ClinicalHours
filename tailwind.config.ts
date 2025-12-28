@@ -14,9 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
+        'sans': ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Inter', 'DM Sans', 'Segoe UI', 'sans-serif'],
+        'heading': ['Plus Jakarta Sans', 'DM Sans', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'sans-serif'],
         'display': ['Playfair Display', 'Georgia', 'serif'],
         'mono': ['Courier New', 'Courier', 'monospace'],
-        'sans': ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

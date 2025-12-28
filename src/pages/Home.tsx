@@ -93,7 +93,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen font-mono">
+    <div className="min-h-screen">
       <Navigation />
 
       {/* Hero Section - Full-screen immersive Squarespace style */}
@@ -106,10 +106,10 @@ const Home = () => {
         
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-normal text-white leading-[1.05] tracking-tight animate-fade-in-up drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight animate-fade-in-up drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading">
               Find Your<br />Clinical Future
             </h1>
-            <p className="text-lg md:text-xl text-white/70 max-w-xl mx-auto leading-relaxed font-light animate-fade-in-up-delay-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+            <p className="text-lg md:text-xl text-white/70 max-w-xl mx-auto leading-relaxed font-normal animate-fade-in-up-delay-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
               The crowdsourced platform helping pre-med students discover clinical opportunities.
             </p>
             
@@ -155,7 +155,7 @@ const Home = () => {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="relative inline-block mb-3">
-                  <div className="text-6xl md:text-7xl font-normal text-white relative z-10 group-hover:scale-110 transition-transform duration-300">
+                  <div className="text-6xl md:text-7xl font-semibold text-white relative z-10 group-hover:scale-110 transition-transform duration-300">
                     {statsInView ? (
                       <AnimatedCounter 
                         end={stat.value} 
@@ -184,10 +184,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30 pointer-events-none"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className={`text-center max-w-2xl mx-auto mb-24 ${featuresInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-normal text-white mb-8">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white mb-8 font-heading">
               Built for Pre-Med Success
             </h2>
-            <p className="text-white/60 text-lg leading-relaxed font-light">
+            <p className="text-white/60 text-lg leading-relaxed font-normal">
               Everything you need to find, evaluate, and secure clinical opportunities.
             </p>
           </div>
@@ -213,8 +213,8 @@ const Home = () => {
                     <feature.icon className="h-8 w-8 text-white/60 group-hover:text-white transition-all duration-500 group-hover:scale-110" strokeWidth={1} />
                     <div className="absolute inset-0 blur-md opacity-0 group-hover:opacity-30 bg-white transition-opacity duration-500"></div>
                   </div>
-                  <h3 className="text-xl font-normal text-white mb-4 group-hover:translate-x-1 transition-transform duration-500">{feature.title}</h3>
-                  <p className="text-white/50 leading-relaxed font-light group-hover:text-white/70 transition-colors duration-500">{feature.description}</p>
+                  <h3 className="text-xl font-semibold text-white mb-4 group-hover:translate-x-1 transition-transform duration-500 font-heading">{feature.title}</h3>
+                  <p className="text-white/50 leading-relaxed font-normal group-hover:text-white/70 transition-colors duration-500">{feature.description}</p>
                 </div>
               </div>
             ))}
@@ -228,10 +228,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-transparent pointer-events-none"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className={`text-center max-w-2xl mx-auto mb-24 ${howItWorksInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-normal text-white mb-8">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-white mb-8 font-heading">
               How It Works
             </h2>
-            <p className="text-white/50 text-lg leading-relaxed font-light">
+            <p className="text-white/50 text-lg leading-relaxed font-normal">
               Four steps to your clinical experience.
             </p>
           </div>
@@ -256,10 +256,10 @@ const Home = () => {
                 <div className="text-xs text-white/40 uppercase tracking-[0.2em] mb-4 group-hover:text-white/60 transition-colors duration-500">
                   Step {item.step}
                 </div>
-                <h3 className="text-2xl font-normal text-white mb-4 group-hover:translate-y-[-2px] transition-transform duration-500">
+                <h3 className="text-2xl font-semibold text-white mb-4 group-hover:translate-y-[-2px] transition-transform duration-500 font-heading">
                   {item.title}
                 </h3>
-                <p className="text-white/50 leading-relaxed font-light group-hover:text-white/70 transition-colors duration-500">
+                <p className="text-white/50 leading-relaxed font-normal group-hover:text-white/70 transition-colors duration-500">
                   {item.description}
                 </p>
               </div>
@@ -274,10 +274,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className={`max-w-3xl mx-auto text-center space-y-10 ${ctaInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-normal text-white leading-tight drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white leading-tight drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading">
               Ready to Start?
             </h2>
-            <p className="text-xl text-white/60 max-w-xl mx-auto font-light drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+            <p className="text-xl text-white/60 max-w-xl mx-auto font-normal drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
               Join students discovering clinical opportunities through our platform.
             </p>
             <div className="pt-6">
@@ -300,11 +300,11 @@ const Home = () => {
             <div className="grid md:grid-cols-2 gap-16 items-center">
               <div className="order-2 md:order-1 space-y-8">
                 <div className="text-xs text-white/40 uppercase tracking-[0.2em]">Our Story</div>
-                <h2 className="text-4xl md:text-5xl font-normal text-white">How It Started</h2>
-                <p className="text-white/50 leading-relaxed font-light">
+                <h2 className="text-4xl md:text-5xl font-semibold text-white font-heading">How It Started</h2>
+                <p className="text-white/50 leading-relaxed font-normal">
                   As college students—one pre-med, one engineering—we saw how frustrating it was to find real clinical experience. The pre-med among us spent weeks calling hospitals and clinics, only to learn that many didn't accept volunteers, had limited spots, or required certifications that were hard to get.
                 </p>
-                <p className="text-white/50 leading-relaxed font-light">
+                <p className="text-white/50 leading-relaxed font-normal">
                   Together, we set out to build a centralized platform where students could share verified opportunities and insights to make the process smoother for everyone pursuing healthcare.
                 </p>
               </div>
