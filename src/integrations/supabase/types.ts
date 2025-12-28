@@ -137,6 +137,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "opportunities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       opportunity_questions: {
@@ -432,6 +439,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       saved_opportunities: {
@@ -615,7 +629,41 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "opportunities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      public_profiles: {
+        Row: {
+          clinical_hours: number | null
+          full_name: string | null
+          graduation_year: number | null
+          id: string | null
+          major: string | null
+          university: string | null
+        }
+        Insert: {
+          clinical_hours?: number | null
+          full_name?: string | null
+          graduation_year?: number | null
+          id?: string | null
+          major?: string | null
+          university?: string | null
+        }
+        Update: {
+          clinical_hours?: number | null
+          full_name?: string | null
+          graduation_year?: number | null
+          id?: string | null
+          major?: string | null
+          university?: string | null
+        }
+        Relationships: []
       }
       questions_with_votes: {
         Row: {

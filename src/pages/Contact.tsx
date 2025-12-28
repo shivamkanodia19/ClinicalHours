@@ -184,95 +184,94 @@ const Contact = () => {
             </div>
           </div>
 
-            {/* Contact Form */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Send className="h-6 w-6 text-primary" />
-                  <CardTitle>Send a Message</CardTitle>
-                </div>
-                <CardDescription>Fill out the form below and we'll respond as soon as possible. All fields are required.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Your name"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="your.email@example.com"
-                        required
-                      />
-                    </div>
-                  </div>
+          {/* Contact Form */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <Send className="h-6 w-6 text-primary" />
+                <CardTitle>Send a Message</CardTitle>
+              </div>
+              <CardDescription>Fill out the form below and we'll respond as soon as possible. All fields are required.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="subject">Subject</Label>
+                    <Label htmlFor="name">Name</Label>
                     <Input
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
+                      id="name"
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
-                      placeholder="What is this about?"
+                      placeholder="Your name"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="message">Message</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      value={formData.message}
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
                       onChange={handleChange}
-                      placeholder="Tell me more..."
-                      rows={6}
+                      placeholder="your.email@example.com"
                       required
                     />
                   </div>
-                  <div className="flex flex-col gap-3">
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="mr-2 h-4 w-4" />
-                          Send Message
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
-                      By submitting this form, you agree to our{" "}
-                      <a href="/privacy" className="text-primary hover:underline">
-                        Privacy Policy
-                      </a>
-                      {" "}and{" "}
-                      <a href="/terms" className="text-primary hover:underline">
-                        Terms of Service
-                      </a>
-                      .
-                    </p>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    placeholder="What is this about?"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Tell me more..."
+                    rows={6}
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Send Message
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    By submitting this form, you agree to our{" "}
+                    <a href="/privacy" className="text-primary hover:underline">
+                      Privacy Policy
+                    </a>
+                    {" "}and{" "}
+                    <a href="/terms" className="text-primary hover:underline">
+                      Terms of Service
+                    </a>
+                    .
+                  </p>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
           {/* FAQ Section */}
           <div className="mt-12">
