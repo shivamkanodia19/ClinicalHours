@@ -11,20 +11,92 @@ interface VerifyEmailRequest {
   token: string;
 }
 
+// Rate limiting for token verification attempts
+const rateLimitMap = new Map<string, { count: number; resetTime: number; failedAttempts: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10; // 10 requests per minute per IP
+const MAX_FAILED_ATTEMPTS = 5; // Block after 5 failed attempts
+const BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minute block after too many failures
+
+function getRateLimitStatus(clientIp: string): { blocked: boolean; reason?: string } {
+  const now = Date.now();
+  const record = rateLimitMap.get(clientIp);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(clientIp, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS, failedAttempts: 0 });
+    return { blocked: false };
+  }
+
+  // Check if blocked due to too many failed attempts
+  if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+    return { blocked: true, reason: "Too many failed attempts. Please try again later." };
+  }
+
+  // Check rate limit
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { blocked: true, reason: "Too many requests. Please try again later." };
+  }
+
+  record.count++;
+  return { blocked: false };
+}
+
+function recordFailedAttempt(clientIp: string): void {
+  const record = rateLimitMap.get(clientIp);
+  if (record) {
+    record.failedAttempts++;
+    // Extend block time on failures
+    if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+      record.resetTime = Date.now() + BLOCK_DURATION_MS;
+    }
+  }
+}
+
+// Clean up old entries periodically
+function cleanupRateLimitMap(): void {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Get client IP for rate limiting
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                   req.headers.get("cf-connecting-ip") || 
+                   "unknown";
+
+  // Check rate limit
+  const rateLimitStatus = getRateLimitStatus(clientIp);
+  if (rateLimitStatus.blocked) {
+    console.warn(`Rate limit/block for IP ${clientIp}: ${rateLimitStatus.reason}`);
+    return new Response(
+      JSON.stringify({ error: rateLimitStatus.reason }),
+      { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Cleanup old entries occasionally
+  if (Math.random() < 0.01) {
+    cleanupRateLimitMap();
+  }
+
   try {
     const { token }: VerifyEmailRequest = await req.json();
 
-    console.log(`Verifying email with token: ${token.substring(0, 8)}...`);
+    console.log(`Verifying email with token: ${token?.substring(0, 8)}...`);
 
-    if (!token) {
+    if (!token || typeof token !== 'string' || token.length < 10 || token.length > 200) {
+      recordFailedAttempt(clientIp);
       return new Response(
-        JSON.stringify({ error: "Token is required" }),
+        JSON.stringify({ error: "Invalid token format" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -45,6 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (tokenError || !tokenData) {
       console.error("Token not found:", tokenError);
+      recordFailedAttempt(clientIp);
       return new Response(
         JSON.stringify({ error: "Invalid or expired verification link" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -100,7 +173,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in verify-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
