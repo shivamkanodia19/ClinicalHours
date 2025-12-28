@@ -2,7 +2,6 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface Props {
   children: ReactNode;
@@ -53,7 +52,9 @@ class ErrorBoundary extends Component<Props, State> {
 }
 
 function ErrorFallback({ error, onReset }: { error: Error | null; onReset: () => void }) {
-  const navigate = useNavigate();
+  const handleGoHome = () => {
+    window.location.href = "/";
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -80,7 +81,7 @@ function ErrorFallback({ error, onReset }: { error: Error | null; onReset: () =>
               <RefreshCw className="mr-2 h-4 w-4" />
               Try Again
             </Button>
-            <Button onClick={() => navigate("/")} variant="outline" className="flex-1">
+            <Button onClick={handleGoHome} variant="outline" className="flex-1">
               <Home className="mr-2 h-4 w-4" />
               Go Home
             </Button>
