@@ -210,6 +210,14 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
+    // Re-check profile completion before submission
+    // This ensures users who complete their profile after opening the form can still submit
+    if (!isComplete) {
+      setGateAction("ask a question");
+      setShowProfileGate(true);
+      return;
+    }
+
     // Client-side rate limiting (10 questions per hour per user)
     const rateLimitKey = `question:${user.id}`;
     const rateLimit = checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000);

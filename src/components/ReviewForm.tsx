@@ -76,6 +76,14 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
+    // Re-check profile completion before submission
+    // This ensures users who complete their profile after opening the dialog can still submit
+    if (!isComplete) {
+      setShowProfileGate(true);
+      setOpen(false);
+      return;
+    }
+
     // Client-side rate limiting (5 reviews per hour per user)
     const rateLimitKey = `review:${user.id}`;
     const rateLimit = checkRateLimit(rateLimitKey, 5, 60 * 60 * 1000);

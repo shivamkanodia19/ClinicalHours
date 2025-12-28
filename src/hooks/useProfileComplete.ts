@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/lib/logger";
@@ -29,46 +29,59 @@ export function useProfileComplete(): ProfileCompletenessResult {
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileCompletenessResult["profile"]>(null);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchProfile = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      setProfile(null);
+      setMissingFields(REQUIRED_FIELDS.map(f => f.label));
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, university, major, graduation_year, clinical_hours")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(data);
+
+      // Check which required fields are missing
+      const missing: string[] = [];
+      REQUIRED_FIELDS.forEach(({ key, label }) => {
+        const value = data?.[key as keyof typeof data];
+        if (!value || (typeof value === "string" && value.trim() === "")) {
+          missing.push(label);
+        }
+      });
+
+      setMissingFields(missing);
+    } catch (error) {
+      logger.error("Error fetching profile for completeness check", error);
+      setMissingFields(REQUIRED_FIELDS.map(f => f.label));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) {
-        setIsLoading(false);
-        setProfile(null);
-        setMissingFields(REQUIRED_FIELDS.map(f => f.label));
-        return;
-      }
+    fetchProfile();
+  }, [fetchProfile, refreshKey]);
 
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("full_name, university, major, graduation_year, clinical_hours")
-          .eq("id", user.id)
-          .single();
-
-        if (error) throw error;
-
-        setProfile(data);
-
-        // Check which required fields are missing
-        const missing: string[] = [];
-        REQUIRED_FIELDS.forEach(({ key, label }) => {
-          const value = data?.[key as keyof typeof data];
-          if (!value || (typeof value === "string" && value.trim() === "")) {
-            missing.push(label);
-          }
-        });
-
-        setMissingFields(missing);
-      } catch (error) {
-        logger.error("Error fetching profile for completeness check", error);
-        setMissingFields(REQUIRED_FIELDS.map(f => f.label));
-      } finally {
-        setIsLoading(false);
+  // Refresh profile when window regains focus (user returns from profile page)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        setRefreshKey(prev => prev + 1);
       }
     };
 
-    fetchProfile();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [user]);
 
   return {
