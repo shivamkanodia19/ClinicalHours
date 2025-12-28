@@ -278,7 +278,7 @@ const Opportunities = () => {
                         <div className="flex items-center gap-2">
                           <Star className="h-4 w-4 text-primary fill-primary" />
                           <span>
-                            {opportunity.avg_rating.toFixed(1)} ({opportunity.review_count} reviews)
+                            {opportunity.avg_rating.toFixed(1)} ({opportunity.review_count && opportunity.review_count > 0 ? `${opportunity.review_count} review${opportunity.review_count !== 1 ? 's' : ''}` : 'No reviews'})
                           </span>
                         </div>
                       )}

@@ -193,7 +193,7 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
   return (
     <div className="space-y-4">
       <h4 className="font-medium text-sm text-muted-foreground">
-        {totalCount} Review{totalCount !== 1 ? "s" : ""}
+        {totalCount > 0 ? `${totalCount} Review${totalCount !== 1 ? "s" : ""}` : "No reviews"}
       </h4>
       {reviews.map((review) => {
         const canDelete = canDeleteReview(review);
