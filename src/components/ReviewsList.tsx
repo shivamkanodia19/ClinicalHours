@@ -6,6 +6,7 @@ import { Star, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
+import { useToast } from "@/hooks/use-toast";
 
 interface Review {
   id: string;
