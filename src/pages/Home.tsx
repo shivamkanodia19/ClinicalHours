@@ -1,5 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { Hospital, Clock, MapPin, Users, Star, Building2, ClipboardCheck, MessageCircle, Heart, Target } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -10,15 +9,12 @@ import HeroVideoCarousel from "@/components/HeroVideoCarousel";
 import communityImage from "@/assets/community-illustration.png";
 
 const Home = () => {
-  const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
+  // Redirect authenticated users to dashboard (optimized - no client-side redirect delay)
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
   
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
   const { ref: storyRef, isInView: storyInView } = useInView({ threshold: 0.2 });
