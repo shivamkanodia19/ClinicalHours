@@ -11,7 +11,6 @@ import { ProfileGate } from "@/components/ProfileGate";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { moderateContent } from "@/lib/moderation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -254,7 +253,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Profile is complete - proceed with moderation and submission
+    // Profile is complete - proceed with submission
 
     // Check 5-minute spam prevention - prevent posting questions too quickly
     const lastQuestionKey = `last_question_time:${user.id}`;
@@ -287,43 +286,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Moderate content before submission
-    const questionText = `${newQuestion.title.trim()} ${newQuestion.body.trim() || ''}`.trim();
-    if (questionText) {
-      console.log('Running moderation for question...');
-      const moderationResult = await moderateContent(questionText, 'question');
-      console.log('Moderation result:', moderationResult);
-      
-      if (!moderationResult.approved) {
-        console.error('Question rejected by moderation:', moderationResult);
-        toast({ 
-          title: "Question not approved", 
-          description: moderationResult.reason || "Your question does not meet our community guidelines. Please revise and try again.",
-          variant: "destructive" 
-        });
-        return;
-      }
-    }
-
     let { error } = await supabase.from("opportunity_questions").insert({
       opportunity_id: opportunityId,
       user_id: user.id,
       title: newQuestion.title.trim(),
       body: newQuestion.body.trim() || null,
-      moderation_status: 'approved',
     });
-
-    // If error is about moderation_status column not existing, retry without it
-    if (error && (error.message?.includes("moderation_status") || error.message?.includes("column") || error.code === "42703")) {
-      console.warn("moderation_status column may not exist, retrying without it");
-      const retryResult = await supabase.from("opportunity_questions").insert({
-        opportunity_id: opportunityId,
-        user_id: user.id,
-        title: newQuestion.title.trim(),
-        body: newQuestion.body.trim() || null,
-      });
-      error = retryResult.error;
-    }
 
     if (error) {
       console.error("Question submission error:", error);
@@ -389,7 +357,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Profile is complete - proceed with moderation and submission
+    // Profile is complete - proceed with submission
 
     // Client-side rate limiting (20 answers per hour per user)
     const rateLimitKey = `answer:${user.id}`;
@@ -405,38 +373,11 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Moderate content before submission
-    console.log('Running moderation for answer...');
-    const moderationResult = await moderateContent(answerText, 'answer');
-    console.log('Moderation result:', moderationResult);
-    
-    if (!moderationResult.approved) {
-      console.error('Answer rejected by moderation:', moderationResult);
-      toast({ 
-        title: "Answer not approved", 
-        description: moderationResult.reason || "Your answer does not meet our community guidelines. Please revise and try again.",
-        variant: "destructive" 
-      });
-      return;
-    }
-
     let { error } = await supabase.from("question_answers").insert({
       question_id: questionId,
       user_id: user.id,
       body: answerText,
-      moderation_status: 'approved',
     });
-
-    // If error is about moderation_status column not existing, retry without it
-    if (error && (error.message?.includes("moderation_status") || error.message?.includes("column") || error.code === "42703")) {
-      console.warn("moderation_status column may not exist, retrying without it");
-      const retryResult = await supabase.from("question_answers").insert({
-        question_id: questionId,
-        user_id: user.id,
-        body: answerText,
-      });
-      error = retryResult.error;
-    }
 
     if (error) {
       console.error("Answer submission error:", error);

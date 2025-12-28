@@ -17,7 +17,6 @@ import {
 import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { moderateContent } from "@/lib/moderation";
 
 interface ReviewFormProps {
   opportunityId: string;
@@ -115,7 +114,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
-    // Profile is complete - proceed with moderation and submission
+    // Profile is complete - proceed with submission
 
     // Client-side rate limiting (5 reviews per hour per user)
     const rateLimitKey = `review:${user.id}`;
@@ -157,33 +156,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         }
       });
 
-      // Moderate content before submission (backend moderation)
-      if (comment?.trim()) {
-        console.log('Running moderation for review comment...');
-        const moderationResult = await moderateContent(comment.trim(), 'review');
-        console.log('Moderation result:', moderationResult);
-        
-        if (!moderationResult.approved) {
-          console.error('Review rejected by moderation:', moderationResult);
-          toast.error(moderationResult.reason || "Your review does not meet our community guidelines. Please revise and try again.");
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Set moderation status to approved (content has passed moderation)
-      reviewData.moderation_status = 'approved';
-
       let { error } = await supabase.from("reviews").insert(reviewData);
-
-      // If error is about moderation_status column not existing, retry without it
-      // This handles cases where the migration hasn't been applied yet
-      if (error && (error.message?.includes("moderation_status") || error.message?.includes("column") || error.code === "42703")) {
-        console.warn("moderation_status column may not exist, retrying without it");
-        const { moderation_status, ...reviewDataWithoutModeration } = reviewData;
-        const retryResult = await supabase.from("reviews").insert(reviewDataWithoutModeration);
-        error = retryResult.error;
-      }
 
       if (error) {
         console.error("Review submission error:", error);
@@ -205,9 +178,6 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         errorMessage = "You have already submitted a review for this opportunity";
       } else if (error?.message?.includes("duplicate") || error?.message?.includes("already exists")) {
         errorMessage = "You have already submitted a review for this opportunity";
-      } else if (error?.message?.includes("moderation_status") || error?.message?.includes("column") || error?.code === "42703") {
-        errorMessage = "Database configuration error. Please contact support.";
-        console.error("Database schema issue - moderation_status column may not exist");
       } else if (error?.message) {
         // Show the actual error message for debugging
         errorMessage = error.message;
