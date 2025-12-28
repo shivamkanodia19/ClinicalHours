@@ -527,6 +527,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       answers_with_votes: {
@@ -636,9 +657,17 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       acceptance_likelihood: "high" | "medium" | "low"
+      app_role: "admin" | "moderator" | "user"
       opportunity_type: "hospital" | "clinic" | "hospice" | "emt" | "volunteer"
       votable_type: "question" | "answer"
     }
@@ -769,6 +798,7 @@ export const Constants = {
   public: {
     Enums: {
       acceptance_likelihood: ["high", "medium", "low"],
+      app_role: ["admin", "moderator", "user"],
       opportunity_type: ["hospital", "clinic", "hospice", "emt", "volunteer"],
       votable_type: ["question", "answer"],
     },

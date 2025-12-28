@@ -14,21 +14,87 @@ interface SendPasswordResetRequest {
   origin: string;
 }
 
+// Rate limiting per email to prevent abuse
+const emailRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const EMAIL_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_RESETS_PER_EMAIL = 3; // 3 reset requests per email per hour
+
+function isEmailRateLimited(email: string): boolean {
+  const now = Date.now();
+  const normalizedEmail = email.toLowerCase().trim();
+  const record = emailRateLimitMap.get(normalizedEmail);
+
+  if (!record || now > record.resetTime) {
+    emailRateLimitMap.set(normalizedEmail, { count: 1, resetTime: now + EMAIL_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (record.count >= MAX_RESETS_PER_EMAIL) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
+// Clean up old entries periodically
+function cleanupRateLimitMap(): void {
+  const now = Date.now();
+  for (const [key, value] of emailRateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      emailRateLimitMap.delete(key);
+    }
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cleanup old entries occasionally
+  if (Math.random() < 0.01) {
+    cleanupRateLimitMap();
+  }
+
   try {
+    // Verify JWT - this function requires authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { email, origin }: SendPasswordResetRequest = await req.json();
 
     console.log(`Processing password reset request for ${email}`);
 
-    if (!email) {
+    // Validate email format
+    if (!email || typeof email !== 'string') {
       return new Response(
         JSON.stringify({ error: "Email is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 254) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Check rate limit per email
+    if (isEmailRateLimited(email)) {
+      console.warn(`Rate limit exceeded for email: ${email}`);
+      // Still return success to prevent email enumeration
+      return new Response(
+        JSON.stringify({ success: true, message: "If an account exists, a reset email will be sent" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -86,8 +152,23 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to create reset token");
     }
 
-    // Create reset link
-    const resetLink = `${origin}/reset-password?token=${token}`;
+    // Create reset link - validate origin
+    const allowedOrigins = [
+      'https://sysbtcikrbrrgafffody.lovableproject.com',
+      'https://lovable.dev',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:8080',
+    ];
+    
+    const isAllowedOrigin = origin && (
+      allowedOrigins.includes(origin) || 
+      origin.endsWith('.lovableproject.com') || 
+      origin.endsWith('.lovable.dev')
+    );
+    
+    const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
+    const resetLink = `${safeOrigin}/reset-password?token=${token}`;
 
     // Send branded email via Resend HTTP API
     const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -184,7 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-password-reset function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }

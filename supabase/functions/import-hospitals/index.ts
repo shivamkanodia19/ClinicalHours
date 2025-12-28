@@ -163,18 +163,75 @@ serve(async (req) => {
   }
 
   try {
+    // Extract JWT from authorization header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Authentication required' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Verify the JWT and get user
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      console.error('Invalid token or user not found:', userError);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Invalid authentication' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`User ${user.id} attempting hospital import`);
+
+    // Check if user has admin role
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .single();
+
+    if (roleError || !roleData) {
+      console.error(`User ${user.id} is not an admin. Access denied.`);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Admin access required' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Admin user ${user.id} authorized for hospital import`);
+
     const { limit = 100, state = null, offset = 0 } = await req.json();
     
-    console.log(`Starting hospital import: limit=${limit}, state=${state}, offset=${offset}`);
+    // Validate input parameters
+    const parsedLimit = Math.min(Math.max(1, parseInt(String(limit)) || 100), 500);
+    const parsedOffset = Math.max(0, parseInt(String(offset)) || 0);
+    const parsedState = state && typeof state === 'string' && state.length === 2 ? state.toUpperCase() : null;
+    
+    console.log(`Starting hospital import: limit=${parsedLimit}, state=${parsedState}, offset=${parsedOffset}`);
     
     const mapboxToken = Deno.env.get('MAPBOX_PUBLIC_TOKEN');
     if (!mapboxToken) {
       throw new Error('MAPBOX_PUBLIC_TOKEN not configured');
     }
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Download CSV directly from CMS
     const csvUrl = 'https://data.cms.gov/provider-data/sites/default/files/resources/893c372430d9d71a1c52737d01239d47_1760630721/Hospital_General_Information.csv';
@@ -193,14 +250,14 @@ serve(async (req) => {
     console.log(`Parsed ${hospitals.length} hospitals from CSV`);
     
     // Filter by state if specified
-    if (state) {
-      hospitals = hospitals.filter(h => h['State'] === state);
-      console.log(`Filtered to ${hospitals.length} hospitals in ${state}`);
+    if (parsedState) {
+      hospitals = hospitals.filter(h => h['State'] === parsedState);
+      console.log(`Filtered to ${hospitals.length} hospitals in ${parsedState}`);
     }
     
     // Apply offset and limit
-    hospitals = hospitals.slice(offset, offset + limit);
-    console.log(`Processing ${hospitals.length} hospitals (offset=${offset}, limit=${limit})`);
+    hospitals = hospitals.slice(parsedOffset, parsedOffset + parsedLimit);
+    console.log(`Processing ${hospitals.length} hospitals (offset=${parsedOffset}, limit=${parsedLimit})`);
     
     if (hospitals.length === 0) {
       return new Response(JSON.stringify({ 
