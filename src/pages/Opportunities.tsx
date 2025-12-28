@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Clock, Star, Loader2, Plus, Check } from "lucide-react";
+import { Search, MapPin, Clock, Star, Loader2, Plus, Check, AlertCircle, ChevronDown } from "lucide-react";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
