@@ -53,11 +53,9 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
         setTotalCount(count || 0);
 
         // Then fetch the actual reviews with extended profile data
-        // Note: Using profiles table but RLS policy ensures only owner can see phone numbers
-        // The select explicitly excludes phone to be safe
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, profiles!reviews_user_id_fkey(full_name, university, major, graduation_year, clinical_hours)")
+          .select("*, profiles(full_name, university, major, graduation_year, clinical_hours)")
           .eq("opportunity_id", opportunityId)
           .order("created_at", { ascending: false })
           .limit(displayCount);

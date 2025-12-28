@@ -10,22 +10,21 @@ import HeroVideoCarousel from "@/components/HeroVideoCarousel";
 import communityImage from "@/assets/community-illustration.png";
 
 const Home = () => {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
   
-  // Call all hooks first (Rules of Hooks - must be called in same order every render)
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
   const { ref: storyRef, isInView: storyInView } = useInView({ threshold: 0.2 });
   const { ref: featuresRef, isInView: featuresInView } = useInView({ threshold: 0.1 });
   const { ref: howItWorksRef, isInView: howItWorksInView } = useInView({ threshold: 0.1 });
   const { ref: ctaRef, isInView: ctaInView } = useInView({ threshold: 0.2 });
-
-  // Redirect authenticated users to dashboard (using useEffect to avoid hook order issues)
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [loading, user, navigate]);
 
   const howItWorksSteps = [
     {

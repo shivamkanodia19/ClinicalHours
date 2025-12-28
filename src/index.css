@@ -2,22 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optimize font loading */
-@font-face {
-  font-family: 'Inter';
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'DM Sans';
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-display: swap;
-}
-
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

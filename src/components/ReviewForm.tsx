@@ -12,10 +12,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { checkRateLimit } from "@/lib/rateLimit";
 
 interface ReviewFormProps {
   opportunityId: string;
