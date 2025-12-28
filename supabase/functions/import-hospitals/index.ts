@@ -6,6 +6,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting per admin user
+const adminRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const ADMIN_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_IMPORTS_PER_ADMIN = 5; // 5 imports per hour per admin
+
+function isAdminRateLimited(adminId: string): boolean {
+  const now = Date.now();
+  const record = adminRateLimitMap.get(adminId);
+
+  if (!record || now > record.resetTime) {
+    adminRateLimitMap.set(adminId, { count: 1, resetTime: now + ADMIN_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (record.count >= MAX_IMPORTS_PER_ADMIN) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
+// Clean up old entries periodically
+function cleanupAdminRateLimitMap(): void {
+  const now = Date.now();
+  for (const [key, value] of adminRateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      adminRateLimitMap.delete(key);
+    }
+  }
+}
+
 interface CMSHospital {
   'Facility ID': string;
   'Facility Name': string;
@@ -162,6 +194,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cleanup old rate limit entries occasionally
+  if (Math.random() < 0.01) {
+    cleanupAdminRateLimitMap();
+  }
+
   try {
     // Extract JWT from authorization header
     const authHeader = req.headers.get('authorization');
@@ -213,6 +250,18 @@ serve(async (req) => {
         error: 'Admin access required' 
       }), {
         status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check rate limit for this admin
+    if (isAdminRateLimited(user.id)) {
+      console.warn(`Admin ${user.id} rate limited for hospital import`);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Rate limit exceeded. Please try again later (max 5 imports per hour).' 
+      }), {
+        status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
