@@ -66,14 +66,24 @@ export async function moderateContent(
     });
 
     if (!response.ok) {
-      throw new Error(`Moderation API returned ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Moderation API error (${response.status}):`, errorText);
+      throw new Error(`Moderation API returned ${response.status}: ${errorText}`);
     }
 
     const result: ModerationResult = await response.json();
+    
+    // Log moderation result for debugging
+    if (!result.approved) {
+      console.warn('Content rejected by moderation:', result);
+    }
+    
     return result;
   } catch (error) {
     console.error('Error calling moderation service:', error);
-    // Fail open - allow content if moderation service fails
+    // For now, fail open but log the error
+    // In production, you might want to fail closed for certain errors
+    console.warn('Moderation service failed, allowing content (fail-open mode)');
     return {
       approved: true,
       reason: 'Moderation service unavailable',

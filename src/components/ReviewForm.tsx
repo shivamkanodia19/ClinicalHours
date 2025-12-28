@@ -159,9 +159,12 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
 
       // Moderate content before submission (backend moderation)
       if (comment?.trim()) {
+        console.log('Running moderation for review comment...');
         const moderationResult = await moderateContent(comment.trim(), 'review');
+        console.log('Moderation result:', moderationResult);
         
         if (!moderationResult.approved) {
+          console.error('Review rejected by moderation:', moderationResult);
           toast.error(moderationResult.reason || "Your review does not meet our community guidelines. Please revise and try again.");
           setLoading(false);
           return;

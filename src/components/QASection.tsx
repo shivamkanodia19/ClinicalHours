@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, ChevronUp, ChevronDown, Send, MessageSquare } from "lucide-react";
+import { MessageCircle, ChevronUp, ChevronDown, Send, MessageSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -16,6 +16,16 @@ import {
   Collapsible,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Question {
   id: string;
@@ -244,6 +254,23 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
     // Profile is complete - proceed with moderation and submission
 
+    // Check 5-minute spam prevention - prevent posting questions too quickly
+    const lastQuestionKey = `last_question_time:${user.id}`;
+    const lastQuestionTime = localStorage.getItem(lastQuestionKey);
+    if (lastQuestionTime) {
+      const timeSinceLastQuestion = Date.now() - parseInt(lastQuestionTime, 10);
+      const fiveMinutes = 5 * 60 * 1000;
+      if (timeSinceLastQuestion < fiveMinutes) {
+        const minutesRemaining = Math.ceil((fiveMinutes - timeSinceLastQuestion) / 60000);
+        toast({ 
+          title: "Please wait before asking another question", 
+          description: `You can ask another question in ${minutesRemaining} minute(s).`,
+          variant: "destructive" 
+        });
+        return;
+      }
+    }
+
     // Client-side rate limiting (10 questions per hour per user)
     const rateLimitKey = `question:${user.id}`;
     const rateLimit = checkRateLimit(rateLimitKey, 10, 60 * 60 * 1000);
@@ -261,8 +288,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     // Moderate content before submission
     const questionText = `${newQuestion.title.trim()} ${newQuestion.body.trim() || ''}`.trim();
     if (questionText) {
+      console.log('Running moderation for question...');
       const moderationResult = await moderateContent(questionText, 'question');
+      console.log('Moderation result:', moderationResult);
+      
       if (!moderationResult.approved) {
+        console.error('Question rejected by moderation:', moderationResult);
         toast({ 
           title: "Question not approved", 
           description: moderationResult.reason || "Your question does not meet our community guidelines. Please revise and try again.",
@@ -296,6 +327,9 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       console.error("Question submission error:", error);
       toast({ title: "Error posting question", description: error.message || "Please try again.", variant: "destructive" });
     } else {
+      // Store timestamp for 5-minute spam prevention
+      localStorage.setItem(`last_question_time:${user.id}`, Date.now().toString());
+      
       toast({ title: "Question posted!" });
       setNewQuestion({ title: "", body: "" });
       setShowAskForm(false);
@@ -370,8 +404,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     }
 
     // Moderate content before submission
+    console.log('Running moderation for answer...');
     const moderationResult = await moderateContent(answerText, 'answer');
+    console.log('Moderation result:', moderationResult);
+    
     if (!moderationResult.approved) {
+      console.error('Answer rejected by moderation:', moderationResult);
       toast({ 
         title: "Answer not approved", 
         description: moderationResult.reason || "Your answer does not meet our community guidelines. Please revise and try again.",
@@ -471,6 +509,83 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
         setAnswerDisplayCount(prev => ({ ...prev, [questionId]: INITIAL_ANSWERS }));
         fetchAnswers(questionId);
       }
+    }
+  };
+
+  const canDeleteItem = (item: Question | Answer): boolean => {
+    if (!userId || item.user_id !== userId) return false;
+    const createdAt = new Date(item.created_at);
+    const now = new Date();
+    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+    return minutesSinceCreation <= 5;
+  };
+
+  const handleDeleteItem = async () => {
+    if (!itemToDelete || !userId) return;
+
+    try {
+      if (itemToDelete.type === 'question') {
+        const question = questions.find(q => q.id === itemToDelete.id);
+        if (!question || !canDeleteItem(question)) {
+          toast({
+            title: "Cannot delete question",
+            description: "You can only delete your own questions within 5 minutes of posting.",
+            variant: "destructive",
+          });
+          setDeleteDialogOpen(false);
+          setItemToDelete(null);
+          return;
+        }
+
+        const { error } = await supabase
+          .from("opportunity_questions")
+          .delete()
+          .eq("id", itemToDelete.id)
+          .eq("user_id", userId);
+
+        if (error) throw error;
+
+        toast({ title: "Question deleted" });
+        fetchQuestions();
+      } else {
+        const answer = Object.values(answers).flat().find(a => a.id === itemToDelete.id);
+        if (!answer || !canDeleteItem(answer)) {
+          toast({
+            title: "Cannot delete answer",
+            description: "You can only delete your own answers within 5 minutes of posting.",
+            variant: "destructive",
+          });
+          setDeleteDialogOpen(false);
+          setItemToDelete(null);
+          return;
+        }
+
+        const { error } = await supabase
+          .from("question_answers")
+          .delete()
+          .eq("id", itemToDelete.id)
+          .eq("user_id", userId);
+
+        if (error) throw error;
+
+        toast({ title: "Answer deleted" });
+        // Refresh answers for the question
+        const question = questions.find(q => answers[q.id]?.some(a => a.id === itemToDelete.id));
+        if (question) {
+          fetchAnswers(question.id);
+          fetchQuestions(); // Update answer count
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast({
+        title: "Error deleting",
+        description: "Unable to delete. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -586,21 +701,44 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                         {question.body}
                       </p>
                     )}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-                      <UserProfileBadge
-                        fullName={question.author_name}
-                        university={question.author_university}
-                        major={question.author_major}
-                        graduationYear={question.author_graduation_year}
-                        className="scale-90 origin-left"
-                      />
-                      <span>•</span>
-                      <span>{formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        {totalAnswers} answers
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                        <UserProfileBadge
+                          fullName={question.author_name}
+                          university={question.author_university}
+                          major={question.author_major}
+                          graduationYear={question.author_graduation_year}
+                          className="scale-90 origin-left"
+                        />
+                        <span>•</span>
+                        <span>{formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {totalAnswers} answers
+                        </span>
+                      </div>
+                      {userId && question.user_id === userId && (() => {
+                        const createdAt = new Date(question.created_at);
+                        const now = new Date();
+                        const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                        const canDelete = minutesSinceCreation <= 5;
+                        return canDelete ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setItemToDelete({ type: 'question', id: question.id });
+                              setDeleteDialogOpen(true);
+                            }}
+                            title="Delete question (within 5 minutes)"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -636,16 +774,38 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                               </div>
                               <div className="flex-1">
                                 <p className="text-sm">{answer.body}</p>
-                                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
-                                  <UserProfileBadge
-                                    fullName={answer.author_name}
-                                    university={answer.author_university}
-                                    major={answer.author_major}
-                                    graduationYear={answer.author_graduation_year}
-                                    className="scale-90 origin-left"
-                                  />
-                                  <span>•</span>
-                                  <span>{formatDistanceToNow(new Date(answer.created_at), { addSuffix: true })}</span>
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                                    <UserProfileBadge
+                                      fullName={answer.author_name}
+                                      university={answer.author_university}
+                                      major={answer.author_major}
+                                      graduationYear={answer.author_graduation_year}
+                                      className="scale-90 origin-left"
+                                    />
+                                    <span>•</span>
+                                    <span>{formatDistanceToNow(new Date(answer.created_at), { addSuffix: true })}</span>
+                                  </div>
+                                  {userId && answer.user_id === userId && (() => {
+                                    const createdAt = new Date(answer.created_at);
+                                    const now = new Date();
+                                    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                                    const canDelete = minutesSinceCreation <= 5;
+                                    return canDelete ? (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                        onClick={() => {
+                                          setItemToDelete({ type: 'answer', id: answer.id });
+                                          setDeleteDialogOpen(true);
+                                        }}
+                                        title="Delete answer (within 5 minutes)"
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    ) : null;
+                                  })()}
                                 </div>
                               </div>
                             </div>
@@ -702,6 +862,26 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
           )}
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {itemToDelete?.type === 'question' ? 'Question' : 'Answer'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this {itemToDelete?.type === 'question' ? 'question' : 'answer'}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

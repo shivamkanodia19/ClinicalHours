@@ -2,11 +2,22 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, ChevronDown } from "lucide-react";
+import { Star, ChevronDown, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Review {
   id: string;
@@ -40,7 +51,10 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
   const [loading, setLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(INITIAL_REVIEWS);
   const [totalCount, setTotalCount] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -89,6 +103,62 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
     setDisplayCount((prev) => prev + LOAD_MORE_COUNT);
   };
 
+  const canDeleteReview = (review: Review): boolean => {
+    if (!user || review.user_id !== user.id) return false;
+    const createdAt = new Date(review.created_at);
+    const now = new Date();
+    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+    return minutesSinceCreation <= 5;
+  };
+
+  const handleDeleteReview = async () => {
+    if (!reviewToDelete) return;
+
+    const review = reviews.find(r => r.id === reviewToDelete);
+    if (!review) return;
+
+    // Double-check user can delete (within 5 minutes and owns it)
+    if (!canDeleteReview(review)) {
+      toast({
+        title: "Cannot delete review",
+        description: "You can only delete your own reviews within 5 minutes of posting.",
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+      setReviewToDelete(null);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", reviewToDelete)
+        .eq("user_id", user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Review deleted",
+        description: "Your review has been removed.",
+      });
+
+      // Refresh reviews
+      setReviews(reviews.filter(r => r.id !== reviewToDelete));
+      setTotalCount(prev => prev - 1);
+    } catch (error) {
+      logger.error("Error deleting review", error);
+      toast({
+        title: "Error deleting review",
+        description: "Unable to delete review. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setReviewToDelete(null);
+    }
+  };
+
   const StarDisplay = ({ rating }: { rating: number }) => (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -125,24 +195,42 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
       <h4 className="font-medium text-sm text-muted-foreground">
         {totalCount} Review{totalCount !== 1 ? "s" : ""}
       </h4>
-      {reviews.map((review) => (
-        <Card key={review.id} className="bg-muted/30">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <UserProfileBadge
-                  fullName={review.profiles?.full_name || null}
-                  university={review.profiles?.university}
-                  major={review.profiles?.major}
-                  graduationYear={review.profiles?.graduation_year}
-                  clinicalHours={review.profiles?.clinical_hours}
-                />
-                <p className="text-xs text-muted-foreground mt-1 ml-9">
-                  {format(new Date(review.created_at), "MMM d, yyyy")}
-                </p>
+      {reviews.map((review) => {
+        const canDelete = canDeleteReview(review);
+        return (
+          <Card key={review.id} className="bg-muted/30">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <UserProfileBadge
+                    fullName={review.profiles?.full_name || null}
+                    university={review.profiles?.university}
+                    major={review.profiles?.major}
+                    graduationYear={review.profiles?.graduation_year}
+                    clinicalHours={review.profiles?.clinical_hours}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1 ml-9">
+                    {format(new Date(review.created_at), "MMM d, yyyy")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StarDisplay rating={review.rating} />
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        setReviewToDelete(review.id);
+                        setDeleteDialogOpen(true);
+                      }}
+                      title="Delete review (within 5 minutes)"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <StarDisplay rating={review.rating} />
-            </div>
 
             {review.comment && (
               <p className="text-sm text-foreground mb-3">{review.comment}</p>
@@ -171,7 +259,28 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this review? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteReview}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {hasMore && (
         <Button
