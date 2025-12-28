@@ -171,14 +171,15 @@ const Auth = () => {
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+      const { data, error } = await supabase.functions.invoke("send-password-reset", {
+        body: { email, origin: window.location.origin },
       });
       
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
       
       setResetEmailSent(true);
-      toast.success("Password reset email sent!");
+      toast.success("If an account exists, a password reset email will be sent.");
     } catch (error: any) {
       toast.error(error.message || "Failed to send reset email");
     } finally {
