@@ -4,15 +4,26 @@ This guide explains how to apply the database performance optimizations to your 
 
 ## For Lovable Cloud Users
 
-Since you're using Lovable, you have two options:
+**Important**: Lovable Cloud automatically applies migrations from `supabase/migrations/` when you deploy!
 
-### Option A: Through Lovable Interface (If Available)
-1. In Lovable, look for a "Database" or "Migrations" section
-2. The migration file is already in your repo at: `supabase/migrations/20251229000000_performance_optimization.sql`
-3. Lovable may automatically detect and apply migrations, or provide a UI to run them
+### How It Works
+1. **Migration files are already in your repo** ✅
+2. **When you deploy in Lovable**, it automatically detects and applies new migrations
+3. **No manual steps needed** - just deploy!
 
-### Option B: Direct Supabase Dashboard (Recommended for Lovable)
-Since Lovable uses Supabase, you can access your Supabase project directly:
+### To Apply a Migration:
+1. Make sure the migration file is in `supabase/migrations/` (already done ✅)
+2. Push to GitHub (already done ✅)
+3. Deploy in Lovable: Go to your project → **"Share"** → **"Publish"**
+4. Lovable will automatically apply the migration during deployment
+
+### If Auto-Apply Doesn't Work:
+- Check Lovable for a "Database" or "SQL" interface
+- Contact Lovable support for help accessing your Supabase project
+- See `LOVABLE_SECURITY_MIGRATION.md` for detailed instructions
+
+### Alternative: Direct Supabase Dashboard (If You Get Access)
+If Lovable support provides you with Supabase dashboard access:
 
 ## Option 1: Using Supabase Dashboard (Recommended - Easiest)
 

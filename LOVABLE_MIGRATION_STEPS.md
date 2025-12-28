@@ -1,36 +1,44 @@
-# Applying Migration in Lovable Cloud - Quick Guide
+# Applying Migrations in Lovable Cloud - Quick Guide
 
-Since you're using Lovable, here's the simplest way to apply the performance optimization migration:
+Since you're using Lovable Cloud, you don't have direct access to Supabase. Here's how to apply migrations:
 
-## Method 1: Supabase Dashboard (Easiest - Recommended)
+## Method 1: Lovable Auto-Applies Migrations (Automatic)
 
-### Step 1: Get Your Supabase Project Link
-1. In Lovable, your project is connected to Supabase
-2. The project ID is: `sysbtcikrbrrgafffody`
-3. You can access it directly at: `https://supabase.com/dashboard/project/sysbtcikrbrrgafffody`
+**Lovable automatically applies migrations when you deploy!**
 
-### Step 2: Open SQL Editor
-1. Go to the Supabase Dashboard link above (or find it in your Supabase account)
-2. In the left sidebar, click **"SQL Editor"**
-3. Click **"New query"**
+1. **Push your migration file to GitHub** (already done ✅)
+   - The migration file is at: `supabase/migrations/20251230000000_fix_phone_exposure.sql`
+   - It's already committed and pushed to your repo
 
-### Step 3: Run the Migration
-1. Open the file in your project: `supabase/migrations/20251229000000_performance_optimization.sql`
-2. **Copy the entire contents** of that file
-3. **Paste it** into the SQL Editor in Supabase Dashboard
-4. Click **"Run"** (or press Ctrl+Enter / Cmd+Enter)
+2. **Deploy in Lovable**
+   - Go to your Lovable project: https://lovable.dev/projects/c5bbc95b-0f92-42a3-b816-bdce54759b81
+   - Click **"Share"** → **"Publish"** (or if already published, it may auto-deploy)
+   - Lovable will detect the new migration file and apply it automatically
 
-### Step 4: Verify Success
-- You should see "Success" message
-- Check for any warnings (some are normal - see troubleshooting below)
-- Go to **"Database"** → **"Indexes"** to see the new indexes
+3. **Verify the migration was applied**
+   - Check Lovable's deployment logs for migration status
+   - Or test the application to see if the security fixes are working
 
-## Method 2: Check if Lovable Auto-Applies
+## Method 2: Manual SQL Execution (If Auto-Apply Doesn't Work)
 
-Some Lovable setups automatically apply migrations. Check:
-1. Look in Lovable for a "Database" or "Migrations" tab
-2. Check if the migration file appears in a migrations list
-3. If it does, you may be able to click "Apply" or "Run"
+If Lovable doesn't auto-apply migrations, you can run the SQL manually:
+
+### Option A: Through Lovable's Database Interface
+1. In Lovable, look for a **"Database"** or **"SQL"** tab/section
+2. If available, you can paste and run the migration SQL there
+
+### Option B: Request Supabase Access from Lovable
+1. Contact Lovable support to request access to your Supabase project
+2. They may provide you with:
+   - A link to your Supabase dashboard
+   - Or credentials to access it
+3. Once you have access, follow the Supabase Dashboard method below
+
+### Option C: Supabase Dashboard (If You Get Access)
+1. Get your Supabase project link from Lovable support
+2. Go to Supabase Dashboard → **"SQL Editor"**
+3. Copy the contents of `supabase/migrations/20251230000000_fix_phone_exposure.sql`
+4. Paste and run it
 
 ## What the Migration Does
 
