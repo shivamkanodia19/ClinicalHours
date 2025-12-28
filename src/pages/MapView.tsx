@@ -7,9 +7,9 @@ const MapView = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
         
-        <main className="flex-1 container mx-auto px-4 pt-24 pb-8">
+        <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2 text-foreground">Opportunity Map</h1>
+            <h1 className="text-4xl font-bold mb-2 text-foreground scroll-mt-28">Opportunity Map</h1>
             <p className="text-muted-foreground">
               Explore clinical opportunities across the country. Switch between viewing all opportunities or just your saved ones.
             </p>

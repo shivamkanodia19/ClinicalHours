@@ -350,12 +350,12 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       
-      <main className="flex-1 container mx-auto px-4 pt-24 pb-8">
+      <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold mb-2 text-foreground">
+              <h1 className="text-3xl lg:text-4xl font-bold mb-2 text-foreground scroll-mt-28">
                 Welcome back, {firstName}!
               </h1>
               <p className="text-muted-foreground">

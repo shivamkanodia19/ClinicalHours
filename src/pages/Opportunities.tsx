@@ -174,11 +174,11 @@ const Opportunities = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="container mx-auto px-4 pt-24 pb-12">
+      <div className="container mx-auto px-4 pt-28 pb-12">
         <div className="max-w-6xl mx-auto">
           <div className="mb-12 flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-4">Clinical Opportunities Near You</h1>
+              <h1 className="text-4xl font-bold mb-4 scroll-mt-28">Clinical Opportunities Near You</h1>
               <p className="text-lg text-muted-foreground">
                 Discover clinical opportunities sorted by distance from your location.
               </p>

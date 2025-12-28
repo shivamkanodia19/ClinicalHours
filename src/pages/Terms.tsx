@@ -13,8 +13,8 @@ const Terms = () => {
       <div className="min-h-screen bg-background">
         <Navigation />
         
-        <main className="container mx-auto px-4 pt-24 pb-12 max-w-4xl">
-          <h1 className="text-4xl font-bold mb-2">Terms and Conditions</h1>
+        <main className="container mx-auto px-4 pt-28 pb-12 max-w-4xl">
+          <h1 className="text-4xl font-bold mb-2 scroll-mt-28">Terms and Conditions</h1>
           <p className="text-muted-foreground mb-8">Last updated: December 26, 2025</p>
           
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
