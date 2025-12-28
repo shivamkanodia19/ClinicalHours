@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "next-themes";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,7 +10,6 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
 
   // Check if we're on the home page for transparent nav
   const isHomePage = location.pathname === "/";
@@ -95,18 +93,6 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className={`p-2 rounded-md transition-opacity hover:opacity-70 ${textColor}`}
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </button>
             {user ? (
               <>
                 <Link
@@ -123,25 +109,12 @@ const Navigation = () => {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  to="/auth"
-                  className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-                >
-                  Log In
-                </Link>
-                <Button 
-                  asChild 
-                  size="sm"
-                  className={`text-xs uppercase tracking-widest rounded-none px-6 py-5 ${
-                    isHomePage
-                      ? "bg-white text-black hover:bg-white/90"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90"
-                  }`}
-                >
-                  <Link to="/auth">Get Started</Link>
-                </Button>
-              </>
+              <Link
+                to="/auth"
+                className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
+              >
+                {isHomePage ? "Login/Signup" : "Log In"}
+              </Link>
             )}
           </div>
 
@@ -169,17 +142,6 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            {/* Theme Toggle - Mobile */}
-            <button
-              onClick={() => {
-                setTheme(theme === "dark" ? "light" : "dark");
-                setIsOpen(false);
-              }}
-              className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? "Light Mode" : "Dark Mode"}
-            </button>
             {user ? (
               <>
                 <Link
@@ -200,24 +162,13 @@ const Navigation = () => {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  to="/auth"
-                  onClick={() => setIsOpen(false)}
-                  className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-                >
-                  Log In
-                </Link>
-                <Link
-                  to="/auth"
-                  onClick={() => setIsOpen(false)}
-                  className={`inline-block text-xs font-semibold uppercase tracking-widest py-3 px-6 mt-2 font-heading ${
-                    isHomePage ? "bg-white text-black" : "bg-primary text-primary-foreground"
-                  }`}
-                >
-                  Get Started
-                </Link>
-              </>
+              <Link
+                to="/auth"
+                onClick={() => setIsOpen(false)}
+                className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
+              >
+                {isHomePage ? "Login/Signup" : "Log In"}
+              </Link>
             )}
           </div>
         )}
