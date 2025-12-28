@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { moderateContent } from "@/lib/moderation";
 
 interface ReviewFormProps {
   opportunityId: string;
@@ -113,6 +115,19 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
           reviewData[r.key] = r.value;
         }
       });
+
+      // Moderate content before submission
+      if (comment?.trim()) {
+        const moderationResult = await moderateContent(comment.trim(), 'review');
+        if (!moderationResult.approved) {
+          toast.error(moderationResult.reason || "Your review does not meet our community guidelines. Please revise and try again.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Set moderation status to approved (content has passed moderation)
+      reviewData.moderation_status = 'approved';
 
       const { error } = await supabase.from("reviews").insert(reviewData);
 

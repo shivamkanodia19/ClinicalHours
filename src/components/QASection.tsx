@@ -11,6 +11,7 @@ import { ProfileGate } from "@/components/ProfileGate";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { moderateContent } from "@/lib/moderation";
 import {
   Collapsible,
   CollapsibleContent,
@@ -223,11 +224,26 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
+    // Moderate content before submission
+    const questionText = `${newQuestion.title.trim()} ${newQuestion.body.trim() || ''}`.trim();
+    if (questionText) {
+      const moderationResult = await moderateContent(questionText, 'question');
+      if (!moderationResult.approved) {
+        toast({ 
+          title: "Question not approved", 
+          description: moderationResult.reason || "Your question does not meet our community guidelines. Please revise and try again.",
+          variant: "destructive" 
+        });
+        return;
+      }
+    }
+
     const { error } = await supabase.from("opportunity_questions").insert({
       opportunity_id: opportunityId,
       user_id: user.id,
       title: newQuestion.title.trim(),
       body: newQuestion.body.trim() || null,
+      moderation_status: 'approved',
     });
 
     if (error) {
@@ -270,10 +286,22 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
+    // Moderate content before submission
+    const moderationResult = await moderateContent(answerText, 'answer');
+    if (!moderationResult.approved) {
+      toast({ 
+        title: "Answer not approved", 
+        description: moderationResult.reason || "Your answer does not meet our community guidelines. Please revise and try again.",
+        variant: "destructive" 
+      });
+      return;
+    }
+
     const { error } = await supabase.from("question_answers").insert({
       question_id: questionId,
       user_id: user.id,
       body: answerText,
+      moderation_status: 'approved',
     });
 
     if (error) {
