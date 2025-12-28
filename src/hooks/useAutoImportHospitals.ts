@@ -95,7 +95,7 @@ export function useAutoImportHospitals() {
       }
     }
 
-    // Start import after a short delay to let the app load
-    setTimeout(checkAndImport, 2000);
+    // Start import after a delay to let the app load - increased delay for better initial load
+    setTimeout(checkAndImport, 5000);
   }, []);
 }

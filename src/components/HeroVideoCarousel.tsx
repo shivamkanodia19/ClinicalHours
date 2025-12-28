@@ -79,6 +79,7 @@ const HeroVideoCarousel = () => {
               muted
               playsInline
               autoPlay={index === 0}
+              preload={index === 0 ? "auto" : "none"}
               className="w-full h-full object-cover"
             >
               <source src={src} type="video/mp4" />
