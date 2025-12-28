@@ -17,8 +17,9 @@ import {
   Loader2, Plus, Trash2, MapPin, Phone, Mail, Globe, 
   Map, Building2, ClipboardCheck, User, BookOpen, 
   Lightbulb, Target, Heart, MessageCircle, ArrowRight,
-  Bookmark, CheckCircle2, Clock, TrendingUp
+  Bookmark, CheckCircle2, Clock, TrendingUp, HelpCircle
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { downloadIcsFile, createOpportunityReminder } from "@/lib/calendar";
 import {
@@ -274,15 +275,35 @@ const Dashboard = () => {
       return;
     }
 
+    // Optimistic update: add to local state immediately
+    const opportunityToAdd = opportunities.find(opp => opp.id === opportunityId);
+    if (opportunityToAdd) {
+      const optimisticSaved: SavedOpportunity = {
+        id: `temp-${opportunityId}`,
+        opportunity_id: opportunityId,
+        contacted: false,
+        applied: false,
+        heard_back: false,
+        scheduled_interview: false,
+        opportunities: opportunityToAdd,
+      };
+      setSavedOpportunities(prev => [...prev, optimisticSaved]);
+    }
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("saved_opportunities")
         .insert({
           user_id: user.id,
           opportunity_id: opportunityId,
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
+        // Rollback optimistic update
+        setSavedOpportunities(prev => prev.filter(s => s.id !== `temp-${opportunityId}`));
+        
         // Handle duplicate entry error
         if (error.code === '23505') {
           toast({
@@ -294,16 +315,28 @@ const Dashboard = () => {
         throw error;
       }
 
+      // Replace optimistic update with real data
+      if (data && opportunityToAdd) {
+        setSavedOpportunities(prev => {
+          const filtered = prev.filter(s => s.id !== `temp-${opportunityId}`);
+          return [...filtered, {
+            ...data,
+            opportunities: opportunityToAdd,
+          }];
+        });
+      }
+
       toast({
         title: "Added to tracker",
         description: "Opportunity added to your personal tracker",
       });
 
+      // Refresh to ensure consistency
       fetchData();
     } catch (error: any) {
       toast({
         title: "Error adding opportunity",
-        description: error.message,
+        description: error.message || "Failed to add opportunity. Please try again.",
         variant: "destructive",
       });
     }
@@ -317,26 +350,38 @@ const Dashboard = () => {
   const removeFromTracker = async () => {
     if (!opportunityToDelete) return;
     const savedId = opportunityToDelete;
+    
+    // Optimistic update: remove from local state immediately
+    const opportunityToRemove = savedOpportunities.find(s => s.id === savedId);
+    setSavedOpportunities(prev => prev.filter(s => s.id !== savedId));
+    
+    setDeleteDialogOpen(false);
+    const tempOpportunityToDelete = opportunityToDelete;
+    setOpportunityToDelete(null);
+
     try {
       const { error } = await supabase
         .from("saved_opportunities")
         .delete()
         .eq("id", savedId);
 
-      if (error) throw error;
+      if (error) {
+        // Rollback optimistic update
+        if (opportunityToRemove) {
+          setSavedOpportunities(prev => [...prev, opportunityToRemove]);
+        }
+        throw error;
+      }
 
       toast({
         title: "Removed from tracker",
         description: "Opportunity removed from your tracker",
       });
-
-      setDeleteDialogOpen(false);
-      setOpportunityToDelete(null);
-      fetchData();
     } catch (error: any) {
+      setOpportunityToDelete(tempOpportunityToDelete);
       toast({
         title: "Error removing opportunity",
-        description: error.message,
+        description: error.message || "Failed to remove opportunity. Please try again.",
         variant: "destructive",
       });
     }
@@ -718,16 +763,35 @@ const Dashboard = () => {
                           <Badge variant="outline" className="capitalize">
                             {opp.type}
                           </Badge>
-                          <Badge className={getAcceptanceColor(opp.acceptance_likelihood)}>
-                            {opp.acceptance_likelihood} acceptance
-                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge className={getAcceptanceColor(opp.acceptance_likelihood)}>
+                                {opp.acceptance_likelihood} acceptance
+                                <HelpCircle className="ml-1 h-3 w-3 inline" />
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">
+                                Acceptance likelihood indicates how likely you are to be accepted based on typical requirements and past student experiences.
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
                             <span>{opp.location}</span>
                             {opp.distance && (
-                              <span className="text-primary">({opp.distance} miles away)</span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="text-primary cursor-help">({opp.distance} miles away)</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">
+                                    Distance calculated from your current location using GPS coordinates. Enable location access for accurate distances.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
                             )}
                           </div>
                           {opp.phone && (

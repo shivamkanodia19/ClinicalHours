@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown, MessageCircle, Loader2, Plus, Check } from "lucide-react";
+import { Search, MapPin, Clock, Phone, Mail, Star, AlertCircle, ChevronDown, MessageCircle, Loader2, Plus, Check, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -250,17 +251,36 @@ const Opportunities = () => {
                           <MapPin className="h-4 w-4" />
                           {opportunity.location}
                           {opportunity.distance && (
-                            <span className="text-primary font-medium">
-                              • {opportunity.distance.toFixed(1)} miles away
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-primary font-medium cursor-help">
+                                  • {opportunity.distance.toFixed(1)} miles away
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">
+                                  Distance calculated from your current location using GPS coordinates. Enable location access for accurate distances.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </CardDescription>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Badge variant="outline">{opportunity.type}</Badge>
-                        <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
-                          {opportunity.acceptance_likelihood} Acceptance
-                        </Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
+                              {opportunity.acceptance_likelihood} Acceptance
+                              <HelpCircle className="ml-1 h-3 w-3 inline" />
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">
+                              Acceptance likelihood indicates how likely you are to be accepted based on typical requirements and past student experiences.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardHeader>

@@ -39,6 +39,7 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
   const [loading, setLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(INITIAL_REVIEWS);
   const [totalCount, setTotalCount] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -63,7 +64,13 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
         if (error) throw error;
         setReviews((data as Review[]) || []);
       } catch (error) {
-        console.error("Error fetching reviews:", error);
+        logger.error("Error fetching reviews", error);
+        // Show user-friendly error message
+        toast({
+          title: "Error loading reviews",
+          description: "Unable to load reviews. Please try refreshing the page.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
