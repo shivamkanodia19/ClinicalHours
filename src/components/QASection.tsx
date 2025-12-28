@@ -202,15 +202,43 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Check profile completion at submission time
-    if (profileLoading) {
-      toast({ title: "Please wait while we verify your profile", variant: "default" });
-      return;
-    }
+    // Check profile completion at submission time - fetch fresh data
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, university, major, graduation_year")
+        .eq("id", user.id)
+        .single();
 
-    if (!isComplete) {
-      setGateAction("ask a question");
-      setShowProfileGate(true);
+      if (profileError) {
+        toast({ title: "Error verifying profile", variant: "destructive" });
+        return;
+      }
+
+      // Check required fields
+      const REQUIRED_FIELDS = [
+        { key: "full_name", label: "Full Name" },
+        { key: "university", label: "University" },
+        { key: "major", label: "Major" },
+        { key: "graduation_year", label: "Graduation Year" },
+      ];
+
+      const missing: string[] = [];
+      REQUIRED_FIELDS.forEach(({ key, label }) => {
+        const value = profileData?.[key as keyof typeof profileData];
+        if (!value || (typeof value === "string" && value.trim() === "")) {
+          missing.push(label);
+        }
+      });
+
+      if (missing.length > 0) {
+        setGateAction("ask a question");
+        setShowProfileGate(true);
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+      toast({ title: "Error verifying profile", variant: "destructive" });
       return;
     }
 
@@ -285,15 +313,43 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    // Check profile completion at submission time
-    if (profileLoading) {
-      toast({ title: "Please wait while we verify your profile", variant: "default" });
-      return;
-    }
+    // Check profile completion at submission time - fetch fresh data
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, university, major, graduation_year")
+        .eq("id", user.id)
+        .single();
 
-    if (!isComplete) {
-      setGateAction("post an answer");
-      setShowProfileGate(true);
+      if (profileError) {
+        toast({ title: "Error verifying profile", variant: "destructive" });
+        return;
+      }
+
+      // Check required fields
+      const REQUIRED_FIELDS = [
+        { key: "full_name", label: "Full Name" },
+        { key: "university", label: "University" },
+        { key: "major", label: "Major" },
+        { key: "graduation_year", label: "Graduation Year" },
+      ];
+
+      const missing: string[] = [];
+      REQUIRED_FIELDS.forEach(({ key, label }) => {
+        const value = profileData?.[key as keyof typeof profileData];
+        if (!value || (typeof value === "string" && value.trim() === "")) {
+          missing.push(label);
+        }
+      });
+
+      if (missing.length > 0) {
+        setGateAction("post an answer");
+        setShowProfileGate(true);
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+      toast({ title: "Error verifying profile", variant: "destructive" });
       return;
     }
 

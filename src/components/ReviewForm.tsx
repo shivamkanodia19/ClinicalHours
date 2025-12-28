@@ -72,16 +72,45 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
-    // Check profile completion at submission time
-    if (profileLoading) {
-      toast.error("Please wait while we verify your profile");
-      setLoading(false);
-      return;
-    }
+    // Check profile completion at submission time - fetch fresh data
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, university, major, graduation_year")
+        .eq("id", user.id)
+        .single();
 
-    if (!isComplete) {
-      setShowProfileGate(true);
-      setOpen(false);
+      if (profileError) {
+        toast.error("Error verifying profile");
+        setLoading(false);
+        return;
+      }
+
+      // Check required fields
+      const REQUIRED_FIELDS = [
+        { key: "full_name", label: "Full Name" },
+        { key: "university", label: "University" },
+        { key: "major", label: "Major" },
+        { key: "graduation_year", label: "Graduation Year" },
+      ];
+
+      const missing: string[] = [];
+      REQUIRED_FIELDS.forEach(({ key, label }) => {
+        const value = profileData?.[key as keyof typeof profileData];
+        if (!value || (typeof value === "string" && value.trim() === "")) {
+          missing.push(label);
+        }
+      });
+
+      if (missing.length > 0) {
+        setShowProfileGate(true);
+        setOpen(false);
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+      toast.error("Error verifying profile");
       setLoading(false);
       return;
     }
