@@ -26,7 +26,7 @@ const HeroVideoCarousel = () => {
     setTimeout(() => {
       setActiveVideo(nextIndex);
       setSlideDirection("none");
-    }, 800);
+    }, 1000);
   }, [activeVideo]);
 
   // Play active video when it changes
@@ -72,7 +72,7 @@ const HeroVideoCarousel = () => {
         return (
           <div
             key={index}
-            className={`absolute inset-0 transition-all duration-700 ease-out ${transform} ${opacity}`}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${transform} ${opacity}`}
           >
             <video
               ref={(el) => (videoRefs.current[index] = el)}
@@ -92,24 +92,10 @@ const HeroVideoCarousel = () => {
 
       {/* Extra blend during transition */}
       <div 
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-500 ease-in-out ${
           slideDirection === "left" ? "opacity-100" : "opacity-0"
         }`}
       />
-
-      {/* Video indicators */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-        {videos.map((_, index) => (
-          <div
-            key={index}
-            className={`h-0.5 w-8 transition-all duration-300 ${
-              index === activeVideo 
-                ? "bg-white/80" 
-                : "bg-white/20"
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 };
