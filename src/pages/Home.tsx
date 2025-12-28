@@ -10,17 +10,18 @@ import communityImage from "@/assets/community-illustration.png";
 
 const Home = () => {
   const { user, loading } = useAuth();
-
-  // Redirect authenticated users to dashboard (optimized - no client-side redirect delay)
-  if (!loading && user) {
-    return <Navigate to="/dashboard" replace />;
-  }
   
+  // Call all hooks first (Rules of Hooks - must be called in same order every render)
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
   const { ref: storyRef, isInView: storyInView } = useInView({ threshold: 0.2 });
   const { ref: featuresRef, isInView: featuresInView } = useInView({ threshold: 0.1 });
   const { ref: howItWorksRef, isInView: howItWorksInView } = useInView({ threshold: 0.1 });
   const { ref: ctaRef, isInView: ctaInView } = useInView({ threshold: 0.2 });
+
+  // Redirect authenticated users to dashboard (after all hooks are called)
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const howItWorksSteps = [
     {
