@@ -35,7 +35,7 @@ const DEFAULT_RADIUS_MILES = 100;
 const TYPE_COLORS: Record<string, string> = {
   hospital: '#3B82F6',
   clinic: '#10B981',
-  hospice: '#6366F1', // Indigo instead of purple
+  hospice: '#8B5CF6',
   emt: '#F59E0B',
   volunteer: '#EC4899',
 };
@@ -701,7 +701,7 @@ const OpportunityMap = () => {
             <span className="text-muted-foreground">Clinic</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-[#6366F1] border-2 border-white"></span>
+            <span className="w-4 h-4 rounded-full bg-[#8B5CF6] border-2 border-white"></span>
             <span className="text-muted-foreground">Hospice</span>
           </div>
           <div className="flex items-center gap-2">
