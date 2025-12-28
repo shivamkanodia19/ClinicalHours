@@ -125,7 +125,7 @@ const Dashboard = () => {
     if (user) {
       fetchData();
     }
-  }, [user]);
+  }, [user, userLocation]); // Re-fetch and re-sort when location changes
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -195,7 +195,50 @@ const Dashboard = () => {
         .eq("user_id", user?.id);
 
       if (savedError) throw savedError;
-      setSavedOpportunities(savedData || []);
+      
+      // Process and sort saved opportunities
+      let processedSaved = (savedData || []).map((saved: any) => {
+        const opp = saved.opportunities;
+        let distance: number | undefined;
+        
+        // Calculate distance if user location and opportunity coordinates are available
+        if (userLocation && opp?.latitude && opp?.longitude) {
+          distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lon,
+            opp.latitude,
+            opp.longitude
+          );
+        }
+        
+        return {
+          ...saved,
+          opportunities: {
+            ...opp,
+            distance,
+          },
+        };
+      });
+      
+      // Sort saved opportunities: by distance if available, otherwise alphabetically
+      if (userLocation) {
+        processedSaved.sort((a: any, b: any) => {
+          const distA = a.opportunities?.distance ?? Infinity;
+          const distB = b.opportunities?.distance ?? Infinity;
+          if (distA !== Infinity || distB !== Infinity) {
+            return distA - distB;
+          }
+          // If both have no distance, sort alphabetically
+          return (a.opportunities?.name || "").localeCompare(b.opportunities?.name || "");
+        });
+      } else {
+        // Sort alphabetically if no location
+        processedSaved.sort((a: any, b: any) => 
+          (a.opportunities?.name || "").localeCompare(b.opportunities?.name || "")
+        );
+      }
+      
+      setSavedOpportunities(processedSaved);
     } catch (error: any) {
       toast({
         title: "Error loading data",
