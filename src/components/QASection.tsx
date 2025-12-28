@@ -81,6 +81,8 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   const [answerDisplayCount, setAnswerDisplayCount] = useState<Record<string, number>>({});
   const [showProfileGate, setShowProfileGate] = useState(false);
   const [gateAction, setGateAction] = useState("participate");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ type: 'question' | 'answer'; id: string } | null>(null);
   const { toast } = useToast();
   const { isComplete, isLoading: profileLoading, missingFields } = useProfileComplete();
 
