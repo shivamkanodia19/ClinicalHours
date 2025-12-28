@@ -32,6 +32,8 @@ const Navigation = () => {
   // Show different links based on auth state
   const publicLinks = [
     { name: "Home", path: "/" },
+    { name: "Map", path: "/map" },
+    { name: "Contact", path: "/contact" },
   ];
 
   const authenticatedLinks = [

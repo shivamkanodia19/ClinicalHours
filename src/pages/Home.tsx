@@ -114,13 +114,24 @@ const Home = () => {
             </p>
             
             <div className="pt-8 animate-fade-in-up-delay-2">
-              <Link 
-                to="/auth"
-                className="group inline-block text-sm uppercase tracking-widest px-12 py-5 bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] relative overflow-hidden"
-              >
-                <span className="relative z-10">Get Started</span>
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link 
+                  to="/auth"
+                  className="group inline-block text-sm uppercase tracking-widest px-12 py-5 bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] relative overflow-hidden"
+                >
+                  <span className="relative z-10">Get Started</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                </Link>
+                <Link 
+                  to="/map"
+                  className="group inline-block text-sm uppercase tracking-widest px-12 py-5 bg-transparent border-2 border-white text-white hover:bg-white/10 transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    View Map
+                  </span>
+                </Link>
+              </div>
               <p className="mt-6 text-xs text-white/50 uppercase tracking-widest animate-pulse">
                 Free forever. No credit card required.
               </p>
