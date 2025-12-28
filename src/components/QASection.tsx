@@ -246,7 +246,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       }
     }
 
-    const { error } = await supabase.from("opportunity_questions").insert({
+    let { error } = await supabase.from("opportunity_questions").insert({
       opportunity_id: opportunityId,
       user_id: user.id,
       title: newQuestion.title.trim(),
@@ -254,8 +254,21 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       moderation_status: 'approved',
     });
 
+    // If error is about moderation_status column not existing, retry without it
+    if (error && (error.message?.includes("moderation_status") || error.message?.includes("column") || error.code === "42703")) {
+      console.warn("moderation_status column may not exist, retrying without it");
+      const retryResult = await supabase.from("opportunity_questions").insert({
+        opportunity_id: opportunityId,
+        user_id: user.id,
+        title: newQuestion.title.trim(),
+        body: newQuestion.body.trim() || null,
+      });
+      error = retryResult.error;
+    }
+
     if (error) {
-      toast({ title: "Error posting question", variant: "destructive" });
+      console.error("Question submission error:", error);
+      toast({ title: "Error posting question", description: error.message || "Please try again.", variant: "destructive" });
     } else {
       toast({ title: "Question posted!" });
       setNewQuestion({ title: "", body: "" });
@@ -305,15 +318,27 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    const { error } = await supabase.from("question_answers").insert({
+    let { error } = await supabase.from("question_answers").insert({
       question_id: questionId,
       user_id: user.id,
       body: answerText,
       moderation_status: 'approved',
     });
 
+    // If error is about moderation_status column not existing, retry without it
+    if (error && (error.message?.includes("moderation_status") || error.message?.includes("column") || error.code === "42703")) {
+      console.warn("moderation_status column may not exist, retrying without it");
+      const retryResult = await supabase.from("question_answers").insert({
+        question_id: questionId,
+        user_id: user.id,
+        body: answerText,
+      });
+      error = retryResult.error;
+    }
+
     if (error) {
-      toast({ title: "Error posting answer", variant: "destructive" });
+      console.error("Answer submission error:", error);
+      toast({ title: "Error posting answer", description: error.message || "Please try again.", variant: "destructive" });
     } else {
       toast({ title: "Answer posted!" });
       setNewAnswer(prev => ({ ...prev, [questionId]: "" }));

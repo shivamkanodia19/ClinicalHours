@@ -137,9 +137,21 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       // Set moderation status to approved (content has passed moderation)
       reviewData.moderation_status = 'approved';
 
-      const { error } = await supabase.from("reviews").insert(reviewData);
+      let { error } = await supabase.from("reviews").insert(reviewData);
 
-      if (error) throw error;
+      // If error is about moderation_status column not existing, retry without it
+      // This handles cases where the migration hasn't been applied yet
+      if (error && (error.message?.includes("moderation_status") || error.message?.includes("column") || error.code === "42703")) {
+        console.warn("moderation_status column may not exist, retrying without it");
+        const { moderation_status, ...reviewDataWithoutModeration } = reviewData;
+        const retryResult = await supabase.from("reviews").insert(reviewDataWithoutModeration);
+        error = retryResult.error;
+      }
+
+      if (error) {
+        console.error("Review submission error:", error);
+        throw error;
+      }
 
       toast.success("Review submitted successfully!");
       setOpen(false);
@@ -147,12 +159,23 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       setRatings(ratings.map((r) => ({ ...r, value: 0 })));
       onReviewSubmitted();
     } catch (error: any) {
+      console.error("Review submission error details:", error);
+      
       // Sanitize error message
-      const errorMessage = error?.code === "23505" 
-        ? "You have already submitted a review for this opportunity"
-        : error?.message?.includes("duplicate") || error?.message?.includes("already exists")
-        ? "You have already submitted a review for this opportunity"
-        : "Failed to submit review. Please try again.";
+      let errorMessage = "Failed to submit review. Please try again.";
+      
+      if (error?.code === "23505") {
+        errorMessage = "You have already submitted a review for this opportunity";
+      } else if (error?.message?.includes("duplicate") || error?.message?.includes("already exists")) {
+        errorMessage = "You have already submitted a review for this opportunity";
+      } else if (error?.message?.includes("moderation_status") || error?.message?.includes("column") || error?.code === "42703") {
+        errorMessage = "Database configuration error. Please contact support.";
+        console.error("Database schema issue - moderation_status column may not exist");
+      } else if (error?.message) {
+        // Show the actual error message for debugging
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
     } finally {
       setLoading(false);
