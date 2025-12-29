@@ -48,15 +48,21 @@ const queryClient = new QueryClient({
   },
 });
 
+// Run keyboard shortcuts within Router context so useNavigate works correctly
+function KeyboardShortcuts() {
+  useAppKeyboardShortcuts();
+  return null;
+}
+
 function AppContent() {
   useAutoImportHospitals();
-  useAppKeyboardShortcuts();
   
   return (
     <>
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <KeyboardShortcuts />
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
           <ErrorBoundary>
