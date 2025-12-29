@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { useAutoSave } from "@/hooks/useAutoSave";
 
 const Contact = () => {
   const { toast } = useToast();

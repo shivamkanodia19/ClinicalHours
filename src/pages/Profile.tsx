@@ -24,6 +24,7 @@ import {
   validateLinkedInURL,
   sanitizeProfileData 
 } from "@/lib/inputValidation";
+import { useAutoSave } from "@/hooks/useAutoSave";
 
 const Profile = () => {
   const navigate = useNavigate();
