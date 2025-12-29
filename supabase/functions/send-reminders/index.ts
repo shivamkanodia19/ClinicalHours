@@ -3,6 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
+// Validate API key is configured
+if (!RESEND_API_KEY) {
+  console.error("RESEND_API_KEY is not configured. Please set it in Supabase Edge Functions secrets.");
+}
+
 // No CORS headers needed - this function is only invoked by cron jobs (server-side)
 const responseHeaders = {
   "Content-Type": "application/json",
@@ -128,9 +133,22 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         if (!emailResponse.ok) {
-          const errorData = await emailResponse.json();
+          const errorData = await emailResponse.json().catch(() => ({}));
           console.error(`Failed to send email to ${userEmail}:`, errorData);
-          errors.push(`Email to ${userEmail}: ${errorData.message || "Failed"}`);
+          
+          // Provide helpful error messages for common issues
+          let errorMessage = "Failed";
+          if (errorData.message) {
+            if (errorData.message.includes("domain") || errorData.message.includes("Domain")) {
+              errorMessage = "Email domain not verified";
+            } else if (errorData.message.includes("API key") || errorData.message.includes("Unauthorized")) {
+              errorMessage = "Email service configuration error";
+            } else {
+              errorMessage = errorData.message;
+            }
+          }
+          
+          errors.push(`Email to ${userEmail}: ${errorMessage}`);
           continue;
         }
 

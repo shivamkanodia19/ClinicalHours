@@ -3,6 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
+// Validate API key is configured
+if (!RESEND_API_KEY) {
+  console.error("RESEND_API_KEY is not configured. Please set it in Supabase Edge Functions secrets.");
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -174,6 +179,15 @@ const handler = async (req: Request): Promise<Response> => {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 
+    // Validate API key before attempting to send
+    if (!RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service is not configured. Please contact support." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Send branded email via Resend HTTP API
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -255,9 +269,22 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!emailResponse.ok) {
-      const errorData = await emailResponse.json();
+      const errorData = await emailResponse.json().catch(() => ({}));
       console.error("Failed to send verification email:", errorData);
-      throw new Error(errorData.message || "Failed to send email");
+      
+      // Provide helpful error messages for common issues
+      let errorMessage = "Failed to send email";
+      if (errorData.message) {
+        if (errorData.message.includes("domain") || errorData.message.includes("Domain")) {
+          errorMessage = "Email domain not verified. Please verify your domain in Resend dashboard.";
+        } else if (errorData.message.includes("API key") || errorData.message.includes("Unauthorized")) {
+          errorMessage = "Email service configuration error. Please contact support.";
+        } else {
+          errorMessage = errorData.message;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
     console.log("Verification email sent successfully");

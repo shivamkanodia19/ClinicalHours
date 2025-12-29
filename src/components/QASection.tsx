@@ -733,6 +733,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                               setDeleteDialogOpen(true);
                             }}
                             title="Delete question (within 5 minutes)"
+                            aria-label="Delete question"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -800,6 +801,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                                           setDeleteDialogOpen(true);
                                         }}
                                         title="Delete answer (within 5 minutes)"
+                                        aria-label="Delete answer"
                                       >
                                         <Trash2 className="h-3 w-3" />
                                       </Button>
@@ -811,15 +813,16 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                           ))}
                           
                           {hasMoreAnswers && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => handleLoadMoreAnswers(question.id)}
-                            >
-                              <ChevronDown className="h-4 w-4 mr-2" />
-                              Show More Answers ({totalAnswers - questionAnswers.length} remaining)
-                            </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => handleLoadMoreAnswers(question.id)}
+                            aria-label={`Show more answers for ${question.title}`}
+                          >
+                            <ChevronDown className="h-4 w-4 mr-2" />
+                            Show More Answers ({totalAnswers - questionAnswers.length} remaining)
+                          </Button>
                           )}
                         </>
                       )}
@@ -844,6 +847,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                             onClick={() => handleAnswer(question.id)}
                             disabled={!newAnswer[question.id]?.trim()}
                             className="self-start"
+                            aria-label="Submit answer"
                           >
                             <Send className="h-4 w-4" />
                           </Button>
@@ -863,6 +867,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
               className="w-full"
               onClick={handleLoadMoreQuestions}
               disabled={loading}
+              aria-label="Load more questions"
             >
               <ChevronDown className="h-4 w-4 mr-2" />
               {loading ? "Loading..." : `Show More Questions (${totalQuestionCount - questions.length} remaining)`}

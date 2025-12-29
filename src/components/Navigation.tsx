@@ -123,12 +123,14 @@ const Navigation = () => {
           {/* Mobile Menu Button and Theme Toggle */}
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className={`p-2 transition-colors ${textColor}`}
-            >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`p-2 transition-colors ${textColor}`}
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
           </div>
         </div>
 
@@ -162,6 +164,7 @@ const Navigation = () => {
                     setIsOpen(false);
                   }}
                   className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
+                  aria-label="Sign out"
                 >
                   Log Out
                 </button>
