@@ -59,15 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify JWT - this function requires authentication
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
+    // Password reset doesn't require authentication (user forgot password)
     const { email, origin }: SendPasswordResetRequest = await req.json();
 
     console.log(`Processing password reset request for ${email}`);
