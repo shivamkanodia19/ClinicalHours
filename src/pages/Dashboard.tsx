@@ -664,6 +664,7 @@ const Dashboard = () => {
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "contacted", checked as boolean)
                             }
+                            aria-label={`Mark ${saved.opportunities.name} as contacted`}
                           />
                         </TableCell>
                         <TableCell>
@@ -672,6 +673,7 @@ const Dashboard = () => {
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "applied", checked as boolean)
                             }
+                            aria-label={`Mark ${saved.opportunities.name} as applied`}
                           />
                         </TableCell>
                         <TableCell>
@@ -680,6 +682,7 @@ const Dashboard = () => {
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "heard_back", checked as boolean)
                             }
+                            aria-label={`Mark ${saved.opportunities.name} as heard back`}
                           />
                         </TableCell>
                         <TableCell>
@@ -688,6 +691,7 @@ const Dashboard = () => {
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "scheduled_interview", checked as boolean)
                             }
+                            aria-label={`Mark ${saved.opportunities.name} as scheduled interview`}
                           />
                         </TableCell>
                         <TableCell>
