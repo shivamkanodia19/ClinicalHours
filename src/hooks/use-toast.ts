@@ -3,7 +3,8 @@ import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+// Toast timeout configuration: errors stay longer (8s), success shorter (4s)
+const TOAST_REMOVE_DELAY = 5000; // Default 5 seconds
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -52,18 +53,19 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
-const addToRemoveQueue = (toastId: string) => {
+const addToRemoveQueue = (toastId: string, delay?: number) => {
   if (toastTimeouts.has(toastId)) {
     return;
   }
 
+  const timeoutDelay = delay ?? TOAST_REMOVE_DELAY;
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId);
     dispatch({
       type: "REMOVE_TOAST",
       toastId: toastId,
     });
-  }, TOAST_REMOVE_DELAY);
+  }, timeoutDelay);
 
   toastTimeouts.set(toastId, timeout);
 };
@@ -144,6 +146,9 @@ function toast({ ...props }: Toast) {
     });
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
 
+  // Determine timeout based on variant: errors stay longer, success shorter
+  const timeoutDelay = props.variant === "destructive" ? 8000 : 4000;
+
   dispatch({
     type: "ADD_TOAST",
     toast: {
@@ -155,6 +160,9 @@ function toast({ ...props }: Toast) {
       },
     },
   });
+
+  // Auto-dismiss after timeout
+  addToRemoveQueue(id, timeoutDelay);
 
   return {
     id: id,
