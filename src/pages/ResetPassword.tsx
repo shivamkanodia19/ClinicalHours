@@ -89,8 +89,8 @@ const ResetPassword = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
         <div className="w-full max-w-md text-center space-y-6">
-          <div className="mx-auto w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+          <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Password Reset!</h1>

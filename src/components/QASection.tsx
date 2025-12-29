@@ -274,7 +274,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
         return;
       }
     } catch (error) {
-      console.error("Error checking profile:", error);
+      logger.error("Error checking profile", error);
       toast({ title: "Error verifying profile", variant: "destructive" });
       return;
     }
@@ -320,7 +320,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     });
 
     if (error) {
-      console.error("Question submission error:", error);
+      logger.error("Question submission error", error);
       toast({ title: "Error posting question", description: sanitizeErrorMessage(error), variant: "destructive" });
     } else {
       // Store timestamp for 5-minute spam prevention
@@ -392,7 +392,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
         return;
       }
     } catch (error) {
-      console.error("Error checking profile:", error);
+      logger.error("Error checking profile", error);
       toast({ title: "Error verifying profile", variant: "destructive" });
       return;
     }
@@ -420,7 +420,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
     });
 
     if (error) {
-      console.error("Answer submission error:", error);
+      logger.error("Answer submission error", error);
       toast({ title: "Error posting answer", description: sanitizeErrorMessage(error), variant: "destructive" });
     } else {
       toast({ title: "Answer posted!" });
@@ -560,7 +560,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
         }
       }
     } catch (error) {
-      console.error("Error deleting item:", error);
+      logger.error("Error deleting item", error);
       toast({
         title: "Error deleting",
         description: "Unable to delete. Please try again.",

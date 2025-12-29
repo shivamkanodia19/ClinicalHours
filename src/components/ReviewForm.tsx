@@ -18,6 +18,7 @@ import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { logger } from "@/lib/logger";
 
 interface ReviewFormProps {
   opportunityId: string;
@@ -109,7 +110,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         return;
       }
     } catch (error) {
-      console.error("Error checking profile:", error);
+      logger.error("Error checking profile", error);
       toast.error("Error verifying profile");
       setLoading(false);
       return;
@@ -170,7 +171,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       let { error } = await supabase.from("reviews").insert(reviewData);
 
       if (error) {
-        console.error("Review submission error:", error);
+        logger.error("Review submission error", error);
         // Handle duplicate key error (race condition case)
         if (error.code === "23505" || error.message?.includes("duplicate") || error.message?.includes("unique")) {
           toast.error("You have already submitted a review for this opportunity");
@@ -187,7 +188,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       setRatings(ratings.map((r) => ({ ...r, value: 0 })));
       onReviewSubmitted();
     } catch (error: any) {
-      console.error("Review submission error details:", error);
+      logger.error("Review submission error details", error);
       
       // Sanitize error message
       let errorMessage = sanitizeErrorMessage(error);

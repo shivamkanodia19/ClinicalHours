@@ -99,11 +99,6 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
     setDisplayCount(INITIAL_REVIEWS);
   }, [opportunityId, refreshTrigger]);
 
-  // Reset display count when opportunity changes or refresh triggered
-  useEffect(() => {
-    setDisplayCount(INITIAL_REVIEWS);
-  }, [opportunityId, refreshTrigger]);
-
   const handleLoadMore = () => {
     setDisplayCount((prev) => prev + LOAD_MORE_COUNT);
   };

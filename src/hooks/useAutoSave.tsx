@@ -31,7 +31,7 @@ export function useAutoSave<T extends Record<string, any>>(
         previousDataRef.current = currentData;
       } catch (error) {
         // Ignore localStorage errors (quota exceeded, etc.)
-        console.warn("Failed to save to localStorage:", error);
+        // Failed to save to localStorage (quota exceeded, etc.) - silently ignore
       }
     }
   }, [formData, storageKey, enabled]);
