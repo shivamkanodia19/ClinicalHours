@@ -9,6 +9,7 @@ import { HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import { useAutoImportHospitals } from "./hooks/useAutoImportHospitals";
+import { useAppKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -49,6 +50,7 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   useAutoImportHospitals();
+  useAppKeyboardShortcuts();
   
   return (
     <>

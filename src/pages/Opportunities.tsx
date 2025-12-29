@@ -176,7 +176,7 @@ const Opportunities = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search by name or location..."
+                placeholder="Search by name or location... (Press / to focus)"
                 value={searchTerm}
                 onChange={(e) => {
                   const value = e.target.value.slice(0, 100); // Limit to 100 chars
