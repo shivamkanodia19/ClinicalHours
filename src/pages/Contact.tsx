@@ -250,7 +250,7 @@ const Contact = () => {
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="Tell me more..."
+                    placeholder="Tell us more..."
                     rows={6}
                     required
                     maxLength={5000}
