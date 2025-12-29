@@ -1,29 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
-
-interface Opportunity {
-  id: string;
-  name: string;
-  type: string;
-  location: string;
-  latitude: number | null;
-  longitude: number | null;
-  hours_required: string;
-  acceptance_likelihood: string;
-  description: string | null;
-  requirements: string[];
-  phone: string | null;
-  email: string | null;
-  website: string | null;
-  avg_rating?: number;
-  review_count?: number;
-  distance?: number;
-}
+import { Opportunity, UserLocation } from "@/types";
+import { fetchOpportunities } from "@/services/opportunities";
+import { calculateDistances, sortByDistance } from "@/lib/geolocation";
 
 interface UseOpportunitiesOptions {
-  userLocation: { lat: number; lng: number } | null;
+  userLocation: UserLocation | null;
   filterType: string;
   searchTerm: string;
   pageSize?: number;
@@ -37,20 +20,7 @@ interface UseOpportunitiesResult {
   totalCount: number;
 }
 
-// Calculate distance client-side (Haversine formula)
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 3959; // Earth radius in miles
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+// Distance calculation moved to src/lib/geolocation.ts
 
 export function useOpportunities({
   userLocation,
@@ -76,68 +46,20 @@ export function useOpportunities({
   const fetchAllOpportunities = useCallback(async () => {
     setLoading(true);
     try {
-      // Validate and sanitize search term
-      const sanitizedSearchTerm = searchTerm?.trim().slice(0, 100) || "";
-      
-      let query = supabase
-        .from("opportunities_with_ratings")
-        .select("*");
-
-      // Apply type filter
-      if (filterType !== "all") {
-        query = query.eq("type", filterType);
-      }
-
-      // Apply search filter (on name and location) - using parameterized query
-      if (sanitizedSearchTerm) {
-        // Escape special characters for ilike pattern
-        const escapedSearch = sanitizedSearchTerm.replace(/[%_\\]/g, "\\$&");
-        query = query.or(`name.ilike.%${escapedSearch}%,location.ilike.%${escapedSearch}%`);
-      }
-
-      const { data, error } = await query;
+      // Use service layer for API call
+      const { data, error } = await fetchOpportunities({
+        filterType: filterType === "all" ? undefined : filterType,
+        searchTerm: searchTerm?.trim() || undefined,
+      });
 
       if (error) throw error;
 
-      let processedData: Opportunity[] = (data || []).map((opp: any) => ({
-        id: opp.id,
-        name: opp.name,
-        type: opp.type,
-        location: opp.location,
-        latitude: opp.latitude,
-        longitude: opp.longitude,
-        hours_required: opp.hours_required,
-        acceptance_likelihood: opp.acceptance_likelihood,
-        description: opp.description,
-        requirements: opp.requirements || [],
-        phone: opp.phone,
-        email: opp.email,
-        website: opp.website,
-        avg_rating: opp.avg_rating,
-        review_count: opp.review_count,
-        distance: undefined,
-      }));
+      let processedData: Opportunity[] = data;
 
       // Calculate distance and sort if user location available
       if (userLocation) {
-        processedData = processedData.map((opp) => ({
-          ...opp,
-          distance: opp.latitude && opp.longitude
-            ? calculateDistance(
-                userLocation.lat,
-                userLocation.lng,
-                opp.latitude,
-                opp.longitude
-              )
-            : undefined,
-        }));
-
-        // Sort by distance (closest first)
-        processedData.sort((a, b) => {
-          if (a.distance === undefined) return 1;
-          if (b.distance === undefined) return -1;
-          return a.distance - b.distance;
-        });
+        processedData = calculateDistances(processedData, userLocation);
+        processedData = sortByDistance(processedData);
       }
 
       setAllOpportunities(processedData);

@@ -8,20 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Map, List, MapPin, RotateCcw } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
-interface Opportunity {
-  id: string;
-  name: string;
-  type: string;
-  location: string;
-  latitude: number | null;
-  longitude: number | null;
-  acceptance_likelihood: string;
-  hours_required: string;
-  website?: string;
-  email?: string;
-  phone?: string;
-}
-
+// Opportunity type imported from @/types
 interface SavedOpportunity {
   opportunity_id: string;
   opportunities: Opportunity;
@@ -41,20 +28,7 @@ const TYPE_COLORS: Record<string, string> = {
   volunteer: '#EC4899',
 };
 
-// Calculate distance between two points in miles
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 3959;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+// calculateDistance imported from @/lib/geolocation
 
 // Convert opportunities to GeoJSON
 function opportunitiesToGeoJSON(opportunities: Opportunity[]): GeoJSON.FeatureCollection {

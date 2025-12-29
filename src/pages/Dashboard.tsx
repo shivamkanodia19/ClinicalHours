@@ -6,6 +6,8 @@ import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { Opportunity, SavedOpportunity } from "@/types";
+import { calculateDistances, sortByDistance, getUserLocation } from "@/lib/geolocation";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,22 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Opportunity {
-  id: string;
-  name: string;
-  type: string;
-  location: string;
-  address?: string;
-  requirements?: string[];
-  hours_required: string;
-  acceptance_likelihood: string;
-  website?: string;
-  email?: string;
-  phone?: string;
-  latitude?: number;
-  longitude?: number;
-  distance?: number;
-}
+import { Opportunity, SavedOpportunity } from "@/types";
 
 interface SavedOpportunity {
   id: string;
