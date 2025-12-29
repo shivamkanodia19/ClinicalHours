@@ -852,9 +852,26 @@ const Dashboard = () => {
 
               {filteredOpportunities.length === 0 && (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">
-                    No opportunities found matching your criteria.
+                  <div className="h-16 w-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                    <Building2 className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No opportunities found</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {searchTerm || typeFilter !== "all" 
+                      ? "Try adjusting your search or filters to find more opportunities."
+                      : "All available opportunities have been added to your tracker."}
                   </p>
+                  {(searchTerm || typeFilter !== "all") && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setTypeFilter("all");
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
               )}
 
