@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,17 @@ const Contact = () => {
     message: "",
   });
 
+  // Auto-save contact form data
+  const { loadSavedData, clearSavedData } = useAutoSave(formData, "contact-form-draft", true);
+
+  // Load saved draft on mount
+  useEffect(() => {
+    const savedDraft = loadSavedData();
+    if (savedDraft) {
+      setFormData(savedDraft);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -37,7 +48,9 @@ const Contact = () => {
         title: "Message Sent!",
         description: "Thank you for reaching out. We'll get back to you soon.",
       });
+      // Clear form and auto-saved draft
       setFormData({ name: "", email: "", subject: "", message: "" });
+      clearSavedData();
     } catch (error: any) {
       logger.error("Error sending message", error);
       toast({

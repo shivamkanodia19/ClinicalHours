@@ -69,6 +69,9 @@ const Profile = () => {
   const completeness = getCompletenessInfo();
   const isProfileComplete = completeness.percentage === 100;
 
+  // Auto-save profile data
+  const { loadSavedData, clearSavedData } = useAutoSave(profile, "profile-form-draft", true);
+
   // Generate signed URL for resume viewing
   const getSignedResumeUrl = useCallback(async (path: string) => {
     if (!path) return null;
@@ -120,6 +123,14 @@ const Profile = () => {
       navigate("/auth");
     } else if (user) {
       loadProfile();
+      // Load auto-saved draft if available
+      const savedDraft = loadSavedData();
+      if (savedDraft && Object.keys(savedDraft).length > 0) {
+        // Only load draft if profile hasn't been loaded yet (to avoid overwriting saved data)
+        if (!profile.full_name && !profile.university) {
+          setProfile(savedDraft);
+        }
+      }
     }
   }, [user, authLoading, navigate]);
 
@@ -293,6 +304,9 @@ const Profile = () => {
         });
 
       if (error) throw error;
+
+      // Clear auto-saved draft after successful save
+      clearSavedData();
 
       toast.success("Profile updated successfully!");
     } catch (error: any) {
