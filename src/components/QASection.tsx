@@ -671,6 +671,8 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                       className={`p-1 rounded hover:bg-muted ${
                         userVotes[question.id] === 1 ? "text-primary" : "text-muted-foreground"
                       }`}
+                      aria-label="Upvote question"
+                      title="Upvote question"
                     >
                       <ChevronUp className="h-4 w-4" />
                     </button>
@@ -683,6 +685,8 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                       className={`p-1 rounded hover:bg-muted ${
                         userVotes[question.id] === -1 ? "text-destructive" : "text-muted-foreground"
                       }`}
+                      aria-label="Downvote question"
+                      title="Downvote question"
                     >
                       <ChevronDown className="h-4 w-4" />
                     </button>
