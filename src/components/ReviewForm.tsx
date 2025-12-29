@@ -139,6 +139,16 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       if (existingReview) {
         toast.error("You have already submitted a review for this opportunity");
         setOpen(false);
+        setLoading(false);
+        return;
+      }
+
+      // Validate comment length (matching database constraint)
+      const MAX_COMMENT_LENGTH = 2000;
+      const trimmedComment = comment?.trim() || null;
+      if (trimmedComment && trimmedComment.length > MAX_COMMENT_LENGTH) {
+        toast.error(`Comment must be ${MAX_COMMENT_LENGTH} characters or less`);
+        setLoading(false);
         return;
       }
 
@@ -146,7 +156,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         opportunity_id: opportunityId,
         user_id: user.id,
         rating: overallRating,
-        comment: comment?.trim() || null,
+        comment: trimmedComment,
       };
 
       // Add optional ratings if they were provided
@@ -160,6 +170,13 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
 
       if (error) {
         console.error("Review submission error:", error);
+        // Handle duplicate key error (race condition case)
+        if (error.code === "23505" || error.message?.includes("duplicate") || error.message?.includes("unique")) {
+          toast.error("You have already submitted a review for this opportunity");
+          setOpen(false);
+          setLoading(false);
+          return;
+        }
         throw error;
       }
 

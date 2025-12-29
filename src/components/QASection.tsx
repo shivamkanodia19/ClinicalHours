@@ -205,7 +205,32 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   };
 
   const handleAskQuestion = async () => {
-    if (!newQuestion.title.trim()) return;
+    if (!newQuestion.title.trim()) {
+      toast({ title: "Question title is required", variant: "destructive" });
+      return;
+    }
+
+    // Validate input lengths (matching database constraints)
+    const MAX_TITLE_LENGTH = 200;
+    const MAX_BODY_LENGTH = 5000;
+    
+    if (newQuestion.title.trim().length > MAX_TITLE_LENGTH) {
+      toast({ 
+        title: "Title too long", 
+        description: `Title must be ${MAX_TITLE_LENGTH} characters or less.`,
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    if (newQuestion.body.trim().length > MAX_BODY_LENGTH) {
+      toast({ 
+        title: "Body too long", 
+        description: `Body must be ${MAX_BODY_LENGTH} characters or less.`,
+        variant: "destructive" 
+      });
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -309,7 +334,21 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
   const handleAnswer = async (questionId: string) => {
     const answerText = newAnswer[questionId]?.trim();
-    if (!answerText) return;
+    if (!answerText) {
+      toast({ title: "Answer cannot be empty", variant: "destructive" });
+      return;
+    }
+
+    // Validate input length (matching database constraint)
+    const MAX_BODY_LENGTH = 5000;
+    if (answerText.length > MAX_BODY_LENGTH) {
+      toast({ 
+        title: "Answer too long", 
+        description: `Answer must be ${MAX_BODY_LENGTH} characters or less.`,
+        variant: "destructive" 
+      });
+      return;
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -561,17 +600,29 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
       {showAskForm && (
         <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-          <Input
-            placeholder="What's your question about this opportunity?"
-            value={newQuestion.title}
-            onChange={(e) => setNewQuestion(prev => ({ ...prev, title: e.target.value }))}
-          />
-          <Textarea
-            placeholder="Add more details (optional)"
-            value={newQuestion.body}
-            onChange={(e) => setNewQuestion(prev => ({ ...prev, body: e.target.value }))}
-            className="min-h-[60px]"
-          />
+          <div className="space-y-1">
+            <Input
+              placeholder="What's your question about this opportunity?"
+              value={newQuestion.title}
+              onChange={(e) => setNewQuestion(prev => ({ ...prev, title: e.target.value }))}
+              maxLength={200}
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {newQuestion.title.length}/200 characters
+            </p>
+          </div>
+          <div className="space-y-1">
+            <Textarea
+              placeholder="Add more details (optional)"
+              value={newQuestion.body}
+              onChange={(e) => setNewQuestion(prev => ({ ...prev, body: e.target.value }))}
+              className="min-h-[60px]"
+              maxLength={5000}
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {newQuestion.body.length}/5000 characters
+            </p>
+          </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={handleAskQuestion}>
               Post Question
@@ -769,20 +820,29 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
                       )}
 
                       {/* Answer form */}
-                      <div className="flex gap-2 pt-2">
-                        <Textarea
-                          placeholder="Write an answer..."
-                          value={newAnswer[question.id] || ""}
-                          onChange={(e) => setNewAnswer(prev => ({ ...prev, [question.id]: e.target.value }))}
-                          className="min-h-[40px] text-sm"
-                        />
-                        <Button
-                          size="icon"
-                          onClick={() => handleAnswer(question.id)}
-                          disabled={!newAnswer[question.id]?.trim()}
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
+                      <div className="space-y-1 pt-2">
+                        <div className="flex gap-2">
+                          <div className="flex-1 space-y-1">
+                            <Textarea
+                              placeholder="Write an answer..."
+                              value={newAnswer[question.id] || ""}
+                              onChange={(e) => setNewAnswer(prev => ({ ...prev, [question.id]: e.target.value }))}
+                              className="min-h-[40px] text-sm"
+                              maxLength={5000}
+                            />
+                            <p className="text-xs text-muted-foreground text-right">
+                              {(newAnswer[question.id] || "").length}/5000 characters
+                            </p>
+                          </div>
+                          <Button
+                            size="icon"
+                            onClick={() => handleAnswer(question.id)}
+                            disabled={!newAnswer[question.id]?.trim()}
+                            className="self-start"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CollapsibleContent>

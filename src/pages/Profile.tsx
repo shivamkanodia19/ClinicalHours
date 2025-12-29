@@ -127,11 +127,38 @@ const Profile = () => {
     try {
       setUploading(true);
       if (!e.target.files || e.target.files.length === 0) {
+        setUploading(false);
         return;
       }
 
       const file = e.target.files[0];
-      const fileExt = file.name.split(".").pop();
+      
+      // Validate file size (max 5MB)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("File size must be less than 5MB. Please choose a smaller file.");
+        setUploading(false);
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const allowedExtensions = ['pdf', 'doc', 'docx'];
+      const fileExt = file.name.split(".").pop()?.toLowerCase();
+      const fileType = file.type.toLowerCase();
+      
+      if (!fileExt || !allowedExtensions.includes(fileExt)) {
+        toast.error("Invalid file type. Please upload a PDF, DOC, or DOCX file.");
+        setUploading(false);
+        return;
+      }
+      
+      // Additional MIME type check (if available)
+      if (fileType && !allowedTypes.some(type => fileType.includes(type.split('/')[1]))) {
+        // MIME type doesn't match, but extension is valid - warn but allow
+        logger.warn("File MIME type doesn't match extension", { fileType, fileExt });
+      }
+
       const filePath = `${user?.id}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
@@ -160,10 +187,51 @@ const Profile = () => {
     setLoading(true);
 
     try {
+      // Authorization check: ensure user is updating their own profile
+      if (!user?.id) {
+        toast.error("You must be signed in to update your profile");
+        setLoading(false);
+        return;
+      }
+
+      // Validate GPA range if provided
+      if (profile.gpa && (parseFloat(profile.gpa) < 0 || parseFloat(profile.gpa) > 4)) {
+        toast.error("GPA must be between 0 and 4.0");
+        setLoading(false);
+        return;
+      }
+
+      // Validate graduation year if provided
+      if (profile.graduation_year) {
+        const year = parseInt(profile.graduation_year);
+        const currentYear = new Date().getFullYear();
+        if (year < 1900 || year > currentYear + 10) {
+          toast.error(`Graduation year must be between 1900 and ${currentYear + 10}`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Validate LinkedIn URL format if provided
+      if (profile.linkedin_url && profile.linkedin_url.trim()) {
+        try {
+          const url = new URL(profile.linkedin_url);
+          if (!url.hostname.includes('linkedin.com')) {
+            toast.error("Please enter a valid LinkedIn URL");
+            setLoading(false);
+            return;
+          }
+        } catch {
+          toast.error("Please enter a valid LinkedIn URL");
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("profiles")
         .upsert({
-          id: user?.id,
+          id: user.id, // Explicitly use user.id to ensure authorization
           full_name: profile.full_name,
           city: profile.city,
           state: profile.state,
