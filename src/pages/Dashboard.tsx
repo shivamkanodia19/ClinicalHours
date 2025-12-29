@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
+import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,10 +154,12 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch all opportunities
+      // Fetch opportunities with pagination (limit to 50 for performance)
+      const MAX_OPPORTUNITIES = 50;
       const { data: oppsData, error: oppsError, count } = await supabase
         .from("opportunities")
-        .select("*", { count: 'exact' });
+        .select("*", { count: 'exact' })
+        .limit(MAX_OPPORTUNITIES);
 
       if (oppsError) throw oppsError;
 
@@ -240,9 +243,10 @@ const Dashboard = () => {
       
       setSavedOpportunities(processedSaved);
     } catch (error: any) {
+      logger.error("Error loading dashboard data", error);
       toast({
         title: "Error loading data",
-        description: error.message,
+        description: sanitizeErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -333,9 +337,10 @@ const Dashboard = () => {
       // Refresh to ensure consistency
       fetchData();
     } catch (error: any) {
+      logger.error("Error adding opportunity", error);
       toast({
         title: "Error adding opportunity",
-        description: error.message || "Failed to add opportunity. Please try again.",
+        description: sanitizeErrorMessage(error) || "Failed to add opportunity. Please try again.",
         variant: "destructive",
       });
     }
@@ -377,10 +382,11 @@ const Dashboard = () => {
         description: "Opportunity removed from your tracker",
       });
     } catch (error: any) {
+      logger.error("Error removing opportunity", error);
       setOpportunityToDelete(tempOpportunityToDelete);
       toast({
         title: "Error removing opportunity",
-        description: error.message || "Failed to remove opportunity. Please try again.",
+        description: sanitizeErrorMessage(error) || "Failed to remove opportunity. Please try again.",
         variant: "destructive",
       });
     }
@@ -406,9 +412,10 @@ const Dashboard = () => {
         )
       );
     } catch (error: any) {
+      logger.error("Error updating tracker", error);
       toast({
         title: "Error updating tracker",
-        description: error.message,
+        description: sanitizeErrorMessage(error),
         variant: "destructive",
       });
     }

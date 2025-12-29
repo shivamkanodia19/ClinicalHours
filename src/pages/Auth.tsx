@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -162,11 +163,12 @@ const Auth = () => {
         toast.error(error.errors[0].message);
       } else {
         // Sanitize error message - don't expose system details
-        const errorMessage = error?.message?.includes("Invalid login")
-          ? "Invalid email or password"
-          : error?.message?.includes("Email not confirmed")
-          ? "Please verify your email before signing in"
-          : "Unable to sign in. Please check your credentials and try again.";
+        let errorMessage = sanitizeErrorMessage(error);
+        if (error?.message?.includes("Invalid login")) {
+          errorMessage = "Invalid email or password";
+        } else if (error?.message?.includes("Email not confirmed")) {
+          errorMessage = "Please verify your email before signing in";
+        }
         toast.error(errorMessage);
       }
     } finally {

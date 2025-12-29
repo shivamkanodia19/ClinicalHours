@@ -15,6 +15,7 @@ import { REQUIRED_FIELDS } from "@/hooks/useProfileComplete";
 import { toast } from "sonner";
 import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { sanitizeErrorMessage } from "@/lib/errorUtils";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -75,6 +76,37 @@ const Profile = () => {
     }
   }, []);
 
+  // Handle resume download/viewing
+  const handleResumeView = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!resumeSignedUrl || !profile.resume_url) return;
+
+    try {
+      // Fetch the file as a blob to avoid exposing the URL
+      const response = await fetch(resumeSignedUrl);
+      if (!response.ok) {
+        throw new Error("Failed to load resume");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `resume_${profile.full_name || "resume"}.${profile.resume_url.split(".").pop() || "pdf"}`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      logger.error("Error viewing resume", error);
+      toast.error("Unable to open resume. Please try again.");
+    }
+  }, [resumeSignedUrl, profile.resume_url, profile.full_name]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
@@ -119,7 +151,8 @@ const Profile = () => {
         }
       }
     } catch (error: any) {
-      toast.error("Error loading profile: " + error.message);
+      logger.error("Error loading profile", error);
+      toast.error(sanitizeErrorMessage(error));
     }
   };
 
@@ -176,7 +209,8 @@ const Profile = () => {
       
       toast.success("Resume uploaded successfully!");
     } catch (error: any) {
-      toast.error("Error uploading resume: " + error.message);
+      logger.error("Error uploading resume", error);
+      toast.error(sanitizeErrorMessage(error) || "Failed to upload resume. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -253,7 +287,8 @@ const Profile = () => {
 
       toast.success("Profile updated successfully!");
     } catch (error: any) {
-      toast.error("Error updating profile: " + error.message);
+      logger.error("Error updating profile", error);
+      toast.error(sanitizeErrorMessage(error) || "Failed to update profile. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -539,14 +574,13 @@ const Profile = () => {
                     {profile.resume_url && resumeSignedUrl && (
                       <p className="text-sm text-muted-foreground flex items-center gap-2">
                         Current resume:{" "}
-                        <a
-                          href={resumeSignedUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1"
+                        <button
+                          type="button"
+                          onClick={handleResumeView}
+                          className="text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
                         >
-                          View Resume <ExternalLink className="h-3 w-3" />
-                        </a>
+                          Download Resume <ExternalLink className="h-3 w-3" />
+                        </button>
                       </p>
                     )}
                   </div>

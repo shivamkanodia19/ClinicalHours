@@ -11,6 +11,7 @@ import { ProfileGate } from "@/components/ProfileGate";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import {
   Collapsible,
   CollapsibleContent,
@@ -320,7 +321,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
     if (error) {
       console.error("Question submission error:", error);
-      toast({ title: "Error posting question", description: error.message || "Please try again.", variant: "destructive" });
+      toast({ title: "Error posting question", description: sanitizeErrorMessage(error), variant: "destructive" });
     } else {
       // Store timestamp for 5-minute spam prevention
       localStorage.setItem(`last_question_time:${user.id}`, Date.now().toString());
@@ -420,7 +421,7 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
     if (error) {
       console.error("Answer submission error:", error);
-      toast({ title: "Error posting answer", description: error.message || "Please try again.", variant: "destructive" });
+      toast({ title: "Error posting answer", description: sanitizeErrorMessage(error), variant: "destructive" });
     } else {
       toast({ title: "Answer posted!" });
       setNewAnswer(prev => ({ ...prev, [questionId]: "" }));

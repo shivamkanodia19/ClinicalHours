@@ -10,6 +10,7 @@ import { Mail, MapPin, Loader2, Linkedin, Clock, MessageCircle, HelpCircle, Send
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { sanitizeErrorMessage } from "@/lib/errorUtils";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -39,12 +40,9 @@ const Contact = () => {
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error: any) {
       logger.error("Error sending message", error);
-      const errorMessage = error?.message?.includes("rate limit") || error?.message?.includes("too many")
-        ? "Too many requests. Please wait a moment and try again."
-        : "Failed to send message. Please try again later.";
       toast({
         title: "Error",
-        description: errorMessage,
+        description: sanitizeErrorMessage(error) || "Failed to send message. Please try again later.",
         variant: "destructive",
       });
     } finally {

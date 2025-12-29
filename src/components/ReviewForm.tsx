@@ -17,6 +17,7 @@ import {
 import { Star, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { sanitizeErrorMessage } from "@/lib/errorUtils";
 
 interface ReviewFormProps {
   opportunityId: string;
@@ -189,15 +190,10 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       console.error("Review submission error details:", error);
       
       // Sanitize error message
-      let errorMessage = "Failed to submit review. Please try again.";
+      let errorMessage = sanitizeErrorMessage(error);
       
-      if (error?.code === "23505") {
+      if (error?.code === "23505" || error?.message?.includes("duplicate") || error?.message?.includes("already exists")) {
         errorMessage = "You have already submitted a review for this opportunity";
-      } else if (error?.message?.includes("duplicate") || error?.message?.includes("already exists")) {
-        errorMessage = "You have already submitted a review for this opportunity";
-      } else if (error?.message) {
-        // Show the actual error message for debugging
-        errorMessage = error.message;
       }
       
       toast.error(errorMessage);

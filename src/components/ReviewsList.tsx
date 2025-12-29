@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,43 +56,48 @@ const ReviewsList = ({ opportunityId, refreshTrigger }: ReviewsListProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const fetchReviews = useCallback(async () => {
+    setLoading(true);
+    try {
+      // First get total count
+      const { count } = await supabase
+        .from("reviews")
+        .select("*", { count: "exact", head: true })
+        .eq("opportunity_id", opportunityId);
+
+      setTotalCount(count || 0);
+
+      // Then fetch the actual reviews with extended profile data
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*, profiles(full_name, university, major, graduation_year, clinical_hours)")
+        .eq("opportunity_id", opportunityId)
+        .order("created_at", { ascending: false })
+        .limit(displayCount);
+
+      if (error) throw error;
+      setReviews((data as Review[]) || []);
+    } catch (error) {
+      logger.error("Error fetching reviews", error);
+      // Show user-friendly error message
+      toast({
+        title: "Error loading reviews",
+        description: "Unable to load reviews. Please try refreshing the page.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [opportunityId, displayCount]);
+
   useEffect(() => {
-    const fetchReviews = async () => {
-      setLoading(true);
-      try {
-        // First get total count
-        const { count } = await supabase
-          .from("reviews")
-          .select("*", { count: "exact", head: true })
-          .eq("opportunity_id", opportunityId);
-
-        setTotalCount(count || 0);
-
-        // Then fetch the actual reviews with extended profile data
-        const { data, error } = await supabase
-          .from("reviews")
-          .select("*, profiles(full_name, university, major, graduation_year, clinical_hours)")
-          .eq("opportunity_id", opportunityId)
-          .order("created_at", { ascending: false })
-          .limit(displayCount);
-
-        if (error) throw error;
-        setReviews((data as Review[]) || []);
-      } catch (error) {
-        logger.error("Error fetching reviews", error);
-        // Show user-friendly error message
-        toast({
-          title: "Error loading reviews",
-          description: "Unable to load reviews. Please try refreshing the page.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchReviews();
-  }, [opportunityId, refreshTrigger, displayCount]);
+  }, [fetchReviews]);
+
+  // Reset display count when opportunity changes or refresh triggered
+  useEffect(() => {
+    setDisplayCount(INITIAL_REVIEWS);
+  }, [opportunityId, refreshTrigger]);
 
   // Reset display count when opportunity changes or refresh triggered
   useEffect(() => {
