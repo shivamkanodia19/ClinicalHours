@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import heroVideo1 from "@/assets/hero-video-1.mp4";
 import heroVideo2 from "@/assets/hero-video-2.mp4";
 import heroVideo3 from "@/assets/hero-video-3.mp4";
@@ -10,6 +11,7 @@ const HeroVideoCarousel = () => {
   const [activeVideo, setActiveVideo] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"none" | "left">("none");
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const isMobileDevice = useIsMobile();
 
   const handleVideoEnd = useCallback(() => {
     // Reset next video to beginning BEFORE transition starts
@@ -34,9 +36,17 @@ const HeroVideoCarousel = () => {
     const video = videoRefs.current[activeVideo];
     if (video) {
       video.currentTime = 0;
-      video.play().catch(() => {});
+      // On mobile, try to play but don't force (autoplay may be blocked)
+      if (!isMobileDevice) {
+        video.play().catch(() => {});
+      } else {
+        // On mobile, only attempt play if user has interacted
+        video.play().catch(() => {
+          // Autoplay blocked on mobile - this is expected behavior
+        });
+      }
     }
-  }, [activeVideo]);
+  }, [activeVideo, isMobileDevice]);
 
   // Set up video end listener
   useEffect(() => {
@@ -49,6 +59,28 @@ const HeroVideoCarousel = () => {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
+      <style>{`
+        /* Hide all video controls on mobile */
+        video::-webkit-media-controls {
+          display: none !important;
+        }
+        video::-webkit-media-controls-enclosure {
+          display: none !important;
+        }
+        video::-webkit-media-controls-panel {
+          display: none !important;
+        }
+        video::-webkit-media-controls-play-button {
+          display: none !important;
+        }
+        video::-webkit-media-controls-start-playback-button {
+          display: none !important;
+        }
+        /* Hide native controls */
+        video[controls] {
+          display: none;
+        }
+      `}</style>
       {videos.map((src, index) => {
         const isActive = index === activeVideo;
         const isNext = index === (activeVideo + 1) % videos.length;
@@ -78,9 +110,16 @@ const HeroVideoCarousel = () => {
               ref={(el) => (videoRefs.current[index] = el)}
               muted
               playsInline
-              autoPlay={index === 0}
-              preload={index === 0 ? "auto" : "none"}
-              className="w-full h-full object-cover"
+              autoPlay={index === 0 && !isMobileDevice}
+              controls={false}
+              disablePictureInPicture
+              disableRemotePlayback
+              preload={index === 0 ? (isMobileDevice ? "metadata" : "auto") : "none"}
+              className="w-full h-full object-cover pointer-events-none"
+              style={{ 
+                WebkitPlaysinline: true,
+                playsInline: true,
+              }}
             >
               <source src={src} type="video/mp4" />
             </video>
