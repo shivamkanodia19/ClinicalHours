@@ -113,7 +113,7 @@ const Navigation = () => {
                 to="/auth"
                 className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
               >
-                {isHomePage ? "Login/Signup" : "Log In"}
+                Login / Sign Up
               </Link>
             )}
           </div>
@@ -167,7 +167,7 @@ const Navigation = () => {
                 onClick={() => setIsOpen(false)}
                 className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
               >
-                {isHomePage ? "Login/Signup" : "Log In"}
+                Login / Sign Up
               </Link>
             )}
           </div>

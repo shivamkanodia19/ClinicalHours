@@ -8,7 +8,6 @@ import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -490,7 +489,6 @@ const Dashboard = () => {
       <Navigation />
       
       <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
-        <Breadcrumbs />
         {/* Welcome Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">

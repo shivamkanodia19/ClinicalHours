@@ -19,12 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bell, CalendarPlus } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { downloadIcsFile, createOpportunityReminder } from "@/lib/calendar";
 
@@ -128,21 +122,13 @@ export function ReminderDialog({
   }).flat();
 
   return (
-    <TooltipProvider>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" aria-label="Set reminder">
-                <Bell className="h-4 w-4 mr-2" />
-                Remind Me
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Set a reminder for this opportunity</p>
-            </TooltipContent>
-          </Tooltip>
-        </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Bell className="h-4 w-4 mr-2" />
+          Remind Me
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Set Reminder</DialogTitle>
@@ -206,6 +192,5 @@ export function ReminderDialog({
         </div>
       </DialogContent>
     </Dialog>
-    </TooltipProvider>
   );
 }
