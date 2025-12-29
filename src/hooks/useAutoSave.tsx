@@ -20,16 +20,6 @@ export function useAutoSave<T extends Record<string, any>>(
     // Skip saving on initial mount
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      // Try to load saved data
-      try {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          return parsed; // Return saved data to be used by component
-        }
-      } catch (error) {
-        // Ignore errors loading saved data
-      }
       return;
     }
 
@@ -46,7 +36,7 @@ export function useAutoSave<T extends Record<string, any>>(
     }
   }, [formData, storageKey, enabled]);
 
-  // Load saved data on mount
+  // Load saved data
   const loadSavedData = (): T | null => {
     if (!enabled) return null;
     try {
