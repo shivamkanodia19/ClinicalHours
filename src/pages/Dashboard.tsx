@@ -843,9 +843,14 @@ const Dashboard = () => {
                 <div className="text-center pt-4">
                   <Button asChild variant="outline">
                     <Link to="/opportunities">
-                      View All {filteredOpportunities.length} Opportunities <ArrowRight className="h-4 w-4 ml-2" />
+                      View All {totalOpportunities > 50 ? `50+` : totalOpportunities} Opportunities <ArrowRight className="h-4 w-4 ml-2" />
                     </Link>
                   </Button>
+                  {totalOpportunities > 50 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Showing first 50 opportunities. Use the search to find more.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
