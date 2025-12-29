@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -116,11 +116,15 @@ const Dashboard = () => {
   const [totalOpportunities, setTotalOpportunities] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [opportunityToDelete, setOpportunityToDelete] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
     }
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
@@ -313,8 +317,10 @@ const Dashboard = () => {
         .single();
 
       if (error) {
-        // Rollback optimistic update
-        setSavedOpportunities(prev => prev.filter(s => s.id !== `temp-${opportunityId}`));
+        // Rollback optimistic update only if component is still mounted
+        if (isMountedRef.current) {
+          setSavedOpportunities(prev => prev.filter(s => s.id !== `temp-${opportunityId}`));
+        }
         
         // Handle duplicate entry error
         if (error.code === '23505') {
@@ -327,8 +333,8 @@ const Dashboard = () => {
         throw error;
       }
 
-      // Replace optimistic update with real data
-      if (data && opportunityToAdd) {
+      // Replace optimistic update with real data only if component is still mounted
+      if (isMountedRef.current && data && opportunityToAdd) {
         setSavedOpportunities(prev => {
           const filtered = prev.filter(s => s.id !== `temp-${opportunityId}`);
           return [...filtered, {
@@ -379,8 +385,8 @@ const Dashboard = () => {
         .eq("id", savedId);
 
       if (error) {
-        // Rollback optimistic update
-        if (opportunityToRemove) {
+        // Rollback optimistic update only if component is still mounted
+        if (isMountedRef.current && opportunityToRemove) {
           setSavedOpportunities(prev => [...prev, opportunityToRemove]);
         }
         throw error;
@@ -742,7 +748,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Available Opportunities */}
-        <Card className="mb-8 bg-card border-border">
+        <Card id="available-opportunities" className="mb-8 bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground">Available Opportunities</CardTitle>
             <CardDescription>
