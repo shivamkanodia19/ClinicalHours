@@ -279,7 +279,11 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Share details about your experience..."
                 rows={4}
+                maxLength={2000}
               />
+              <p className="text-xs text-muted-foreground text-right">
+                {comment.length}/2000 characters
+              </p>
             </div>
           </div>
 

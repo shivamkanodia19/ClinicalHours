@@ -110,6 +110,7 @@ const Dashboard = () => {
   const [savedOpportunities, setSavedOpportunities] = useState<SavedOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [totalOpportunities, setTotalOpportunities] = useState(0);
@@ -127,6 +128,14 @@ const Dashboard = () => {
       fetchData();
     }
   }, [user, userLocation]); // Re-fetch and re-sort when location changes
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -423,8 +432,8 @@ const Dashboard = () => {
 
   const filteredOpportunities = opportunities.filter((opp) => {
     const matchesSearch =
-      opp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opp.location.toLowerCase().includes(searchTerm.toLowerCase());
+      opp.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      opp.location.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || opp.type === typeFilter;
     const notSaved = !savedOpportunities.some((s) => s.opportunity_id === opp.id);
     return matchesSearch && matchesType && notSaved;

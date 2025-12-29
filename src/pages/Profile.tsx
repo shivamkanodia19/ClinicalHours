@@ -16,6 +16,13 @@ import { toast } from "sonner";
 import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { 
+  validatePhoneNumber, 
+  validateGPA, 
+  validateGraduationYear, 
+  validateLinkedInURL,
+  sanitizeProfileData 
+} from "@/lib/inputValidation";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -228,59 +235,60 @@ const Profile = () => {
         return;
       }
 
-      // Validate GPA range if provided
-      if (profile.gpa && (parseFloat(profile.gpa) < 0 || parseFloat(profile.gpa) > 4)) {
-        toast.error("GPA must be between 0 and 4.0");
+      // Validate phone number
+      const phoneValidation = validatePhoneNumber(profile.phone);
+      if (!phoneValidation.valid) {
+        toast.error(phoneValidation.error || "Invalid phone number");
         setLoading(false);
         return;
       }
 
-      // Validate graduation year if provided
-      if (profile.graduation_year) {
-        const year = parseInt(profile.graduation_year);
-        const currentYear = new Date().getFullYear();
-        if (year < 1900 || year > currentYear + 10) {
-          toast.error(`Graduation year must be between 1900 and ${currentYear + 10}`);
-          setLoading(false);
-          return;
-        }
+      // Validate GPA
+      const gpaValidation = validateGPA(profile.gpa);
+      if (!gpaValidation.valid) {
+        toast.error(gpaValidation.error || "Invalid GPA");
+        setLoading(false);
+        return;
       }
 
-      // Validate LinkedIn URL format if provided
-      if (profile.linkedin_url && profile.linkedin_url.trim()) {
-        try {
-          const url = new URL(profile.linkedin_url);
-          if (!url.hostname.includes('linkedin.com')) {
-            toast.error("Please enter a valid LinkedIn URL");
-            setLoading(false);
-            return;
-          }
-        } catch {
-          toast.error("Please enter a valid LinkedIn URL");
-          setLoading(false);
-          return;
-        }
+      // Validate graduation year
+      const yearValidation = validateGraduationYear(profile.graduation_year);
+      if (!yearValidation.valid) {
+        toast.error(yearValidation.error || "Invalid graduation year");
+        setLoading(false);
+        return;
       }
+
+      // Validate LinkedIn URL
+      const linkedInValidation = validateLinkedInURL(profile.linkedin_url);
+      if (!linkedInValidation.valid) {
+        toast.error(linkedInValidation.error || "Invalid LinkedIn URL");
+        setLoading(false);
+        return;
+      }
+
+      // Sanitize all inputs before submission
+      const sanitizedData = sanitizeProfileData(profile);
 
       const { error } = await supabase
         .from("profiles")
         .upsert({
           id: user.id, // Explicitly use user.id to ensure authorization
-          full_name: profile.full_name,
-          city: profile.city,
-          state: profile.state,
-          phone: profile.phone,
-          university: profile.university,
-          major: profile.major,
-          gpa: profile.gpa ? parseFloat(profile.gpa) : null,
-          graduation_year: profile.graduation_year ? parseInt(profile.graduation_year) : null,
-          clinical_hours: profile.clinical_hours ? parseInt(profile.clinical_hours) : 0,
-          pre_med_track: profile.pre_med_track,
-          bio: profile.bio,
-          career_goals: profile.career_goals,
-          research_experience: profile.research_experience,
-          linkedin_url: profile.linkedin_url,
-          resume_url: profile.resume_url,
+          full_name: sanitizedData.full_name,
+          city: sanitizedData.city,
+          state: sanitizedData.state,
+          phone: sanitizedData.phone,
+          university: sanitizedData.university,
+          major: sanitizedData.major,
+          gpa: sanitizedData.gpa ? parseFloat(sanitizedData.gpa) : null,
+          graduation_year: sanitizedData.graduation_year ? parseInt(sanitizedData.graduation_year) : null,
+          clinical_hours: sanitizedData.clinical_hours ? parseInt(sanitizedData.clinical_hours) : 0,
+          pre_med_track: sanitizedData.pre_med_track,
+          bio: sanitizedData.bio,
+          career_goals: sanitizedData.career_goals,
+          research_experience: sanitizedData.research_experience,
+          linkedin_url: sanitizedData.linkedin_url,
+          resume_url: sanitizedData.resume_url,
         });
 
       if (error) throw error;

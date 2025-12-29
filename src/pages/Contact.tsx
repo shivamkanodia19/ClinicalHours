@@ -239,7 +239,11 @@ const Contact = () => {
                     placeholder="Tell me more..."
                     rows={6}
                     required
+                    maxLength={5000}
                   />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {formData.message.length}/5000 characters
+                  </p>
                 </div>
                 <div className="flex flex-col gap-3">
                   <Button type="submit" className="w-full" disabled={loading}>
