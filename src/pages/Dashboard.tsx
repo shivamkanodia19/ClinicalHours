@@ -52,18 +52,6 @@ import {
 
 import { Opportunity, SavedOpportunity } from "@/types";
 
-interface SavedOpportunity {
-  id: string;
-  opportunity_id: string;
-  contacted: boolean;
-  applied: boolean;
-  heard_back: boolean;
-  scheduled_interview: boolean;
-  deadline?: string;
-  notes?: string;
-  opportunities: Opportunity;
-}
-
 const tips = [
   {
     icon: Target,

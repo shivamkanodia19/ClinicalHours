@@ -26,6 +26,12 @@ export interface SavedOpportunity {
   opportunity_id: string;
   user_id: string;
   created_at: string;
+  contacted?: boolean;
+  applied?: boolean;
+  heard_back?: boolean;
+  scheduled_interview?: boolean;
+  deadline?: string;
+  notes?: string;
   opportunity?: Opportunity;
 }
 
