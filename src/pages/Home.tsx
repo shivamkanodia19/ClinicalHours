@@ -315,7 +315,7 @@ const Home = () => {
               <div className="order-1 md:order-2 flex justify-center">
                 <div className="relative w-80 h-80 bg-white/5 flex items-center justify-center group hover:bg-white/10 transition-all duration-500 hover:scale-105">
                   <div className="absolute inset-0 border border-white/10 group-hover:border-white/20 transition-colors duration-500"></div>
-                  <img src={communityImage} alt="" className="w-56 opacity-60 group-hover:opacity-80 transition-opacity duration-500 relative z-10" />
+                  <img src={communityImage} alt="" className="w-56 opacity-60 group-hover:opacity-80 transition-opacity duration-500 relative z-10" loading="lazy" />
                   <div className="absolute inset-0 blur-2xl opacity-0 group-hover:opacity-20 bg-white transition-opacity duration-500"></div>
                 </div>
               </div>

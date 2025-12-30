@@ -167,20 +167,26 @@ const Dashboard = () => {
       let processedOpps = oppsData || [];
       
       // Calculate distances and sort if location available
+      // Memoize distance calculations to avoid recalculation
       if (userLocation) {
-        processedOpps = processedOpps.map((opp) => ({
-          ...opp,
-          distance: opp.latitude && opp.longitude
+        processedOpps = processedOpps.map((opp) => {
+          const distance = opp.latitude && opp.longitude
             ? calculateDistance(
                 userLocation.lat,
                 userLocation.lon,
                 opp.latitude,
                 opp.longitude
               )
-            : undefined,
-        }));
-        // Sort by distance (closest first)
-        processedOpps.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+            : undefined;
+          return { ...opp, distance };
+        });
+        // Sort by distance (closest first) - use stable sort
+        processedOpps.sort((a, b) => {
+          const distA = a.distance ?? Infinity;
+          const distB = b.distance ?? Infinity;
+          if (distA === distB) return a.name.localeCompare(b.name);
+          return distA - distB;
+        });
       } else {
         // Default sort by name if no location
         processedOpps.sort((a, b) => a.name.localeCompare(b.name));

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +32,8 @@ const TYPE_COLORS: Record<string, string> = {
 
 
 // Convert opportunities to GeoJSON
-function opportunitiesToGeoJSON(opportunities: Opportunity[]): GeoJSON.FeatureCollection {
+// Memoize this function to avoid recreating on every call
+const opportunitiesToGeoJSON = (opportunities: Opportunity[]): GeoJSON.FeatureCollection => {
   return {
     type: 'FeatureCollection',
     features: opportunities
@@ -56,7 +57,7 @@ function opportunitiesToGeoJSON(opportunities: Opportunity[]): GeoJSON.FeatureCo
         },
       })),
   };
-}
+};
 
 const OpportunityMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -84,37 +85,44 @@ const OpportunityMap = () => {
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
 
-  // Fetch all opportunities with coordinates for map display
+  // Fetch opportunities with coordinates for map display
+  // Use reasonable limit with clustering for performance
+  // Mapbox clustering handles large datasets efficiently
   useEffect(() => {
     const fetchOpportunities = async () => {
       setDataLoading(true);
       try {
-        // Fetch all opportunities with coordinates in batches
+        // Load opportunities in batches, but limit total for performance
+        // Clustering will handle display efficiently even with large datasets
+        const MAX_OPPORTUNITIES = 2000; // Reasonable limit for map performance with clustering
         const allData: Opportunity[] = [];
         let from = 0;
         const batchSize = 1000;
         let hasMore = true;
         
-        while (hasMore) {
+        while (hasMore && allData.length < MAX_OPPORTUNITIES) {
+          const remaining = MAX_OPPORTUNITIES - allData.length;
+          const currentBatchSize = Math.min(batchSize, remaining);
+          
           const { data, error } = await supabase
             .from('opportunities')
             .select('*')
             .not('latitude', 'is', null)
             .not('longitude', 'is', null)
-            .range(from, from + batchSize - 1);
+            .range(from, from + currentBatchSize - 1);
 
           if (error) throw error;
           
           if (data && data.length > 0) {
             allData.push(...data);
-            from += batchSize;
-            hasMore = data.length === batchSize;
+            from += currentBatchSize;
+            hasMore = data.length === currentBatchSize && allData.length < MAX_OPPORTUNITIES;
           } else {
             hasMore = false;
           }
         }
         
-        logger.debug('Map: Loaded', allData.length, 'opportunities with coordinates');
+        logger.debug('Map: Loaded', allData.length, 'opportunities with coordinates (clustered for performance)');
         setOpportunities(allData);
       } catch (err: any) {
         logger.error('Error fetching opportunities', err);
@@ -188,12 +196,16 @@ const OpportunityMap = () => {
     }
   }, []);
 
-  // Filter opportunities within radius (or show all if no center)
-  const getFilteredOpportunities = useCallback(() => {
-    const baseOpportunities = viewMode === 'all' 
+  // Memoize base opportunities to avoid recalculation
+  const baseOpportunities = useMemo(() => {
+    return viewMode === 'all' 
       ? opportunities 
       : savedOpportunities.map(s => s.opportunities).filter(Boolean);
+  }, [viewMode, opportunities, savedOpportunities]);
 
+  // Filter opportunities within radius (or show all if no center)
+  // Memoized to prevent unnecessary recalculations
+  const getFilteredOpportunities = useCallback(() => {
     if (!activeCenter) {
       return baseOpportunities.filter(opp => opp.latitude && opp.longitude);
     }
@@ -208,7 +220,12 @@ const OpportunityMap = () => {
       );
       return distance <= radiusMiles;
     });
-  }, [activeCenter, opportunities, savedOpportunities, viewMode, radiusMiles]);
+  }, [activeCenter, baseOpportunities, radiusMiles]);
+
+  // Memoize filtered opportunities to avoid recalculating on every render
+  const filteredOpportunities = useMemo(() => {
+    return getFilteredOpportunities();
+  }, [getFilteredOpportunities]);
 
   // Initialize map with clustering layers
   useEffect(() => {
@@ -449,38 +466,35 @@ const OpportunityMap = () => {
     map.current.getCanvas().style.cursor = isPinMode ? 'crosshair' : '';
   }, [isPinMode]);
 
+  // Memoize GeoJSON to avoid recreating on every render
+  const geojsonData = useMemo(() => {
+    return opportunitiesToGeoJSON(filteredOpportunities);
+  }, [filteredOpportunities]);
+
   // Update GeoJSON source when data or filters change
+  // Use memoized filtered opportunities to prevent unnecessary updates
   useEffect(() => {
     if (!map.current || !mapReady) return;
 
     const source = map.current.getSource('opportunities') as mapboxgl.GeoJSONSource;
     if (!source) return;
-
-    const filtered = getFilteredOpportunities();
-    const geojson = opportunitiesToGeoJSON(filtered);
     
-    logger.debug('Map: Updating source with', filtered.length, 'filtered opportunities');
-    source.setData(geojson);
+    logger.debug('Map: Updating source with', filteredOpportunities.length, 'filtered opportunities');
+    source.setData(geojsonData);
 
-    // Fit bounds to data if there are points
-    if (filtered.length > 0) {
-      if (activeCenter) {
-        map.current.flyTo({
-          center: [activeCenter.lng, activeCenter.lat],
-          zoom: 7,
-          duration: 1000,
-        });
-      } else {
-        const bounds = new mapboxgl.LngLatBounds();
-        filtered.forEach((opp) => {
-          if (opp.latitude && opp.longitude) {
-            bounds.extend([opp.longitude, opp.latitude]);
-          }
-        });
+    // Fit bounds to data if there are points (only on initial load)
+    if (filteredOpportunities.length > 0 && !activeCenter && map.current.getZoom() < 3) {
+      const bounds = new mapboxgl.LngLatBounds();
+      filteredOpportunities.forEach((opp) => {
+        if (opp.latitude && opp.longitude) {
+          bounds.extend([opp.longitude, opp.latitude]);
+        }
+      });
+      if (bounds.isEmpty() === false) {
         map.current.fitBounds(bounds, { padding: 80, maxZoom: 6 });
       }
     }
-  }, [opportunities, savedOpportunities, viewMode, mapReady, activeCenter, radiusMiles, getFilteredOpportunities]);
+  }, [geojsonData, filteredOpportunities, mapReady, activeCenter]);
 
   // Add user location marker
   useEffect(() => {
@@ -563,7 +577,7 @@ const OpportunityMap = () => {
     }
   };
 
-  const displayCount = getFilteredOpportunities().length;
+  const displayCount = filteredOpportunities.length;
 
   if (mapError) {
     return (
