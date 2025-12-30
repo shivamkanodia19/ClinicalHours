@@ -116,10 +116,6 @@ const HeroVideoCarousel = () => {
               disableRemotePlayback
               preload={index === 0 ? (isMobileDevice ? "metadata" : "auto") : "none"}
               className="w-full h-full object-cover pointer-events-none"
-              style={{ 
-                WebkitPlaysinline: true,
-                playsInline: true,
-              }}
             >
               <source src={src} type="video/mp4" />
             </video>

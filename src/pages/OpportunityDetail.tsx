@@ -57,7 +57,11 @@ const OpportunityDetail = () => {
 
       setLoading(true);
       try {
-        const { data, error } = await fetchOpportunityById(id);
+        const { data, error } = await supabase
+          .from("opportunities_with_ratings")
+          .select("*")
+          .eq("id", id)
+          .single();
 
         if (error) throw error;
 

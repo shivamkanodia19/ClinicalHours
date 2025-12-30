@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Map, List, MapPin, RotateCcw } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { Opportunity } from '@/types';
+import { calculateDistance } from '@/lib/geolocation';
 
-// Opportunity type imported from @/types
 interface SavedOpportunity {
   opportunity_id: string;
   opportunities: Opportunity;
@@ -28,7 +29,7 @@ const TYPE_COLORS: Record<string, string> = {
   volunteer: '#EC4899',
 };
 
-// calculateDistance imported from @/lib/geolocation
+
 
 // Convert opportunities to GeoJSON
 function opportunitiesToGeoJSON(opportunities: Opportunity[]): GeoJSON.FeatureCollection {
