@@ -85,38 +85,32 @@ const OpportunityMap = () => {
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
 
-  // Fetch opportunities with coordinates for map display
-  // Use reasonable limit with clustering for performance
+  // Fetch all opportunities with coordinates for map display
   // Mapbox clustering handles large datasets efficiently
   useEffect(() => {
     const fetchOpportunities = async () => {
       setDataLoading(true);
       try {
-        // Load opportunities in batches, but limit total for performance
-        // Clustering will handle display efficiently even with large datasets
-        const MAX_OPPORTUNITIES = 2000; // Reasonable limit for map performance with clustering
+        // Load all opportunities in batches
         const allData: Opportunity[] = [];
         let from = 0;
         const batchSize = 1000;
         let hasMore = true;
         
-        while (hasMore && allData.length < MAX_OPPORTUNITIES) {
-          const remaining = MAX_OPPORTUNITIES - allData.length;
-          const currentBatchSize = Math.min(batchSize, remaining);
-          
+        while (hasMore) {
           const { data, error } = await supabase
             .from('opportunities')
             .select('*')
             .not('latitude', 'is', null)
             .not('longitude', 'is', null)
-            .range(from, from + currentBatchSize - 1);
+            .range(from, from + batchSize - 1);
 
           if (error) throw error;
           
           if (data && data.length > 0) {
             allData.push(...data);
-            from += currentBatchSize;
-            hasMore = data.length === currentBatchSize && allData.length < MAX_OPPORTUNITIES;
+            from += batchSize;
+            hasMore = data.length === batchSize;
           } else {
             hasMore = false;
           }
