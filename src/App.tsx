@@ -20,7 +20,6 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const MapView = lazy(() => import("./pages/MapView"));
 const AdminImportHospitals = lazy(() => import("./pages/AdminImportHospitals"));
-const AdminFindMissingLinks = lazy(() => import("./pages/AdminFindMissingLinks"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
@@ -76,7 +75,6 @@ function AppContent() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/map" element={<MapView />} />
               <Route path="/admin/import-hospitals" element={<AdminImportHospitals />} />
-              <Route path="/admin/find-missing-links" element={<AdminFindMissingLinks />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/verify" element={<VerifyEmail />} />
