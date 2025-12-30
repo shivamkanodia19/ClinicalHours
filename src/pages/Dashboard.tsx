@@ -6,8 +6,8 @@ import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
-import { Opportunity, SavedOpportunity } from "@/types";
-import { calculateDistance, calculateDistances, sortByDistance, getUserLocation } from "@/lib/geolocation";
+import { Opportunity } from "@/types";
+import { calculateDistance } from "@/lib/geolocation";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Opportunity, SavedOpportunity } from "@/types";
+// Extended SavedOpportunity with nested opportunities for Dashboard
+interface DashboardSavedOpportunity {
+  id: string;
+  opportunity_id: string;
+  contacted?: boolean;
+  applied?: boolean;
+  heard_back?: boolean;
+  scheduled_interview?: boolean;
+  deadline?: string;
+  notes?: string;
+  opportunities?: Opportunity;
+}
 
 const tips = [
   {
@@ -82,7 +93,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [savedOpportunities, setSavedOpportunities] = useState<SavedOpportunity[]>([]);
+  const [savedOpportunities, setSavedOpportunities] = useState<DashboardSavedOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -258,7 +269,7 @@ const Dashboard = () => {
     // Optimistic update: add to local state immediately
     const opportunityToAdd = opportunities.find(opp => opp.id === opportunityId);
     if (opportunityToAdd) {
-      const optimisticSaved: SavedOpportunity = {
+      const optimisticSaved: DashboardSavedOpportunity = {
         id: `temp-${opportunityId}`,
         opportunity_id: opportunityId,
         contacted: false,

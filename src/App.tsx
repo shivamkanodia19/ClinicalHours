@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
-import { useAutoImportHospitals } from "./hooks/useAutoImportHospitals";
 import { useAppKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 // Lazy load pages for code splitting
@@ -55,8 +54,8 @@ function KeyboardShortcuts() {
 }
 
 function AppContent() {
-  useAutoImportHospitals();
-  
+  // Hospital import is now handled only through the admin page
+  // at /admin/import-hospitals - requires admin authentication
   return (
     <>
       <Toaster />
