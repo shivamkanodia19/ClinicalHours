@@ -10,6 +10,8 @@ export interface FetchOpportunitiesOptions {
   searchTerm?: string;
   limit?: number;
   offset?: number;
+  userLocation?: { lat: number; lng: number };
+  sortByDistance?: boolean;
 }
 
 export interface FetchOpportunitiesResult {
@@ -48,12 +50,12 @@ export async function fetchOpportunities(
       }
     }
 
-    // Apply pagination
-    if (limit) {
-      query = query.limit(limit);
-    }
+    // Apply pagination with proper defaults
+    const pageLimit = limit || 20; // Default to 20 items per page
     if (offset !== undefined) {
-      query = query.range(offset, offset + (limit || 1000) - 1);
+      query = query.range(offset, offset + pageLimit - 1);
+    } else {
+      query = query.limit(pageLimit);
     }
 
     const { data, error, count } = await query;

@@ -83,45 +83,35 @@ const OpportunityMap = () => {
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
 
-  // Fetch all opportunities with pagination to get all records
+  // Fetch opportunities with reasonable limit for map display
+  // For better performance, we limit to 500 opportunities initially
+  // TODO: Implement viewport-based loading for even better performance
   useEffect(() => {
-    const fetchAllOpportunities = async () => {
+    const fetchOpportunities = async () => {
       setDataLoading(true);
       try {
-        const allData: Opportunity[] = [];
-        let from = 0;
-        const batchSize = 1000;
-        let hasMore = true;
+        const MAX_MAP_OPPORTUNITIES = 500; // Reasonable limit for map performance
         
-        while (hasMore) {
-          const { data, error } = await supabase
-            .from('opportunities')
-            .select('*')
-            .not('latitude', 'is', null)
-            .not('longitude', 'is', null)
-            .range(from, from + batchSize - 1);
+        const { data, error } = await supabase
+          .from('opportunities')
+          .select('*')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null)
+          .limit(MAX_MAP_OPPORTUNITIES);
 
-          if (error) throw error;
-          
-          if (data && data.length > 0) {
-            allData.push(...data);
-            from += batchSize;
-            hasMore = data.length === batchSize;
-          } else {
-            hasMore = false;
-          }
-        }
+        if (error) throw error;
         
-        logger.debug('Map: Loaded', allData.length, 'opportunities with coordinates');
-        setOpportunities(allData);
+        logger.debug('Map: Loaded', data?.length || 0, 'opportunities with coordinates');
+        setOpportunities(data || []);
       } catch (err: any) {
         logger.error('Error fetching opportunities', err);
+        setMapError('Failed to load opportunities. Please refresh the page.');
       } finally {
         setDataLoading(false);
       }
     };
 
-    fetchAllOpportunities();
+    fetchOpportunities();
   }, []);
 
   // Fetch saved opportunities if user is logged in

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 import { Opportunity, UserLocation } from "@/types";
@@ -29,41 +29,55 @@ export function useOpportunities({
   pageSize = 20,
 }: UseOpportunitiesOptions): UseOpportunitiesResult {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [allOpportunities, setAllOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
 
-  // Reset when filters change
+  // Reset page when filters change
   useEffect(() => {
     setPage(0);
     setHasMore(true);
   }, [filterType, searchTerm, userLocation?.lat, userLocation?.lng]);
 
-  // Fetch ALL opportunities once, then sort and paginate client-side
-  const fetchAllOpportunities = useCallback(async () => {
+  // Fetch opportunities with server-side pagination
+  const fetchOpportunitiesPage = useCallback(async (pageNum: number) => {
     setLoading(true);
     try {
-      // Use service layer for API call
-      const { data, error } = await fetchOpportunities({
+      const offset = pageNum * pageSize;
+      
+      // Use service layer for API call with pagination
+      const { data, error, count } = await fetchOpportunities({
         filterType: filterType === "all" ? undefined : filterType,
         searchTerm: searchTerm?.trim() || undefined,
+        limit: pageSize,
+        offset,
+        userLocation,
       });
 
       if (error) throw error;
 
-      let processedData: Opportunity[] = data;
+      let processedData: Opportunity[] = data || [];
 
-      // Calculate distance and sort if user location available
+      // Calculate distance and sort if user location available (client-side for now)
+      // TODO: Move to server-side with PostGIS when available
       if (userLocation) {
         processedData = calculateDistances(processedData, userLocation);
         processedData = sortByDistance(processedData);
       }
 
-      setAllOpportunities(processedData);
-      setTotalCount(processedData.length);
+      // For first page, replace data; for subsequent pages, append
+      if (pageNum === 0) {
+        setOpportunities(processedData);
+      } else {
+        setOpportunities((prev) => [...prev, ...processedData]);
+      }
+
+      // Update total count and hasMore
+      const total = count || processedData.length;
+      setTotalCount(total);
+      setHasMore(processedData.length === pageSize && (offset + pageSize < total));
     } catch (error) {
       logger.error("Error fetching opportunities", error);
       toast({
@@ -74,20 +88,12 @@ export function useOpportunities({
     } finally {
       setLoading(false);
     }
-  }, [filterType, searchTerm, userLocation, toast]);
+  }, [filterType, searchTerm, userLocation, pageSize, toast]);
 
-  // Fetch all opportunities when filters change
+  // Fetch opportunities when filters or page changes
   useEffect(() => {
-    fetchAllOpportunities();
-  }, [fetchAllOpportunities]);
-
-  // Paginate from already-sorted data
-  useEffect(() => {
-    const endIndex = (page + 1) * pageSize;
-    const paginatedData = allOpportunities.slice(0, endIndex);
-    setOpportunities(paginatedData);
-    setHasMore(endIndex < allOpportunities.length);
-  }, [allOpportunities, page, pageSize]);
+    fetchOpportunitiesPage(page);
+  }, [fetchOpportunitiesPage, page]);
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {

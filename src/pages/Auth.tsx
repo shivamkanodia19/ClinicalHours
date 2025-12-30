@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ const Auth = () => {
   const [signedUpUserId, setSignedUpUserId] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -63,6 +64,13 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmittingRef.current || loading) {
+      return;
+    }
+    
+    isSubmittingRef.current = true;
     setLoading(true);
 
     try {
@@ -144,6 +152,13 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmittingRef.current || loading) {
+      return;
+    }
+    
+    isSubmittingRef.current = true;
     setLoading(true);
 
     try {
@@ -173,6 +188,7 @@ const Auth = () => {
       }
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -183,6 +199,12 @@ const Auth = () => {
       return;
     }
     
+    // Prevent double submission
+    if (isSubmittingRef.current || loading) {
+      return;
+    }
+    
+    isSubmittingRef.current = true;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-password-reset", {
@@ -202,6 +224,7 @@ const Auth = () => {
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

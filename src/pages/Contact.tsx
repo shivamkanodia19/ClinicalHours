@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ const Contact = () => {
     subject: "",
     message: "",
   });
+  const isSubmittingRef = useRef(false);
 
   // Auto-save contact form data
   const { loadSavedData, clearSavedData } = useAutoSave(formData, "contact-form-draft", true);
@@ -36,6 +37,13 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmittingRef.current || loading) {
+      return;
+    }
+    
+    isSubmittingRef.current = true;
     setLoading(true);
 
     try {
@@ -61,6 +69,7 @@ const Contact = () => {
       });
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

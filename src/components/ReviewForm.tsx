@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
@@ -46,10 +46,16 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
     { key: "staff_friendliness", label: "Staff Friendliness", value: 0 },
     { key: "learning_opportunities", label: "Learning Opportunities", value: 0 },
   ]);
+  const isSubmittingRef = useRef(false);
 
-  const handleRatingChange = (key: string, value: number) => {
-    setRatings(ratings.map((r) => (r.key === key ? { ...r, value } : r)));
-  };
+  const handleRatingChange = useCallback((key: string, value: number) => {
+    setRatings((prev) => prev.map((r) => (r.key === key ? { ...r, value } : r)));
+  }, []);
+
+  // Memoize overall rating calculation
+  const overallRating = useMemo(() => {
+    return ratings.find((r) => r.key === "rating")?.value || 0;
+  }, [ratings]);
 
   const handleOpenReviewDialog = () => {
     if (!user) {
@@ -61,8 +67,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
     setOpen(true);
   };
 
-  const handleSubmit = async () => {
-    const overallRating = ratings.find((r) => r.key === "rating")?.value || 0;
+  const handleSubmit = useCallback(async () => {
     if (overallRating === 0) {
       toast.error("Please provide at least an overall rating");
       return;
@@ -72,6 +77,13 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       toast.error("Please sign in to submit a review");
       return;
     }
+
+    // Prevent double submission
+    if (isSubmittingRef.current || loading) {
+      return;
+    }
+    
+    isSubmittingRef.current = true;
 
     // Check profile completion at submission time - fetch fresh data
     try {
@@ -200,8 +212,9 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
-  };
+  }, [overallRating, user?.id, ratings, comment, opportunityId, onReviewSubmitted, loading]);
 
   const StarRating = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
     <div className="flex gap-1">
