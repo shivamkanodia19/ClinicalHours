@@ -1,119 +1,88 @@
-# Comprehensive Fix Plan - ClinicalHours Website
+# Comprehensive Fix Plan - All Remaining Issues
 
-## Executive Summary
-This plan addresses all security, scalability, UI/UX, and other issues found in the codebase to perfect the website.
+## Execution Strategy
+Working through fixes in priority order, committing after each major category.
 
-## 🔴 CRITICAL SECURITY ISSUES
+## 🔴 CRITICAL PRIORITY (Fix First)
 
-### 1. Email API Configuration for DNS Setup
-**Status**: ⚠️ Needs Fix
-**Issue**: Email functions need to handle domain verification properly
-**Fix**: 
-- Ensure email functions check for RESEND_API_KEY
-- Add proper error handling for domain verification failures
-- Make email functions more resilient to DNS setup issues
+### 1. Memory Leaks - useEffect Cleanup
+- Add cleanup functions to all useEffect hooks
+- Remove event listeners
+- Clear timers/intervals
+- Cancel async operations
 
-### 2. XSS Prevention Enhancement
-**Status**: ⚠️ Needs Verification
-**Issue**: Need to ensure all user-generated content is properly sanitized
-**Fix**: 
-- Add DOMPurify or similar for any HTML rendering
-- Verify all user content is rendered as text (not HTML)
-- Add Content Security Policy headers
+### 2. Error Boundaries
+- Add route-level error boundaries
+- Improve error boundary messaging
 
-### 3. Authorization Checks
-**Status**: ⚠️ Needs Verification
-**Issue**: Verify all protected operations have proper authorization
-**Fix**: 
-- Review all update/delete operations
-- Ensure RLS policies are in place
-- Add client-side authorization checks
+### 3. Large Components
+- Split QASection into smaller components
+- Split Dashboard into smaller components
 
-### 4. Input Validation & Sanitization
-**Status**: ✅ Mostly Fixed
-**Issue**: Verify all inputs are validated and sanitized
-**Fix**: 
-- Review all form inputs
-- Ensure all special characters are handled
-- Add validation for edge cases
+## 🟡 HIGH PRIORITY
 
-## 🟡 SCALABILITY ISSUES
+### 4. Performance Optimizations
+- Add useMemo for expensive computations
+- Add useCallback for functions passed as props
+- Optimize array operations
 
-### 5. Query Optimization
-**Status**: ⚠️ Needs Review
-**Issue**: Some queries may fetch unnecessary data
-**Fix**: 
-- Review all `.select("*")` queries
-- Limit fields to only what's needed
-- Add pagination where missing
+### 5. Missing Loading States
+- Add loading states to all async operations
+- Improve loading UX
 
-### 6. Memory Leaks
-**Status**: ✅ Fixed (rate limiting)
-**Issue**: Verify no other memory leaks exist
-**Fix**: 
-- Review all useEffect hooks
-- Check for proper cleanup
-- Review event listeners
+### 6. Input Validation
+- Add comprehensive client-side validation
+- Improve error messages
 
-### 7. Client-Side Processing
-**Status**: ⚠️ Needs Improvement
-**Issue**: Distance calculation done client-side
-**Fix**: 
-- Document limitation (acceptable for current scale)
-- Add comment about future server-side migration
-- Optimize current implementation
-
-## 🟢 UI/UX ISSUES
-
-### 8. Accessibility
-**Status**: ⚠️ Needs Enhancement
-**Issue**: Missing some ARIA labels and keyboard navigation
-**Fix**: 
-- Add ARIA labels to all interactive elements
+### 7. Accessibility
+- Add missing ARIA labels
 - Improve keyboard navigation
-- Add skip links
-- Ensure focus management
+- Add focus management
 
-### 9. Loading States
-**Status**: ⚠️ Needs Review
-**Issue**: Some async operations may lack loading states
-**Fix**: 
-- Review all async operations
-- Add loading indicators where missing
-- Improve existing loading states
+### 8. Debouncing
+- Add debouncing to search inputs
+- Optimize filter operations
 
-### 10. Mobile Responsiveness
-**Status**: ⚠️ Needs Testing
-**Issue**: Need to verify all pages work well on mobile
-**Fix**: 
-- Test all pages on mobile viewport
-- Fix any responsive issues
-- Optimize mobile performance
+## 🟠 MEDIUM PRIORITY
+
+### 9. Code Duplication
+- Extract common logic
+- Create reusable utilities
+
+### 10. Type Safety
+- Remove any types
+- Add proper TypeScript types
 
 ### 11. Error Handling
-**Status**: ⚠️ Needs Enhancement
-**Issue**: Some errors may not be user-friendly
-**Fix**: 
-- Review all error messages
-- Ensure all errors are sanitized
-- Add helpful error messages
+- Standardize error handling
+- Create error handling utility
 
-## 📧 EMAIL API FIXES
+### 12. Optimistic Updates
+- Add optimistic updates where missing
+- Improve rollback logic
 
-### 12. Email Domain Configuration
-**Status**: ⚠️ Needs Fix
-**Issue**: Email functions need to work once DNS is configured
-**Fix**: 
-- Verify RESEND_API_KEY handling
-- Add better error messages for domain issues
-- Add fallback handling
-- Document DNS setup requirements
+### 13. Bundle Size
+- Optimize code splitting
+- Lazy load heavy components
 
-## Implementation Order
+## 🔵 LOW PRIORITY
 
-1. **Email API Fixes** (Critical - user requested)
-2. **Security Enhancements** (Critical)
-3. **Scalability Improvements** (High)
-4. **UI/UX Enhancements** (Medium)
-5. **Testing & Verification** (Final)
+### 14. Documentation
+- Add JSDoc comments
+- Document complex functions
 
+### 15. SEO
+- Add meta tags
+- Add structured data
+
+### 16. Confirmation Dialogs
+- Add confirmations for destructive actions
+- Improve UX
+
+---
+
+## Execution Order
+1. Critical fixes (memory leaks, error boundaries)
+2. High priority (performance, loading states, validation)
+3. Medium priority (code quality, types)
+4. Low priority (documentation, SEO)
