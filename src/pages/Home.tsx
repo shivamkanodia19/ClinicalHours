@@ -87,7 +87,7 @@ const Home = () => {
   ];
 
   const stats = [
-    { value: 4700, suffix: "+", label: "Opportunities", icon: Building2 },
+    { value: 4750, suffix: "+", label: "Opportunities", icon: Building2 },
     { value: 3000, suffix: "+", label: "Locations", icon: MapPin },
     { value: 100, suffix: "%", label: "Free", icon: Heart },
   ];
