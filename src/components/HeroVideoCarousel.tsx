@@ -107,7 +107,7 @@ const HeroVideoCarousel = () => {
             className={`absolute inset-0 transition-all duration-1000 ease-in-out ${transform} ${opacity}`}
           >
             <video
-              ref={(el) => (videoRefs.current[index] = el)}
+              ref={(el) => { videoRefs.current[index] = el; }}
               muted
               playsInline
               autoPlay={index === 0 && !isMobileDevice}
