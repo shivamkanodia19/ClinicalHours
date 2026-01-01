@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Hospital, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Hospital, Loader2, CheckCircle, XCircle, AlertCircle, ShieldX } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { useAdminRole } from "@/hooks/useAdminRole";
+import { useAuth } from "@/hooks/useAuth";
 
 const US_STATES = [
   { value: "all", label: "All States" },
@@ -85,11 +88,71 @@ interface ImportResult {
 }
 
 export default function AdminImportHospitals() {
+  const navigate = useNavigate();
+  const { isAdmin, loading: adminLoading } = useAdminRole();
+  const { user, loading: authLoading } = useAuth();
   const [selectedState, setSelectedState] = useState("all");
   const [limit, setLimit] = useState("100");
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ImportResult | null>(null);
+
+  // Show loading state while checking authentication and admin role
+  if (authLoading || adminLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
+          <div className="max-w-2xl mx-auto flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              <p className="text-muted-foreground">Checking permissions...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Redirect non-authenticated users
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
+
+  // Show access denied for non-admin users
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <ShieldX className="h-6 w-6" />
+                  Access Denied
+                </CardTitle>
+                <CardDescription>
+                  You do not have permission to access this page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This page is restricted to administrators only. If you believe you should have access, please contact your administrator.
+                </p>
+                <Button onClick={() => navigate("/")} variant="outline">
+                  Return to Home
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleImport = async () => {
     setIsImporting(true);
