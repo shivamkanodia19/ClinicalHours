@@ -63,6 +63,11 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
+    // Initialize CSRF token for form submission
+    if (!getCSRFToken()) {
+      storeCSRFToken();
+    }
+
     // No profile check here - let user fill out the form first
     setOpen(true);
   };

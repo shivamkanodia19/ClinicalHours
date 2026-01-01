@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { logProfileUpdate, logFileAccess } from "@/lib/auditLogger";
 import { 
   validatePhoneNumber, 
   validateGPA, 
@@ -78,8 +79,12 @@ const Profile = () => {
     try {
       const { data, error } = await supabase.storage
         .from("resumes")
-        .createSignedUrl(path, 3600); // Valid for 1 hour
+        .createSignedUrl(path, 900); // Valid for 15 minutes (reduced from 1 hour for security)
       if (error) throw error;
+      
+      // Log file access for audit purposes
+      logFileAccess("resume", path);
+      
       return data?.signedUrl || null;
     } catch (error) {
       logger.error("Error getting signed URL", error);
@@ -121,7 +126,7 @@ const Profile = () => {
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
-    } else if (user) {
+      } else if (user) {
       loadProfile();
       // Load auto-saved draft if available
       const savedDraft = loadSavedData();
@@ -130,6 +135,10 @@ const Profile = () => {
         if (!profile.full_name && !profile.university) {
           setProfile(savedDraft);
         }
+      }
+      // Initialize CSRF token for form submission
+      if (!getCSRFToken()) {
+        storeCSRFToken();
       }
     }
   }, [user, authLoading, navigate]);
@@ -305,6 +314,10 @@ const Profile = () => {
 
       if (error) throw error;
 
+      // Log profile update for audit
+      const updatedFields = Object.keys(sanitizedData).filter(key => sanitizedData[key] !== undefined);
+      logProfileUpdate(updatedFields);
+
       // Clear auto-saved draft after successful save
       clearSavedData();
 
@@ -420,7 +433,8 @@ const Profile = () => {
                       <Input
                         id="full_name"
                         value={profile.full_name}
-                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value.slice(0, 100) })}
+                        maxLength={100}
                         required
                       />
                     </div>
@@ -430,7 +444,8 @@ const Profile = () => {
                         id="phone"
                         type="tel"
                         value={profile.phone}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value.slice(0, 20) })}
+                        maxLength={20}
                       />
                     </div>
                   </div>
@@ -441,7 +456,8 @@ const Profile = () => {
                       <Input
                         id="city"
                         value={profile.city}
-                        onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, city: e.target.value.slice(0, 100) })}
+                        maxLength={100}
                       />
                     </div>
                     <div className="space-y-2">
@@ -449,7 +465,8 @@ const Profile = () => {
                       <Input
                         id="state"
                         value={profile.state}
-                        onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, state: e.target.value.slice(0, 50) })}
+                        maxLength={50}
                       />
                     </div>
                   </div>
@@ -467,7 +484,8 @@ const Profile = () => {
                       <Input
                         id="university"
                         value={profile.university}
-                        onChange={(e) => setProfile({ ...profile, university: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, university: e.target.value.slice(0, 200) })}
+                        maxLength={200}
                       />
                     </div>
                     <div className="space-y-2">
@@ -478,7 +496,8 @@ const Profile = () => {
                       <Input
                         id="major"
                         value={profile.major}
-                        onChange={(e) => setProfile({ ...profile, major: e.target.value })}
+                        onChange={(e) => setProfile({ ...profile, major: e.target.value.slice(0, 100) })}
+                        maxLength={100}
                       />
                     </div>
                   </div>
@@ -524,8 +543,9 @@ const Profile = () => {
                     <Input
                       id="pre_med_track"
                       value={profile.pre_med_track}
-                      onChange={(e) => setProfile({ ...profile, pre_med_track: e.target.value })}
+                      onChange={(e) => setProfile({ ...profile, pre_med_track: e.target.value.slice(0, 100) })}
                       placeholder="e.g., Traditional, Post-Bacc, Career Changer"
+                      maxLength={100}
                     />
                   </div>
                 </div>
@@ -538,10 +558,14 @@ const Profile = () => {
                     <Textarea
                       id="bio"
                       value={profile.bio}
-                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                      onChange={(e) => setProfile({ ...profile, bio: e.target.value.slice(0, 2000) })}
                       placeholder="Tell us about yourself..."
                       rows={4}
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-muted-foreground text-right">
+                      {profile.bio.length}/2000 characters
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -549,10 +573,14 @@ const Profile = () => {
                     <Textarea
                       id="career_goals"
                       value={profile.career_goals}
-                      onChange={(e) => setProfile({ ...profile, career_goals: e.target.value })}
+                      onChange={(e) => setProfile({ ...profile, career_goals: e.target.value.slice(0, 2000) })}
                       placeholder="What are your medical career aspirations?"
                       rows={3}
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-muted-foreground text-right">
+                      {profile.career_goals.length}/2000 characters
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -560,21 +588,26 @@ const Profile = () => {
                     <Textarea
                       id="research_experience"
                       value={profile.research_experience}
-                      onChange={(e) => setProfile({ ...profile, research_experience: e.target.value })}
+                      onChange={(e) => setProfile({ ...profile, research_experience: e.target.value.slice(0, 2000) })}
                       placeholder="Describe your research experience..."
                       rows={3}
+                      maxLength={2000}
                     />
+                    <p className="text-xs text-muted-foreground text-right">
+                      {profile.research_experience.length}/2000 characters
+                    </p>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-                    <Input
-                      id="linkedin_url"
-                      type="url"
-                      value={profile.linkedin_url}
-                      onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
-                      placeholder="https://linkedin.com/in/yourprofile"
-                    />
+                      <Input
+                        id="linkedin_url"
+                        type="url"
+                        value={profile.linkedin_url}
+                        onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value.slice(0, 500) })}
+                        placeholder="https://linkedin.com/in/yourprofile"
+                        maxLength={500}
+                      />
                   </div>
                 </div>
 

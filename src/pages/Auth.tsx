@@ -7,13 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { logAuthEvent } from "@/lib/auditLogger";
 import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
 
+// Strong password validation: min 12 chars, uppercase, lowercase, number, special char
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).max(255),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(100),
+  password: z.string()
+    .min(12, { message: "Password must be at least 12 characters" })
+    .max(128)
+    .regex(passwordRegex, { 
+      message: "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)" 
+    }),
   fullName: z.string().trim().min(1, { message: "Full name is required" }).max(100).optional(),
   phone: z.string().max(20).optional().or(z.literal("")),
 });
@@ -99,6 +108,7 @@ const Auth = () => {
 
       // Send custom verification email
       if (data.user) {
+        logAuthEvent("signup", { email: validatedData.email });
         setSignedUpUserId(data.user.id);
         const emailSent = await sendVerificationEmail(
           data.user.id,
@@ -116,16 +126,10 @@ const Auth = () => {
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
-      } else if (error.message?.includes("User already registered") || error.message?.includes("already registered")) {
-        toast.error("An account with this email already exists. Please sign in.");
       } else {
-        // Sanitize error message
-        const errorMessage = error?.message?.includes("password")
-          ? "Password does not meet requirements"
-          : error?.message?.includes("email")
-          ? "Invalid email address"
-          : "Unable to create account. Please try again.";
-        toast.error(errorMessage);
+        // Generic error message to prevent email enumeration
+        // Don't reveal if email exists or specific error details
+        toast.error("Unable to create account. Please check your information and try again.");
       }
     } finally {
       setLoading(false);
@@ -169,22 +173,21 @@ const Auth = () => {
         password: validatedData.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        logAuthEvent("login_failure", { email: validatedData.email });
+        throw error;
+      }
 
+      logAuthEvent("login_success", { email: validatedData.email });
       toast.success("Logged in successfully!");
       navigate("/dashboard");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        // Sanitize error message - don't expose system details
-        let errorMessage = sanitizeErrorMessage(error);
-        if (error?.message?.includes("Invalid login")) {
-          errorMessage = "Invalid email or password";
-        } else if (error?.message?.includes("Email not confirmed")) {
-          errorMessage = "Please verify your email before signing in";
-        }
-        toast.error(errorMessage);
+        // Generic error message to prevent information disclosure and email enumeration
+        // Don't reveal if email exists or specific error details
+        toast.error("Invalid email or password. Please try again.");
       }
     } finally {
       setLoading(false);

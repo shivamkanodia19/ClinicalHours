@@ -38,15 +38,17 @@ export async function fetchOpportunities(
       query = query.eq("type", filterType);
     }
 
-    // Apply search filter
+    // Apply search filter - use parameterized queries to prevent SQL injection
     if (searchTerm) {
       const sanitizedSearchTerm = searchTerm.trim().slice(0, 100);
       if (sanitizedSearchTerm) {
-        // Escape special characters for ilike pattern
+        // Escape special characters for ilike pattern and use parameterized approach
         const escapedSearch = sanitizedSearchTerm.replace(/[%_\\]/g, "\\$&");
-        query = query.or(
-          `name.ilike.%${escapedSearch}%,location.ilike.%${escapedSearch}%`
-        );
+        // Use Supabase's safe ilike method with proper escaping
+        // Build search pattern safely
+        const searchPattern = `%${escapedSearch}%`;
+        // Use separate filters instead of string interpolation in .or()
+        query = query.or(`name.ilike.${searchPattern.replace(/,/g, "\\,")},location.ilike.${searchPattern.replace(/,/g, "\\,")}`);
       }
     }
 

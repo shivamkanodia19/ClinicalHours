@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Hospital, Loader2, CheckCircle, XCircle, AlertCircle, ShieldX } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { logAdminAction } from "@/lib/auditLogger";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -182,6 +183,13 @@ export default function AdminImportHospitals() {
       setResults(data as ImportResult);
 
       if (data.success) {
+        logAdminAction("hospital_import", { 
+          imported: data.imported, 
+          skipped: data.skipped, 
+          failed: data.failed,
+          state: selectedState,
+          limit: parseInt(limit)
+        });
         toast.success(`Successfully imported ${data.imported} hospitals!`);
       } else {
         toast.error(data.error || "Import failed");

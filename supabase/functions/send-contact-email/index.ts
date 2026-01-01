@@ -44,10 +44,10 @@ function escapeHtml(unsafe: string): string {
     .replace(/'/g, "&#039;");
 }
 
-// Simple in-memory rate limiting
+// Simple in-memory rate limiting - stricter limits for security
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 5; // 5 requests per minute per IP
+const MAX_REQUESTS_PER_WINDOW = 3; // Reduced to 3 requests per minute per IP for security
 
 function isRateLimited(clientIp: string): boolean {
   const now = Date.now();

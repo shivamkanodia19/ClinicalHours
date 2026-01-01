@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { storeCSRFToken, getCSRFToken } from "@/lib/csrf";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -27,11 +28,15 @@ const Contact = () => {
   // Auto-save contact form data
   const { loadSavedData, clearSavedData } = useAutoSave(formData, "contact-form-draft", true);
 
-  // Load saved draft on mount
+  // Load saved draft on mount and initialize CSRF token
   useEffect(() => {
     const savedDraft = loadSavedData();
     if (savedDraft) {
       setFormData(savedDraft);
+    }
+    // Initialize CSRF token for form submission
+    if (!getCSRFToken()) {
+      storeCSRFToken();
     }
   }, []);
 
@@ -47,8 +52,13 @@ const Contact = () => {
     setLoading(true);
 
     try {
+      // Include CSRF token in request
+      const csrfToken = getCSRFToken();
       const { data, error } = await supabase.functions.invoke("send-contact-email", {
-        body: formData,
+        body: {
+          ...formData,
+          _csrf: csrfToken, // CSRF token for additional security
+        },
       });
 
       if (error) throw error;

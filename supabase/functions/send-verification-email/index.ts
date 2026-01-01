@@ -24,7 +24,7 @@ interface SendVerificationEmailRequest {
 // Rate limiting per user to prevent abuse
 const userRateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const USER_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_EMAILS_PER_USER = 5; // 5 verification emails per user per hour
+const MAX_EMAILS_PER_USER = 3; // Reduced to 3 verification emails per user per hour for security
 
 function isUserRateLimited(userId: string): boolean {
   const now = Date.now();
