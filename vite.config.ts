@@ -8,15 +8,11 @@ const securityHeadersPlugin = () => ({
   name: "security-headers",
   configureServer(server: any) {
     server.middlewares.use((_req: any, res: any, next: any) => {
-      // Security headers
+      // Security headers (CSP removed - too strict for dev, should be set at server/CDN level)
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-      res.setHeader(
-        "Content-Security-Policy",
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://*.mapbox.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://api.mapbox.com https://api.resend.com wss://*.supabase.co; frame-src 'self';"
-      );
       next();
     });
   },

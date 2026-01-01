@@ -23,18 +23,29 @@ export async function logAuditEvent(
   severity: "low" | "medium" | "high" | "critical" = "medium"
 ): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Don't block on getting user - make it non-blocking
+    let userId: string | null = null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id || null;
+    } catch (authError) {
+      // Ignore auth errors - user might not be logged in
+    }
     
     const logEntry: AuditLogEntry = {
       event_type: eventType,
-      user_id: user?.id || null,
+      user_id: userId,
       details: details || {},
       severity,
       timestamp: new Date().toISOString(),
     };
 
     // Log to console in development, would send to logging service in production
-    logger.info("Audit Event", logEntry);
+    if (logger && logger.info) {
+      logger.info("Audit Event", logEntry);
+    } else {
+      console.log("Audit Event", logEntry);
+    }
 
     // In production, you would send this to:
     // - A logging service (e.g., LogRocket, Sentry)
@@ -50,8 +61,10 @@ export async function logAuditEvent(
     //   created_at: new Date().toISOString(),
     // });
   } catch (error) {
-    // Don't fail the operation if logging fails
-    logger.error("Failed to log audit event", error);
+    // Don't fail the operation if logging fails - silently ignore
+    if (logger && logger.error) {
+      logger.error("Failed to log audit event", error);
+    }
   }
 }
 

@@ -11,25 +11,47 @@
  */
 export function generateCSRFToken(): string {
   // Generate a random token
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (error) {
+    // Fallback if crypto is not available
+  }
+  // Fallback: use Math.random if crypto is not available
+  return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 }
 
 /**
  * Store CSRF token in sessionStorage (temporary until we implement httpOnly cookies)
  */
 export function storeCSRFToken(): string {
-  const token = generateCSRFToken();
-  sessionStorage.setItem('csrf_token', token);
-  return token;
+  try {
+    const token = generateCSRFToken();
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('csrf_token', token);
+    }
+    return token;
+  } catch (error) {
+    // If sessionStorage is not available, return a token anyway
+    return generateCSRFToken();
+  }
 }
 
 /**
  * Get CSRF token from sessionStorage
  */
 export function getCSRFToken(): string | null {
-  return sessionStorage.getItem('csrf_token');
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem('csrf_token');
+    }
+  } catch (error) {
+    // Ignore errors
+  }
+  return null;
 }
 
 /**
@@ -44,6 +66,12 @@ export function validateCSRFToken(token: string | null): boolean {
  * Clear CSRF token (on logout)
  */
 export function clearCSRFToken(): void {
-  sessionStorage.removeItem('csrf_token');
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('csrf_token');
+    }
+  } catch (error) {
+    // Ignore errors
+  }
 }
 

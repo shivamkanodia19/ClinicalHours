@@ -20,12 +20,17 @@ export const useAuth = () => {
 
   // Check for session timeout
   const checkSessionTimeout = async () => {
-    const timeSinceActivity = Date.now() - lastActivityRef.current;
-    if (timeSinceActivity > SESSION_TIMEOUT_MS && session) {
-      logAuthEvent("logout", { reason: "session_timeout" });
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
+    try {
+      const timeSinceActivity = Date.now() - lastActivityRef.current;
+      if (timeSinceActivity > SESSION_TIMEOUT_MS && session) {
+        // Don't await logAuthEvent to avoid blocking
+        logAuthEvent("logout", { reason: "session_timeout" }).catch(() => {});
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      }
+    } catch (error) {
+      // Ignore errors in timeout check
     }
   };
 
@@ -47,7 +52,8 @@ export const useAuth = () => {
         setLoading(false);
         
         if (event === "SIGNED_OUT") {
-          logAuthEvent("logout");
+          // Don't await to avoid blocking
+          logAuthEvent("logout").catch(() => {});
           lastActivityRef.current = Date.now();
         } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
           lastActivityRef.current = Date.now();
@@ -78,7 +84,8 @@ export const useAuth = () => {
   }, [session]);
 
   const signOut = async () => {
-    logAuthEvent("logout");
+    // Don't await to avoid blocking
+    logAuthEvent("logout").catch(() => {});
     await supabase.auth.signOut();
   };
 
