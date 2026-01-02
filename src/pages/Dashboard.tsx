@@ -113,44 +113,10 @@ const Dashboard = () => {
     };
   }, [user, authLoading, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user, userLocation]); // Re-fetch and re-sort when location changes
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          });
-        },
-        (error) => {
-          // Log error but don't show toast - location is optional
-          logger.error("Error getting location", error);
-          // Location features will work without it, just won't sort by distance
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 300000, // 5 minutes
-        }
-      );
-    }
-  }, []);
-
-  const fetchData = async () => {
+  // Memoize fetchData to prevent infinite loops
+  const fetchData = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       setLoading(true);
       
@@ -201,7 +167,7 @@ const Dashboard = () => {
           *,
           opportunities (*)
         `)
-        .eq("user_id", user?.id);
+        .eq("user_id", user.id);
 
       if (savedError) throw savedError;
       
@@ -258,7 +224,44 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, userLocation, toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user, fetchData]);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        },
+        (error) => {
+          // Log error but don't show toast - location is optional
+          logger.error("Error getting location", error);
+          // Location features will work without it, just won't sort by distance
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    }
+  }, []);
 
 // calculateDistance imported from @/lib/geolocation
 
