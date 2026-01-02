@@ -63,10 +63,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       return;
     }
 
-    // Initialize CSRF token for form submission
-    if (!getCSRFToken()) {
-      storeCSRFToken();
-    }
+    // CSRF protection is handled by Supabase's built-in JWT token validation
 
     // No profile check here - let user fill out the form first
     setOpen(true);

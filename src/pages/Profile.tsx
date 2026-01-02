@@ -136,10 +136,7 @@ const Profile = () => {
           setProfile(savedDraft);
         }
       }
-      // Initialize CSRF token for form submission
-      if (!getCSRFToken()) {
-        storeCSRFToken();
-      }
+      // CSRF protection is handled by Supabase's built-in JWT token validation
     }
   }, [user, authLoading, navigate]);
 
