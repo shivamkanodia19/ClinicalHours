@@ -52,12 +52,14 @@ export async function searchCities(query: string, limit: number = 10): Promise<s
 
     const data: CityResult[] = await response.json();
     
-    // Extract city names, removing duplicates
+    // Extract city names with state, removing duplicates
     const cities = new Set<string>();
     data.forEach(item => {
       const cityName = item.address?.city || item.address?.town || item.address?.village;
+      const state = item.address?.state;
       if (cityName) {
-        cities.add(cityName);
+        const cityWithState = state ? `${cityName}, ${state}` : cityName;
+        cities.add(cityWithState);
       }
     });
 

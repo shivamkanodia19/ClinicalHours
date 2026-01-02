@@ -105,7 +105,7 @@ export function AutocompleteCombobox({
                   key={option}
                   value={option}
                   onSelect={() => {
-                    onValueChange(option === value ? "" : option);
+                    onValueChange(option);
                     setOpen(false);
                     setSearchQuery("");
                   }}

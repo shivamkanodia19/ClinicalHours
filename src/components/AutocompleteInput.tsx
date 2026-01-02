@@ -37,33 +37,46 @@ export function AutocompleteInput({
   maxLength,
 }: AutocompleteInputProps) {
   const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState(value);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  // Update input value when prop changes
-  React.useEffect(() => {
-    setInputValue(value);
-  }, [value]);
-
-  // Filter options based on input value
+  // Filter options based on current value
   const filteredOptions = React.useMemo(() => {
-    if (!inputValue) return options;
-    const query = inputValue.toLowerCase();
+    if (!value) return options;
+    const query = value.toLowerCase();
     return options.filter(option =>
       option.toLowerCase().includes(query)
     ).slice(0, 10); // Limit to 10 results
-  }, [options, inputValue]);
+  }, [options, value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = maxLength ? e.target.value.slice(0, maxLength) : e.target.value;
-    setInputValue(newValue);
     onValueChange(newValue);
     setOpen(true);
   };
 
   const handleSelect = (option: string) => {
-    setInputValue(option);
     onValueChange(option);
     setOpen(false);
+    // Refocus the input after selection
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleFocus = () => {
+    setOpen(true);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Don't close if clicking on the popover
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (relatedTarget?.closest('[role="listbox"]')) {
+      return;
+    }
+    // Delay closing to allow selection
+    setTimeout(() => {
+      setOpen(false);
+    }, 200);
   };
 
   return (
@@ -72,14 +85,12 @@ export function AutocompleteInput({
         <PopoverTrigger asChild>
           <div className="relative">
             <Input
+              ref={inputRef}
               type="text"
-              value={inputValue}
+              value={value}
               onChange={handleInputChange}
-              onFocus={() => setOpen(true)}
-              onBlur={() => {
-                // Delay closing to allow selection
-                setTimeout(() => setOpen(false), 200);
-              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               placeholder={placeholder}
               disabled={disabled}
               className={cn("pr-8", className)}
@@ -88,11 +99,17 @@ export function AutocompleteInput({
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none" />
           </div>
         </PopoverTrigger>
-        {filteredOptions.length > 0 && (
+        {open && filteredOptions.length > 0 && (
           <PopoverContent 
             className="w-[var(--radix-popover-trigger-width)] p-0" 
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
+            onInteractOutside={(e) => {
+              // Don't close if clicking on the input
+              if (e.target === inputRef.current || inputRef.current?.contains(e.target as Node)) {
+                e.preventDefault();
+              }
+            }}
           >
             <Command>
               <CommandList>

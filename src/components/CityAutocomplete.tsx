@@ -34,9 +34,16 @@ export function CityAutocomplete({
   className,
 }: CityAutocompleteProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState(value || "");
   const [cities, setCities] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(false);
+
+  // Update searchQuery when value prop changes
+  React.useEffect(() => {
+    if (value) {
+      setSearchQuery(value);
+    }
+  }, [value]);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -96,9 +103,9 @@ export function CityAutocomplete({
                   key={city}
                   value={city}
                   onSelect={() => {
-                    onValueChange(city === value ? "" : city);
+                    onValueChange(city);
                     setOpen(false);
-                    setSearchQuery("");
+                    setSearchQuery(city);
                   }}
                 >
                   <Check
