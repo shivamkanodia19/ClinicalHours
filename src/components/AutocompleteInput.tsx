@@ -54,14 +54,13 @@ export function AutocompleteInput({
     setOpen(true);
   };
 
-  const handleSelect = (option: string) => {
-    onValueChange(option);
-    setOpen(false);
-    // Refocus the input after selection
+  const handleSelect = React.useCallback((option: string) => {
+    // Use a small delay to ensure the click event completes
     setTimeout(() => {
-      inputRef.current?.focus();
+      onValueChange(option);
+      setOpen(false);
     }, 0);
-  };
+  }, [onValueChange]);
 
   const handleFocus = () => {
     setOpen(true);
@@ -70,13 +69,14 @@ export function AutocompleteInput({
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // Don't close if clicking on the popover
     const relatedTarget = e.relatedTarget as HTMLElement;
-    if (relatedTarget?.closest('[role="listbox"]')) {
+    if (relatedTarget?.closest('[role="listbox"]') || relatedTarget?.closest('[role="option"]')) {
+      e.preventDefault();
       return;
     }
     // Delay closing to allow selection
     setTimeout(() => {
       setOpen(false);
-    }, 200);
+    }, 300);
   };
 
   return (
@@ -105,8 +105,10 @@ export function AutocompleteInput({
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
             onInteractOutside={(e) => {
-              // Don't close if clicking on the input
-              if (e.target === inputRef.current || inputRef.current?.contains(e.target as Node)) {
+              // Don't close if clicking on the input or command items
+              if (e.target === inputRef.current || 
+                  inputRef.current?.contains(e.target as Node) ||
+                  (e.target as HTMLElement)?.closest('[role="option"]')) {
                 e.preventDefault();
               }
             }}
@@ -120,6 +122,12 @@ export function AutocompleteInput({
                       key={option}
                       value={option}
                       onSelect={() => handleSelect(option)}
+                      onMouseDown={(e) => {
+                        // Prevent blur from firing on the input
+                        e.preventDefault();
+                        onValueChange(option);
+                        setOpen(false);
+                      }}
                     >
                       <Check
                         className={cn(

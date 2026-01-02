@@ -104,7 +104,16 @@ export function AutocompleteCombobox({
                 <CommandItem
                   key={option}
                   value={option}
-                  onSelect={() => {
+                  onSelect={(selectedValue) => {
+                    // CommandItem passes the value as a parameter
+                    const finalValue = selectedValue || option;
+                    onValueChange(finalValue);
+                    setOpen(false);
+                    setSearchQuery("");
+                  }}
+                  onMouseDown={(e) => {
+                    // Prevent any default behavior that might interfere
+                    e.preventDefault();
                     onValueChange(option);
                     setOpen(false);
                     setSearchQuery("");

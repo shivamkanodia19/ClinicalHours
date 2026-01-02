@@ -102,7 +102,16 @@ export function CityAutocomplete({
                 <CommandItem
                   key={city}
                   value={city}
-                  onSelect={() => {
+                  onSelect={(selectedValue) => {
+                    // CommandItem passes the value as a parameter
+                    const finalValue = selectedValue || city;
+                    onValueChange(finalValue);
+                    setOpen(false);
+                    setSearchQuery(finalValue);
+                  }}
+                  onMouseDown={(e) => {
+                    // Prevent any default behavior that might interfere
+                    e.preventDefault();
                     onValueChange(city);
                     setOpen(false);
                     setSearchQuery(city);
