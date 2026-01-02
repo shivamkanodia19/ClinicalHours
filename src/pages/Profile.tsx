@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,6 +79,9 @@ const Profile = () => {
 
   // Auto-save profile data
   const { loadSavedData, clearSavedData } = useAutoSave(profile, "profile-form-draft", true);
+
+  // Get graduation years list
+  const graduationYears = useMemo(() => getGraduationYears(), []);
 
   // Generate signed URL for resume viewing
   const getSignedResumeUrl = useCallback(async (path: string) => {
@@ -536,7 +539,7 @@ const Profile = () => {
                       <AutocompleteCombobox
                         value={profile.graduation_year}
                         onValueChange={(value) => setProfile({ ...profile, graduation_year: value })}
-                        options={graduationYears.map(y => y.toString())}
+                        options={graduationYears}
                         placeholder="Select graduation year..."
                         searchPlaceholder="Search years..."
                         emptyMessage="No years found."
