@@ -175,7 +175,7 @@ const Profile = () => {
           setResumeSignedUrl(signedUrl);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error loading profile", error);
       toast.error(sanitizeErrorMessage(error));
     }
@@ -233,7 +233,7 @@ const Profile = () => {
       setResumeSignedUrl(signedUrl);
       
       toast.success("Resume uploaded successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error uploading resume", error);
       toast.error(sanitizeErrorMessage(error) || "Failed to upload resume. Please try again.");
     } finally {
@@ -319,7 +319,7 @@ const Profile = () => {
       clearSavedData();
 
       toast.success("Profile updated successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error updating profile", error);
       toast.error(sanitizeErrorMessage(error) || "Failed to update profile. Please try again.");
     } finally {

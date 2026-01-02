@@ -61,7 +61,7 @@ const Contact = () => {
       // Clear form and auto-saved draft
       setFormData({ name: "", email: "", subject: "", message: "" });
       clearSavedData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error sending message", error);
       toast({
         title: "Error",

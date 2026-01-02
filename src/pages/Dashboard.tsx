@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,7 +6,7 @@ import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
-import { Opportunity } from "@/types";
+import { Opportunity, SavedOpportunityWithDetails } from "@/types";
 import { calculateDistance } from "@/lib/geolocation";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -206,7 +206,7 @@ const Dashboard = () => {
       if (savedError) throw savedError;
       
       // Process and sort saved opportunities
-      let processedSaved = (savedData || []).map((saved: any) => {
+      let processedSaved = (savedData || []).map((saved: SavedOpportunityWithDetails) => {
         const opp = saved.opportunities;
         let distance: number | undefined;
         
@@ -231,7 +231,7 @@ const Dashboard = () => {
       
       // Sort saved opportunities: by distance if available, otherwise alphabetically
       if (userLocation) {
-        processedSaved.sort((a: any, b: any) => {
+        processedSaved.sort((a: SavedOpportunityWithDetails, b: SavedOpportunityWithDetails) => {
           const distA = a.opportunities?.distance ?? Infinity;
           const distB = b.opportunities?.distance ?? Infinity;
           if (distA !== Infinity || distB !== Infinity) {
@@ -242,13 +242,13 @@ const Dashboard = () => {
         });
       } else {
         // Sort alphabetically if no location
-        processedSaved.sort((a: any, b: any) => 
+        processedSaved.sort((a: SavedOpportunityWithDetails, b: SavedOpportunityWithDetails) => 
           (a.opportunities?.name || "").localeCompare(b.opportunities?.name || "")
         );
       }
       
       setSavedOpportunities(processedSaved);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error loading dashboard data", error);
       toast({
         title: "Error loading data",
@@ -332,7 +332,7 @@ const Dashboard = () => {
 
       // Refresh to ensure consistency
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error adding opportunity", error);
       toast({
         title: "Error adding opportunity",
@@ -377,7 +377,7 @@ const Dashboard = () => {
         title: "Removed from tracker",
         description: "Opportunity removed from your tracker",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error removing opportunity", error);
       setOpportunityToDelete(tempOpportunityToDelete);
       toast({
@@ -407,7 +407,7 @@ const Dashboard = () => {
           item.id === savedId ? { ...item, [field]: value } : item
         )
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error updating tracker", error);
       toast({
         title: "Error updating tracker",

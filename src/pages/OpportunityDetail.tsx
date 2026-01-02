@@ -151,28 +151,29 @@ const OpportunityDetail = () => {
     });
   };
 
-  const handleReviewSubmitted = () => {
+  const handleReviewSubmitted = async () => {
     setReviewRefreshTrigger((prev) => prev + 1);
     // Refresh opportunity data to update rating
     if (id) {
-      supabase
+      const { data, error } = await supabase
         .from("opportunities_with_ratings")
         .select("*")
         .eq("id", id)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            setOpportunity((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    avg_rating: data.avg_rating,
-                    review_count: data.review_count,
-                  }
-                : null
-            );
-          }
-        });
+        .single();
+      
+      if (error) {
+        logger.error("Error fetching updated rating", error);
+      } else if (data) {
+        setOpportunity((prev) =>
+          prev
+            ? {
+                ...prev,
+                avg_rating: data.avg_rating,
+                review_count: data.review_count,
+              }
+            : null
+        );
+      }
     }
   };
 

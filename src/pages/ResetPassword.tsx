@@ -44,7 +44,7 @@ const ResetPassword = () => {
 
       setStatus("success");
       toast.success("Password reset successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error resetting password", error);
       setStatus("error");
       const errorMessage = error?.message?.includes("expired") || error?.message?.includes("invalid")

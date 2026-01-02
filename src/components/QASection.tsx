@@ -87,9 +87,22 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   const { isComplete, isLoading: profileLoading, missingFields } = useProfileComplete();
 
   useEffect(() => {
-    fetchQuestions();
-    fetchUserId();
-    fetchUserVotes();
+    let isMounted = true;
+    
+    const fetchData = async () => {
+      if (!isMounted) return;
+      await fetchQuestions();
+      if (!isMounted) return;
+      await fetchUserId();
+      if (!isMounted) return;
+      await fetchUserVotes();
+    };
+    
+    fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [opportunityId]);
 
   // Reset display count when opportunity changes
@@ -146,10 +159,21 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
   // Refetch when displayCount changes
   useEffect(() => {
+    let isMounted = true;
+    
     if (!loading) {
-      fetchQuestions();
+      const fetch = async () => {
+        await fetchQuestions();
+        if (!isMounted) return;
+      };
+      fetch();
     }
-  }, [displayCount]);
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayCount, loading, opportunityId]);
 
   const fetchAnswers = async (questionId: string) => {
     const limit = answerDisplayCount[questionId] || INITIAL_ANSWERS;
@@ -189,12 +213,23 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
 
   // Refetch answers when display count changes
   useEffect(() => {
-    Object.keys(answerDisplayCount).forEach(questionId => {
-      if (expandedQuestion === questionId) {
-        fetchAnswers(questionId);
+    let isMounted = true;
+    
+    const fetch = async () => {
+      for (const questionId of Object.keys(answerDisplayCount)) {
+        if (!isMounted) return;
+        if (expandedQuestion === questionId) {
+          await fetchAnswers(questionId);
+        }
       }
-    });
-  }, [answerDisplayCount]);
+    };
+    
+    fetch();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [answerDisplayCount, expandedQuestion]);
 
   const handleShowAskForm = () => {
     if (!userId) {

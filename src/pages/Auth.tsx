@@ -37,11 +37,13 @@ const Auth = () => {
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate("/dashboard");
       }
-    });
+    };
+    checkSession();
   }, [navigate]);
 
   const sendVerificationEmail = async (userId: string, userEmail: string, userName: string) => {
@@ -118,7 +120,7 @@ const Auth = () => {
           toast.success("Account created! You can now log in.");
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
@@ -176,7 +178,7 @@ const Auth = () => {
       logAuthEvent("login_success", { email: validatedData.email });
       toast.success("Logged in successfully!");
       navigate("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
@@ -214,9 +216,9 @@ const Auth = () => {
       
       setResetEmailSent(true);
       toast.success("If an account exists, a password reset email will be sent.");
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Sanitize error message
-      const errorMessage = error?.message?.includes("rate limit") || error?.message?.includes("too many")
+      const errorMessage = error instanceof Error && (error.message?.includes("rate limit") || error.message?.includes("too many"))
         ? "Too many requests. Please wait a moment and try again."
         : "Failed to send reset email. Please try again.";
       toast.error(errorMessage);

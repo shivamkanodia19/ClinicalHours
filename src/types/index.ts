@@ -103,3 +103,71 @@ export interface SearchOptions {
   userLocation?: UserLocation | null;
 }
 
+// Error types
+export interface SupabaseError {
+  message: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+}
+
+export type ErrorDetails = Record<string, unknown>;
+
+// Review data types
+export interface ReviewData {
+  opportunity_id: string;
+  user_id: string;
+  rating: number;
+  comment?: string | null;
+  overall_experience?: number;
+  acceptance_difficulty?: number;
+  staff_friendliness?: number;
+  learning_opportunities?: number;
+  [key: string]: string | number | null | undefined;
+}
+
+// Supabase client type (for lazy loading)
+export type SupabaseClient = {
+  auth: {
+    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
+  };
+  from: (table: string) => {
+    insert: (data: unknown) => Promise<{ error: SupabaseError | null }>;
+    select: (columns: string) => unknown;
+  };
+};
+
+// Opportunity database row type (before mapping to Opportunity)
+export interface OpportunityRow {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  hours_required: string;
+  acceptance_likelihood: string;
+  description?: string | null;
+  requirements?: string[] | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  avg_rating?: number | null;
+  review_count?: number | null;
+}
+
+// Saved opportunity with nested opportunity data (from database join)
+export interface SavedOpportunityWithDetails {
+  id: string;
+  opportunity_id: string;
+  user_id: string;
+  created_at: string;
+  contacted?: boolean;
+  applied?: boolean;
+  heard_back?: boolean;
+  scheduled_interview?: boolean;
+  deadline?: string;
+  notes?: string;
+  opportunities?: Opportunity & { distance?: number };
+}
+

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logger } from "@/lib/logger";
+import type { ReviewData, SupabaseError } from "@/types";
 
 interface ReviewFormProps {
   opportunityId: string;
@@ -168,7 +169,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         return;
       }
 
-      const reviewData: any = {
+      const reviewData: ReviewData = {
         opportunity_id: opportunityId,
         user_id: user.id,
         rating: overallRating,
@@ -178,7 +179,7 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       // Add optional ratings if they were provided
       ratings.forEach((r) => {
         if (r.key !== "rating" && r.value > 0) {
-          reviewData[r.key] = r.value;
+          (reviewData as Record<string, number>)[r.key] = r.value;
         }
       });
 
@@ -201,13 +202,14 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
       setComment("");
       setRatings(ratings.map((r) => ({ ...r, value: 0 })));
       onReviewSubmitted();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Review submission error details", error);
       
       // Sanitize error message
       let errorMessage = sanitizeErrorMessage(error);
       
-      if (error?.code === "23505" || error?.message?.includes("duplicate") || error?.message?.includes("already exists")) {
+      const supabaseError = error as SupabaseError;
+      if (supabaseError?.code === "23505" || supabaseError?.message?.includes("duplicate") || supabaseError?.message?.includes("already exists")) {
         errorMessage = "You have already submitted a review for this opportunity";
       }
       

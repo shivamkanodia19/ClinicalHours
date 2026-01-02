@@ -62,14 +62,16 @@ export const useAuth = () => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       if (session) {
         lastActivityRef.current = Date.now();
       }
-    });
+    };
+    checkSession();
 
     return () => {
       subscription.unsubscribe();

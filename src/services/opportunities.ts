@@ -2,7 +2,7 @@
 // Centralized API calls for opportunities
 
 import { supabase } from "@/integrations/supabase/client";
-import { Opportunity } from "@/types";
+import { Opportunity, OpportunityRow } from "@/types";
 import { logger } from "@/lib/logger";
 
 export interface FetchOpportunitiesOptions {
@@ -64,7 +64,7 @@ export async function fetchOpportunities(
 
     if (error) throw error;
 
-    const opportunities: Opportunity[] = (data || []).map((opp: any) => ({
+    const opportunities: Opportunity[] = (data || []).map((opp: OpportunityRow) => ({
       id: opp.id,
       name: opp.name,
       type: opp.type,

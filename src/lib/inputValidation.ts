@@ -221,8 +221,8 @@ export function validateLinkedInURL(url: string | null | undefined): { valid: bo
 /**
  * Sanitizes all profile fields before submission with XSS prevention
  */
-export function sanitizeProfileData(data: Record<string, any>): Record<string, any> {
-  const sanitized: Record<string, any> = {};
+export function sanitizeProfileData(data: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
   
   // Text fields with length limits and XSS prevention
   const textFieldLimits: Record<string, number> = {

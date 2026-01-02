@@ -124,7 +124,7 @@ const OpportunityMap = () => {
         
         logger.debug('Map: Loaded', allData.length, 'opportunities with coordinates (clustered for performance)');
         setOpportunities(allData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error fetching opportunities', err);
         setMapError('Failed to load opportunities. Please refresh the page.');
       } finally {
@@ -155,7 +155,7 @@ const OpportunityMap = () => {
         if (error) throw error;
         
         const validData: SavedOpportunity[] = [];
-        (data || []).forEach((item: any) => {
+        (data || []).forEach((item: { opportunity_id: string; opportunities: Opportunity | Opportunity[] }) => {
           if (item.opportunities && !Array.isArray(item.opportunities)) {
             validData.push({
               opportunity_id: item.opportunity_id,
@@ -164,7 +164,7 @@ const OpportunityMap = () => {
           }
         });
         setSavedOpportunities(validData);
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error fetching saved opportunities', err);
       }
     };

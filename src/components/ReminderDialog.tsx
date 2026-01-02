@@ -76,7 +76,7 @@ export function ReminderDialog({
 
       setOpen(false);
       setDate(undefined);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error setting reminder",
         description: error.message,

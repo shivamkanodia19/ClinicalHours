@@ -2,14 +2,15 @@
 // Logs security-relevant events for monitoring and investigation
 
 import { logger } from "./logger";
+import type { SupabaseClient, ErrorDetails } from "@/types";
 
 // Lazy import supabase to avoid initialization issues
-let supabaseClient: any = null;
-const getSupabase = async () => {
+let supabaseClient: SupabaseClient | null = null;
+const getSupabase = async (): Promise<SupabaseClient | null> => {
   if (!supabaseClient) {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      supabaseClient = supabase;
+      supabaseClient = supabase as SupabaseClient;
     } catch (error) {
       // Ignore import errors
     }
@@ -22,7 +23,7 @@ export interface AuditLogEntry {
   user_id?: string | null;
   ip_address?: string;
   user_agent?: string;
-  details?: Record<string, any>;
+  details?: ErrorDetails;
   severity: "low" | "medium" | "high" | "critical";
   timestamp: string;
 }
@@ -32,7 +33,7 @@ export interface AuditLogEntry {
  */
 export async function logAuditEvent(
   eventType: string,
-  details?: Record<string, any>,
+  details?: ErrorDetails,
   severity: "low" | "medium" | "high" | "critical" = "medium"
 ): Promise<void> {
   try {
@@ -59,7 +60,7 @@ export async function logAuditEvent(
     // Log to console in development, would send to logging service in production
     if (logger && logger.info) {
       logger.info("Audit Event", logEntry);
-    } else {
+    } else if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
       console.log("Audit Event", logEntry);
     }
 
@@ -92,7 +93,7 @@ export async function logAuditEvent(
  */
 export function logAuthEvent(
   eventType: "login_success" | "login_failure" | "logout" | "signup" | "password_reset_request" | "password_reset_success",
-  details?: Record<string, any>
+  details?: ErrorDetails
 ): void {
   const severity = eventType.includes("failure") ? "high" : "medium";
   logAuditEvent(`auth_${eventType}`, details, severity);
@@ -115,14 +116,14 @@ export function logFileAccess(fileType: string, filePath: string): void {
 /**
  * Log admin actions
  */
-export function logAdminAction(action: string, details?: Record<string, any>): void {
+export function logAdminAction(action: string, details?: ErrorDetails): void {
   logAuditEvent(`admin_${action}`, details, "high");
 }
 
 /**
  * Log security violations
  */
-export function logSecurityViolation(violationType: string, details?: Record<string, any>): void {
+export function logSecurityViolation(violationType: string, details?: ErrorDetails): void {
   logAuditEvent(`security_violation_${violationType}`, details, "critical");
 }
 
