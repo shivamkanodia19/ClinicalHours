@@ -12,17 +12,12 @@ import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-// Strong password validation: min 12 chars, uppercase, lowercase, number, special char
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
-
+// Password validation: min 6 characters, no other requirements
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).max(255),
   password: z.string()
-    .min(12, { message: "Password must be at least 12 characters" })
-    .max(128)
-    .regex(passwordRegex, { 
-      message: "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)" 
-    }),
+    .min(6, { message: "Password must be at least 6 characters" })
+    .max(128),
   fullName: z.string().trim().min(1, { message: "Full name is required" }).max(100).optional(),
   phone: z.string().max(20).optional().or(z.literal("")),
 });
