@@ -26,6 +26,7 @@ import {
 } from "@/lib/inputValidation";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { AutocompleteCombobox } from "@/components/AutocompleteCombobox";
+import { AutocompleteInput } from "@/components/AutocompleteInput";
 import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { US_STATES } from "@/lib/data/usStates";
 import { COMMON_MAJORS } from "@/lib/data/majors";
@@ -487,15 +488,14 @@ const Profile = () => {
                         University
                         {isFieldRequired("university") && <RequiredBadge />}
                       </Label>
-                      <AutocompleteCombobox
+                      <AutocompleteInput
                         value={profile.university}
                         onValueChange={(value) => setProfile({ ...profile, university: value })}
                         options={COMMON_UNIVERSITIES}
-                        placeholder="Select or type university..."
-                        searchPlaceholder="Search universities..."
+                        placeholder="Type or select university..."
                         emptyMessage="No universities found."
                         disabled={loading}
-                        allowCustom={true}
+                        maxLength={200}
                       />
                     </div>
                     <div className="space-y-2">
@@ -503,15 +503,14 @@ const Profile = () => {
                         Major
                         {isFieldRequired("major") && <RequiredBadge />}
                       </Label>
-                      <AutocompleteCombobox
+                      <AutocompleteInput
                         value={profile.major}
                         onValueChange={(value) => setProfile({ ...profile, major: value })}
                         options={COMMON_MAJORS}
-                        placeholder="Select or type major..."
-                        searchPlaceholder="Search majors..."
+                        placeholder="Type or select major..."
                         emptyMessage="No majors found."
                         disabled={loading}
-                        allowCustom={true}
+                        maxLength={100}
                       />
                     </div>
                   </div>
