@@ -2,7 +2,20 @@
 // Logs security-relevant events for monitoring and investigation
 
 import { logger } from "./logger";
-import { supabase } from "@/integrations/supabase/client";
+
+// Lazy import supabase to avoid initialization issues
+let supabaseClient: any = null;
+const getSupabase = async () => {
+  if (!supabaseClient) {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      supabaseClient = supabase;
+    } catch (error) {
+      // Ignore import errors
+    }
+  }
+  return supabaseClient;
+};
 
 export interface AuditLogEntry {
   event_type: string;
@@ -26,10 +39,13 @@ export async function logAuditEvent(
     // Don't block on getting user - make it non-blocking
     let userId: string | null = null;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id || null;
+      const supabase = await getSupabase();
+      if (supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        userId = user?.id || null;
+      }
     } catch (authError) {
-      // Ignore auth errors - user might not be logged in
+      // Ignore auth errors - user might not be logged in or supabase not initialized
     }
     
     const logEntry: AuditLogEntry = {
@@ -53,13 +69,16 @@ export async function logAuditEvent(
     // - A security information and event management (SIEM) system
     
     // Example: Store in Supabase audit_logs table (if created)
-    // await supabase.from("audit_logs").insert({
-    //   event_type: eventType,
-    //   user_id: user?.id,
-    //   details: details,
-    //   severity,
-    //   created_at: new Date().toISOString(),
-    // });
+    // const supabase = await getSupabase();
+    // if (supabase) {
+    //   await supabase.from("audit_logs").insert({
+    //     event_type: eventType,
+    //     user_id: userId,
+    //     details: details,
+    //     severity,
+    //     created_at: new Date().toISOString(),
+    //   });
+    // }
   } catch (error) {
     // Don't fail the operation if logging fails - silently ignore
     if (logger && logger.error) {
