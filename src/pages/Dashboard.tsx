@@ -113,6 +113,12 @@ const Dashboard = () => {
     };
   }, [user, authLoading, navigate]);
 
+  // Store toast in a ref to avoid recreating fetchData when toast changes
+  const toastRef = useRef(toast);
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
   // Memoize fetchData to prevent infinite loops
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
@@ -216,7 +222,7 @@ const Dashboard = () => {
       setSavedOpportunities(processedSaved);
     } catch (error: unknown) {
       logger.error("Error loading dashboard data", error);
-      toast({
+      toastRef.current({
         title: "Error loading data",
         description: sanitizeErrorMessage(error),
         variant: "destructive",
@@ -224,7 +230,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userLocation, toast]);
+  }, [user?.id, userLocation]);
 
   useEffect(() => {
     if (user) {
