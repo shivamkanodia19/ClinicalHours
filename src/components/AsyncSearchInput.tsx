@@ -41,9 +41,16 @@ export function AsyncSearchInput({
           setIsSearching(false);
           setShowSuggestions(true);
         })
-        .catch(() => {
+        .catch((error) => {
+          // Silently handle search errors - don't show toasts for search failures
+          // User can still type custom values
           setSuggestions([]);
           setIsSearching(false);
+          setShowSuggestions(false);
+          // Only log in development
+          if (import.meta.env.DEV) {
+            console.debug("Search error (silent):", error);
+          }
         });
     } else {
       setSuggestions([]);
