@@ -230,7 +230,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, userLocation]);
+  }, [user?.id, userLocation?.lat, userLocation?.lon]);
 
   useEffect(() => {
     if (user) {
