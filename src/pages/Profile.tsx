@@ -25,9 +25,7 @@ import {
   sanitizeProfileData 
 } from "@/lib/inputValidation";
 import { useAutoSave } from "@/hooks/useAutoSave";
-import { AutocompleteCombobox } from "@/components/AutocompleteCombobox";
-import { AutocompleteInput } from "@/components/AutocompleteInput";
-import { CityAutocomplete } from "@/components/CityAutocomplete";
+import { UnifiedAutocomplete } from "@/components/UnifiedAutocomplete";
 import { US_STATES } from "@/lib/data/usStates";
 import { COMMON_MAJORS } from "@/lib/data/majors";
 import { COMMON_UNIVERSITIES } from "@/lib/data/universities";
@@ -460,16 +458,23 @@ const Profile = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <CityAutocomplete
+                      <UnifiedAutocomplete
                         value={profile.city}
                         onValueChange={(value) => setProfile({ ...profile, city: value })}
-                        placeholder="Search for a city..."
+                        searchFunction={async (query) => {
+                          const { searchCities } = await import("@/lib/api/citySearch");
+                          return searchCities(query, 10);
+                        }}
+                        placeholder="Select city..."
+                        searchPlaceholder="Search for a city..."
+                        emptyMessage="No cities found."
                         disabled={loading}
+                        allowCustom={true}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
-                      <AutocompleteCombobox
+                      <UnifiedAutocomplete
                         value={profile.state}
                         onValueChange={(value) => setProfile({ ...profile, state: value })}
                         options={US_STATES}
@@ -491,14 +496,15 @@ const Profile = () => {
                         University
                         {isFieldRequired("university") && <RequiredBadge />}
                       </Label>
-                      <AutocompleteInput
+                      <UnifiedAutocomplete
                         value={profile.university}
                         onValueChange={(value) => setProfile({ ...profile, university: value })}
                         options={COMMON_UNIVERSITIES}
-                        placeholder="Type or select university..."
+                        placeholder="Select university..."
+                        searchPlaceholder="Search universities..."
                         emptyMessage="No universities found."
                         disabled={loading}
-                        maxLength={200}
+                        allowCustom={true}
                       />
                     </div>
                     <div className="space-y-2">
@@ -506,14 +512,15 @@ const Profile = () => {
                         Major
                         {isFieldRequired("major") && <RequiredBadge />}
                       </Label>
-                      <AutocompleteInput
+                      <UnifiedAutocomplete
                         value={profile.major}
                         onValueChange={(value) => setProfile({ ...profile, major: value })}
                         options={COMMON_MAJORS}
-                        placeholder="Type or select major..."
+                        placeholder="Select major..."
+                        searchPlaceholder="Search majors..."
                         emptyMessage="No majors found."
                         disabled={loading}
-                        maxLength={100}
+                        allowCustom={true}
                       />
                     </div>
                   </div>
@@ -536,7 +543,7 @@ const Profile = () => {
                         Graduation Year
                         {isFieldRequired("graduation_year") && <RequiredBadge />}
                       </Label>
-                      <AutocompleteCombobox
+                      <UnifiedAutocomplete
                         value={profile.graduation_year}
                         onValueChange={(value) => setProfile({ ...profile, graduation_year: value })}
                         options={graduationYears}
