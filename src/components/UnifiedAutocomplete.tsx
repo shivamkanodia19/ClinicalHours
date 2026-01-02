@@ -85,11 +85,13 @@ export function UnifiedAutocomplete({
     }
   }, [open]);
 
-  const handleSelect = (selectedValue: string) => {
-    onValueChange(selectedValue);
+  const handleSelect = React.useCallback((selectedValue: string, option: string) => {
+    // CommandItem may pass a transformed value, so use the actual option
+    const valueToSet = option || selectedValue;
+    onValueChange(valueToSet);
     setOpen(false);
     setSearchQuery("");
-  };
+  }, [onValueChange]);
 
   const handleCustomValue = () => {
     if (allowCustom && searchQuery && !displayOptions.includes(searchQuery)) {
@@ -157,7 +159,12 @@ export function UnifiedAutocomplete({
                   <CommandItem
                     key={option}
                     value={option}
-                    onSelect={() => handleSelect(option)}
+                    onSelect={(selectedValue) => {
+                      // Use the option directly to ensure correct value
+                      onValueChange(option);
+                      setOpen(false);
+                      setSearchQuery("");
+                    }}
                   >
                     <Check
                       className={cn(
