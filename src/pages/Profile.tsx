@@ -25,7 +25,8 @@ import {
   sanitizeProfileData 
 } from "@/lib/inputValidation";
 import { useAutoSave } from "@/hooks/useAutoSave";
-import { UnifiedAutocomplete } from "@/components/UnifiedAutocomplete";
+import { DatalistInput } from "@/components/DatalistInput";
+import { AsyncSearchInput } from "@/components/AsyncSearchInput";
 import { US_STATES } from "@/lib/data/usStates";
 import { COMMON_MAJORS } from "@/lib/data/majors";
 import { COMMON_UNIVERSITIES } from "@/lib/data/universities";
@@ -458,29 +459,26 @@ const Profile = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <UnifiedAutocomplete
+                      <AsyncSearchInput
+                        id="city"
                         value={profile.city}
                         onValueChange={(value) => setProfile({ ...profile, city: value })}
                         searchFunction={async (query) => {
                           const { searchCities } = await import("@/lib/api/citySearch");
                           return searchCities(query, 10);
                         }}
-                        placeholder="Select city..."
-                        searchPlaceholder="Search for a city..."
-                        emptyMessage="No cities found."
+                        placeholder="Type to search for a city..."
                         disabled={loading}
-                        allowCustom={true}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
-                      <UnifiedAutocomplete
+                      <DatalistInput
+                        id="state"
                         value={profile.state}
                         onValueChange={(value) => setProfile({ ...profile, state: value })}
                         options={US_STATES}
-                        placeholder="Select state..."
-                        searchPlaceholder="Search states..."
-                        emptyMessage="No states found."
+                        placeholder="Type or select state..."
                         disabled={loading}
                       />
                     </div>
@@ -496,13 +494,12 @@ const Profile = () => {
                         University
                         {isFieldRequired("university") && <RequiredBadge />}
                       </Label>
-                      <UnifiedAutocomplete
+                      <DatalistInput
+                        id="university"
                         value={profile.university}
                         onValueChange={(value) => setProfile({ ...profile, university: value })}
                         options={COMMON_UNIVERSITIES}
-                        placeholder="Select university..."
-                        searchPlaceholder="Search universities..."
-                        emptyMessage="No universities found."
+                        placeholder="Type or select university..."
                         disabled={loading}
                         allowCustom={true}
                       />
@@ -512,13 +509,12 @@ const Profile = () => {
                         Major
                         {isFieldRequired("major") && <RequiredBadge />}
                       </Label>
-                      <UnifiedAutocomplete
+                      <DatalistInput
+                        id="major"
                         value={profile.major}
                         onValueChange={(value) => setProfile({ ...profile, major: value })}
                         options={COMMON_MAJORS}
-                        placeholder="Select major..."
-                        searchPlaceholder="Search majors..."
-                        emptyMessage="No majors found."
+                        placeholder="Type or select major..."
                         disabled={loading}
                         allowCustom={true}
                       />
@@ -543,13 +539,12 @@ const Profile = () => {
                         Graduation Year
                         {isFieldRequired("graduation_year") && <RequiredBadge />}
                       </Label>
-                      <UnifiedAutocomplete
+                      <DatalistInput
+                        id="graduation_year"
                         value={profile.graduation_year}
                         onValueChange={(value) => setProfile({ ...profile, graduation_year: value })}
                         options={graduationYears}
-                        placeholder="Select graduation year..."
-                        searchPlaceholder="Search years..."
-                        emptyMessage="No years found."
+                        placeholder="Type or select graduation year..."
                         disabled={loading}
                       />
                     </div>
