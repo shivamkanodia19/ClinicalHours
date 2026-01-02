@@ -20,8 +20,23 @@ const securityHeadersPlugin = () => ({
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Ensure env vars are loaded consistently in all environments (dev/preview/build)
-  const env = loadEnv(mode, process.cwd(), "");
+  // In this environment, VITE_ vars may be provided via runtime env injection rather than a local .env file.
+  // We read from BOTH loadEnv + process.env and then define them explicitly so `import.meta.env.*` is never undefined.
+  const env = loadEnv(mode, process.cwd(), "VITE_");
+
+  const DEFAULT_VITE_SUPABASE_URL = "https://sysbtcikrbrrgafffody.supabase.co";
+  const DEFAULT_VITE_SUPABASE_PUBLISHABLE_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5c2J0Y2lrcmJycmdhZmZmb2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTc5MzUsImV4cCI6MjA3ODYzMzkzNX0.5jN1B2RIscA42w7FYfwxaQHFW6ROldslPzUFYtQCgLc";
+
+  const VITE_SUPABASE_URL =
+    env.VITE_SUPABASE_URL ??
+    (process.env.VITE_SUPABASE_URL as string | undefined) ??
+    DEFAULT_VITE_SUPABASE_URL;
+
+  const VITE_SUPABASE_PUBLISHABLE_KEY =
+    env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+    (process.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+    DEFAULT_VITE_SUPABASE_PUBLISHABLE_KEY;
 
   return {
     server: {
@@ -38,10 +53,11 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-    // Provide explicit defines so the auto-generated Supabase client never sees undefined
     define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_SUPABASE_PUBLISHABLE_KEY),
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(VITE_SUPABASE_URL),
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
+        VITE_SUPABASE_PUBLISHABLE_KEY
+      ),
     },
     build: {
       // Optimize chunk splitting
