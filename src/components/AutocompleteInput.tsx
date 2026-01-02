@@ -55,11 +55,8 @@ export function AutocompleteInput({
   };
 
   const handleSelect = React.useCallback((option: string) => {
-    // Use a small delay to ensure the click event completes
-    setTimeout(() => {
-      onValueChange(option);
-      setOpen(false);
-    }, 0);
+    onValueChange(option);
+    setOpen(false);
   }, [onValueChange]);
 
   const handleFocus = () => {
@@ -67,20 +64,34 @@ export function AutocompleteInput({
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Don't close if clicking on the popover
+    // Check if focus is moving to the popover
     const relatedTarget = e.relatedTarget as HTMLElement;
-    if (relatedTarget?.closest('[role="listbox"]') || relatedTarget?.closest('[role="option"]')) {
-      e.preventDefault();
+    if (relatedTarget?.closest('[role="listbox"]') || 
+        relatedTarget?.closest('[role="option"]') ||
+        relatedTarget?.closest('[data-radix-popper-content-wrapper]') ||
+        relatedTarget?.closest('[data-radix-popover-content]')) {
+      // Keep popover open if clicking inside it
       return;
     }
-    // Delay closing to allow selection
-    setTimeout(() => {
+    // Close popover after a delay to allow selection
+    // Use a longer delay to ensure selection completes
+    const timeoutId = setTimeout(() => {
       setOpen(false);
-    }, 300);
+    }, 250);
+    
+    // Store timeout ID to clear if needed
+    return () => clearTimeout(timeoutId);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(newOpen) => {
+      // Only close if explicitly set to false and not clicking on an option
+      if (!newOpen) {
+        setOpen(false);
+      } else {
+        setOpen(true);
+      }
+    }}>
       <div className="relative">
         <PopoverTrigger asChild>
           <div className="relative">
@@ -105,10 +116,10 @@ export function AutocompleteInput({
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
             onInteractOutside={(e) => {
-              // Don't close if clicking on the input or command items
+              // Don't close if clicking on the input or inside the popover
               if (e.target === inputRef.current || 
                   inputRef.current?.contains(e.target as Node) ||
-                  (e.target as HTMLElement)?.closest('[role="option"]')) {
+                  (e.target as HTMLElement)?.closest('[data-radix-popover-content]')) {
                 e.preventDefault();
               }
             }}
@@ -122,12 +133,6 @@ export function AutocompleteInput({
                       key={option}
                       value={option}
                       onSelect={() => handleSelect(option)}
-                      onMouseDown={(e) => {
-                        // Prevent blur from firing on the input
-                        e.preventDefault();
-                        onValueChange(option);
-                        setOpen(false);
-                      }}
                     >
                       <Check
                         className={cn(

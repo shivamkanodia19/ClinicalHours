@@ -111,13 +111,6 @@ export function AutocompleteCombobox({
                     setOpen(false);
                     setSearchQuery("");
                   }}
-                  onMouseDown={(e) => {
-                    // Prevent any default behavior that might interfere
-                    e.preventDefault();
-                    onValueChange(option);
-                    setOpen(false);
-                    setSearchQuery("");
-                  }}
                 >
                   <Check
                     className={cn(

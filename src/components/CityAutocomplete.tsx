@@ -109,13 +109,6 @@ export function CityAutocomplete({
                     setOpen(false);
                     setSearchQuery(finalValue);
                   }}
-                  onMouseDown={(e) => {
-                    // Prevent any default behavior that might interfere
-                    e.preventDefault();
-                    onValueChange(city);
-                    setOpen(false);
-                    setSearchQuery(city);
-                  }}
                 >
                   <Check
                     className={cn(
