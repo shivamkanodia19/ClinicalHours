@@ -103,6 +103,7 @@ const Dashboard = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [opportunityToDelete, setOpportunityToDelete] = useState<string | null>(null);
   const isMountedRef = useRef(true);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -229,6 +230,7 @@ const Dashboard = () => {
       });
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [user?.id, userLocation?.lat, userLocation?.lon]);
 
