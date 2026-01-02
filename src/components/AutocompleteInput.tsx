@@ -63,7 +63,14 @@ export function AutocompleteInput({
     setOpen(true);
   };
 
+  const blurTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Clear any existing timeout
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+    }
+    
     // Check if focus is moving to the popover
     const relatedTarget = e.relatedTarget as HTMLElement;
     if (relatedTarget?.closest('[role="listbox"]') || 
@@ -74,13 +81,10 @@ export function AutocompleteInput({
       return;
     }
     // Close popover after a delay to allow selection
-    // Use a longer delay to ensure selection completes
-    const timeoutId = setTimeout(() => {
+    blurTimeoutRef.current = setTimeout(() => {
       setOpen(false);
+      blurTimeoutRef.current = null;
     }, 250);
-    
-    // Store timeout ID to clear if needed
-    return () => clearTimeout(timeoutId);
   };
 
   return (
