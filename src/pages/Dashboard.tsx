@@ -233,10 +233,10 @@ const Dashboard = () => {
   }, [user?.id, userLocation?.lat, userLocation?.lon]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchData();
     }
-  }, [user, fetchData]);
+  }, [user?.id, fetchData]);
 
   // Debounce search term
   useEffect(() => {
