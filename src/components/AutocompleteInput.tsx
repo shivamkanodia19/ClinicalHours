@@ -88,14 +88,7 @@ export function AutocompleteInput({
   };
 
   return (
-    <Popover open={open} onOpenChange={(newOpen) => {
-      // Only close if explicitly set to false and not clicking on an option
-      if (!newOpen) {
-        setOpen(false);
-      } else {
-        setOpen(true);
-      }
-    }}>
+    <Popover open={open} onOpenChange={setOpen}>
       <div className="relative">
         <PopoverTrigger asChild>
           <div className="relative">
