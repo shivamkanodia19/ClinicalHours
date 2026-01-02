@@ -235,10 +235,11 @@ const Dashboard = () => {
   }, [user?.id, userLocation?.lat, userLocation?.lon]);
 
   useEffect(() => {
-    if (user?.id) {
+    // Wait for auth to finish loading before fetching data
+    if (!authLoading && user?.id) {
       fetchData();
     }
-  }, [user?.id, fetchData]);
+  }, [user?.id, fetchData, authLoading]);
 
   // Debounce search term
   useEffect(() => {
