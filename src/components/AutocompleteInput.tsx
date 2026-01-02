@@ -58,9 +58,8 @@ export function AutocompleteInput({
   }, [onValueChange]);
 
   const handleFocus = () => {
-    if (filteredOptions.length > 0) {
-      setOpen(true);
-    }
+    // Always show dropdown when focused if there are options
+    setOpen(true);
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -82,18 +81,25 @@ export function AutocompleteInput({
   // Close dropdown when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node) &&
-        !listRef.current?.contains(event.target as Node)
+        !containerRef.current.contains(target) &&
+        listRef.current &&
+        !listRef.current.contains(target)
       ) {
         setOpen(false);
       }
     };
 
     if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
+      // Use a slight delay to ensure the click event completes
+      const timeoutId = setTimeout(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+      }, 0);
+      
       return () => {
+        clearTimeout(timeoutId);
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }
@@ -120,10 +126,6 @@ export function AutocompleteInput({
         <div
           ref={listRef}
           className="absolute z-50 w-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md"
-          onMouseDown={(e) => {
-            // Prevent input from losing focus when clicking on dropdown
-            e.preventDefault();
-          }}
         >
           <Command>
             <CommandList>
@@ -134,6 +136,11 @@ export function AutocompleteInput({
                     key={option}
                     value={option}
                     onSelect={() => handleSelect(option)}
+                    onMouseDown={(e) => {
+                      // Only prevent default on the item itself to allow selection
+                      // but don't prevent it on the container
+                      e.stopPropagation();
+                    }}
                   >
                     <Check
                       className={cn(
