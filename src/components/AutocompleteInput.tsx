@@ -9,11 +9,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 interface AutocompleteInputProps {
   value: string;
@@ -38,6 +33,8 @@ export function AutocompleteInput({
 }: AutocompleteInputProps) {
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
 
   // Filter options based on current value
   const filteredOptions = React.useMemo(() => {
@@ -57,96 +54,101 @@ export function AutocompleteInput({
   const handleSelect = React.useCallback((option: string) => {
     onValueChange(option);
     setOpen(false);
+    inputRef.current?.focus();
   }, [onValueChange]);
 
   const handleFocus = () => {
-    setOpen(true);
+    if (filteredOptions.length > 0) {
+      setOpen(true);
+    }
   };
-
-  const blurTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Clear any existing timeout
-    if (blurTimeoutRef.current) {
-      clearTimeout(blurTimeoutRef.current);
-    }
-    
-    // Check if focus is moving to the popover
+    // Check if focus is moving to the dropdown list
     const relatedTarget = e.relatedTarget as HTMLElement;
-    if (relatedTarget?.closest('[role="listbox"]') || 
-        relatedTarget?.closest('[role="option"]') ||
-        relatedTarget?.closest('[data-radix-popper-content-wrapper]') ||
-        relatedTarget?.closest('[data-radix-popover-content]')) {
-      // Keep popover open if clicking inside it
+    if (relatedTarget && (
+      listRef.current?.contains(relatedTarget) ||
+      containerRef.current?.contains(relatedTarget)
+    )) {
+      // Keep dropdown open if clicking inside it
       return;
     }
-    // Close popover after a delay to allow selection
-    blurTimeoutRef.current = setTimeout(() => {
+    // Close dropdown after a short delay
+    setTimeout(() => {
       setOpen(false);
-      blurTimeoutRef.current = null;
-    }, 250);
+    }, 200);
   };
 
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node) &&
+        !listRef.current?.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [open]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <div ref={containerRef} className="relative w-full">
       <div className="relative">
-        <PopoverTrigger asChild>
-          <div className="relative">
-            <Input
-              ref={inputRef}
-              type="text"
-              value={value}
-              onChange={handleInputChange}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder={placeholder}
-              disabled={disabled}
-              className={cn("pr-8", className)}
-              maxLength={maxLength}
-            />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none" />
-          </div>
-        </PopoverTrigger>
-        {open && filteredOptions.length > 0 && (
-          <PopoverContent 
-            className="w-[var(--radix-popover-trigger-width)] p-0" 
-            align="start"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-            onInteractOutside={(e) => {
-              // Don't close if clicking on the input or inside the popover
-              if (e.target === inputRef.current || 
-                  inputRef.current?.contains(e.target as Node) ||
-                  (e.target as HTMLElement)?.closest('[data-radix-popover-content]')) {
-                e.preventDefault();
-              }
-            }}
-          >
-            <Command>
-              <CommandList>
-                <CommandEmpty>{emptyMessage}</CommandEmpty>
-                <CommandGroup>
-                  {filteredOptions.map((option) => (
-                    <CommandItem
-                      key={option}
-                      value={option}
-                      onSelect={() => handleSelect(option)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value === option ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {option}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        )}
+        <Input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={cn("pr-8", className)}
+          maxLength={maxLength}
+        />
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none" />
       </div>
-    </Popover>
+      {open && filteredOptions.length > 0 && (
+        <div
+          ref={listRef}
+          className="absolute z-50 w-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md"
+          onMouseDown={(e) => {
+            // Prevent input from losing focus when clicking on dropdown
+            e.preventDefault();
+          }}
+        >
+          <Command>
+            <CommandList>
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+              <CommandGroup>
+                {filteredOptions.map((option) => (
+                  <CommandItem
+                    key={option}
+                    value={option}
+                    onSelect={() => handleSelect(option)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === option ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {option}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
+      )}
+    </div>
   );
 }
-
