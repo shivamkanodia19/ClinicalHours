@@ -25,6 +25,12 @@ import {
   sanitizeProfileData 
 } from "@/lib/inputValidation";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { AutocompleteCombobox } from "@/components/AutocompleteCombobox";
+import { CityAutocomplete } from "@/components/CityAutocomplete";
+import { US_STATES } from "@/lib/data/usStates";
+import { COMMON_MAJORS } from "@/lib/data/majors";
+import { COMMON_UNIVERSITIES } from "@/lib/data/universities";
+import { getGraduationYears } from "@/lib/data/graduationYears";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -450,20 +456,23 @@ const Profile = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
+                      <CityAutocomplete
                         value={profile.city}
-                        onChange={(e) => setProfile({ ...profile, city: e.target.value.slice(0, 100) })}
-                        maxLength={100}
+                        onValueChange={(value) => setProfile({ ...profile, city: value })}
+                        placeholder="Search for a city..."
+                        disabled={loading}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
-                      <Input
-                        id="state"
+                      <AutocompleteCombobox
                         value={profile.state}
-                        onChange={(e) => setProfile({ ...profile, state: e.target.value.slice(0, 50) })}
-                        maxLength={50}
+                        onValueChange={(value) => setProfile({ ...profile, state: value })}
+                        options={US_STATES}
+                        placeholder="Select state..."
+                        searchPlaceholder="Search states..."
+                        emptyMessage="No states found."
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -478,11 +487,15 @@ const Profile = () => {
                         University
                         {isFieldRequired("university") && <RequiredBadge />}
                       </Label>
-                      <Input
-                        id="university"
+                      <AutocompleteCombobox
                         value={profile.university}
-                        onChange={(e) => setProfile({ ...profile, university: e.target.value.slice(0, 200) })}
-                        maxLength={200}
+                        onValueChange={(value) => setProfile({ ...profile, university: value })}
+                        options={COMMON_UNIVERSITIES}
+                        placeholder="Select or type university..."
+                        searchPlaceholder="Search universities..."
+                        emptyMessage="No universities found."
+                        disabled={loading}
+                        allowCustom={true}
                       />
                     </div>
                     <div className="space-y-2">
@@ -490,11 +503,15 @@ const Profile = () => {
                         Major
                         {isFieldRequired("major") && <RequiredBadge />}
                       </Label>
-                      <Input
-                        id="major"
+                      <AutocompleteCombobox
                         value={profile.major}
-                        onChange={(e) => setProfile({ ...profile, major: e.target.value.slice(0, 100) })}
-                        maxLength={100}
+                        onValueChange={(value) => setProfile({ ...profile, major: value })}
+                        options={COMMON_MAJORS}
+                        placeholder="Select or type major..."
+                        searchPlaceholder="Search majors..."
+                        emptyMessage="No majors found."
+                        disabled={loading}
+                        allowCustom={true}
                       />
                     </div>
                   </div>
@@ -517,11 +534,14 @@ const Profile = () => {
                         Graduation Year
                         {isFieldRequired("graduation_year") && <RequiredBadge />}
                       </Label>
-                      <Input
-                        id="graduation_year"
-                        type="number"
+                      <AutocompleteCombobox
                         value={profile.graduation_year}
-                        onChange={(e) => setProfile({ ...profile, graduation_year: e.target.value })}
+                        onValueChange={(value) => setProfile({ ...profile, graduation_year: value })}
+                        options={graduationYears.map(y => y.toString())}
+                        placeholder="Select graduation year..."
+                        searchPlaceholder="Search years..."
+                        emptyMessage="No years found."
+                        disabled={loading}
                       />
                     </div>
                     <div className="space-y-2">
