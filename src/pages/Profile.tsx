@@ -307,9 +307,9 @@ const Profile = () => {
           phone: sanitizedData.phone,
           university: sanitizedData.university,
           major: sanitizedData.major,
-          gpa: sanitizedData.gpa ? parseFloat(sanitizedData.gpa) : null,
-          graduation_year: sanitizedData.graduation_year ? parseInt(sanitizedData.graduation_year) : null,
-          clinical_hours: sanitizedData.clinical_hours ? parseInt(sanitizedData.clinical_hours) : 0,
+          gpa: sanitizedData.gpa ? parseFloat(String(sanitizedData.gpa)) : null,
+          graduation_year: sanitizedData.graduation_year ? parseInt(String(sanitizedData.graduation_year)) : null,
+          clinical_hours: sanitizedData.clinical_hours ? parseInt(String(sanitizedData.clinical_hours)) : 0,
           pre_med_track: sanitizedData.pre_med_track,
           bio: sanitizedData.bio,
           career_goals: sanitizedData.career_goals,
@@ -543,7 +543,7 @@ const Profile = () => {
                         id="graduation_year"
                         value={profile.graduation_year}
                         onValueChange={(value) => setProfile({ ...profile, graduation_year: value })}
-                        options={graduationYears}
+                        options={graduationYears.map(String)}
                         placeholder="Type or select graduation year..."
                         disabled={loading}
                       />
