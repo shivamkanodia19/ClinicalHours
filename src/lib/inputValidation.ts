@@ -252,13 +252,13 @@ export function sanitizeProfileData(data: Record<string, unknown>): Record<strin
   
   // Phone - normalize and validate
   if (data.phone !== undefined) {
-    const phoneValidation = validatePhoneNumber(data.phone);
-    sanitized.phone = phoneValidation.normalized || sanitizeTextInput(data.phone);
+    const phoneValidation = validatePhoneNumber(String(data.phone ?? ""));
+    sanitized.phone = phoneValidation.normalized || sanitizeTextInput(String(data.phone ?? ""));
   }
   
   // URL fields - validate and sanitize
   if (data.linkedin_url !== undefined) {
-    const url = sanitizeTextInput(data.linkedin_url);
+    const url = sanitizeTextInput(String(data.linkedin_url ?? ""));
     if (url && containsMaliciousPattern(url)) {
       sanitized.linkedin_url = ""; // Clear malicious URLs
     } else {

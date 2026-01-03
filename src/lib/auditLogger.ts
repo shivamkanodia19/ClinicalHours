@@ -10,7 +10,7 @@ const getSupabase = async (): Promise<SupabaseClient | null> => {
   if (!supabaseClient) {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      supabaseClient = supabase as SupabaseClient;
+      supabaseClient = supabase as unknown as SupabaseClient;
     } catch (error) {
       // Ignore import errors
     }

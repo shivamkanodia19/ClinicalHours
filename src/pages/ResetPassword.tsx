@@ -47,13 +47,14 @@ const ResetPassword = () => {
     } catch (error: unknown) {
       logger.error("Error resetting password", error);
       setStatus("error");
-      const errorMessage = error?.message?.includes("expired") || error?.message?.includes("invalid")
+      const errMsg = error instanceof Error ? error.message : "";
+      const displayMessage = errMsg.includes("expired") || errMsg.includes("invalid")
         ? "This reset link is invalid or has expired. Please request a new one."
-        : error?.message?.includes("password")
+        : errMsg.includes("password")
         ? "Password does not meet requirements"
         : "Failed to reset password. Please try again.";
-      setErrorMessage(errorMessage);
-      toast.error(errorMessage);
+      setErrorMessage(displayMessage);
+      toast.error(displayMessage);
     } finally {
       setLoading(false);
     }
