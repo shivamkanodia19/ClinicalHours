@@ -13,7 +13,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   const [mounted, setMounted] = useState(false);
   const location = useLocation();
   
-  // Check if we're on the home page for styling
+  // Check if we're on the home page - don't render toggle there
   const isHomePage = location.pathname === "/";
 
   // Avoid hydration mismatch
@@ -21,23 +21,16 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className={`h-9 w-9 ${isHomePage ? "text-white hover:text-white/80" : ""} ${className || ""}`}
-      >
-        <Sun className="h-4 w-4" />
-      </Button>
-    );
+  // Don't show theme toggle on home page
+  if (!mounted || isHomePage) {
+    return null;
   }
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      className={`h-9 w-9 ${isHomePage ? "text-white hover:text-white/80 hover:bg-white/10" : ""} ${className || ""}`}
+      className={`h-9 w-9 ${className || ""}`}
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-label="Toggle theme"
     >
