@@ -3,16 +3,125 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// Plugin to add security headers in development
-const securityHeadersPlugin = () => ({
+// Apply CSP headers to all routes for comprehensive XSS protection
+// This includes all application routes to prevent script injection attacks
+const shouldApplyCSP = (pathname: string): boolean => {
+  // Exclude static assets and API routes from CSP
+  // Apply CSP to all HTML pages and application routes
+  const excludedPaths = [
+    "/@vite",           // Vite dev server internal
+    "/@react-refresh",  // React refresh
+    "/@id",             // Vite module resolution
+    "/node_modules",    // Node modules
+    ".js",              // JavaScript files
+    ".css",             // CSS files
+    ".json",            // JSON files
+    ".png",             // Images
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".ico",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+  ];
+  
+  // Check if path is an excluded static asset
+  const isExcluded = excludedPaths.some((excluded) => 
+    pathname.includes(excluded) || pathname.endsWith(excluded)
+  );
+  
+  // Apply CSP to all HTML pages and application routes
+  return !isExcluded;
+};
+
+// Generate CSP policy based on environment and Supabase URL
+const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
+  // Extract domain from Supabase URL (e.g., https://xxx.supabase.co -> *.supabase.co)
+  const supabaseDomain = supabaseUrl.replace(/^https?:\/\/([^/]+).*$/, "$1");
+  const supabaseWildcard = supabaseDomain.includes("supabase.co") 
+    ? "https://*.supabase.co" 
+    : supabaseUrl;
+
+  if (isDev) {
+    // Development policy - more permissive for Vite HMR
+    // Note: CSP doesn't support wildcard ports, so we allow localhost with common ports
+    const localhostPorts = [
+      "http://localhost:8080",
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "ws://localhost:8080",
+      "ws://localhost:5173",
+      "ws://localhost:5174",
+      "wss://localhost:8080",
+      "wss://localhost:5173",
+      "wss://localhost:5174",
+    ].join(" ");
+    
+    return [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: https:",
+      `connect-src 'self' ${supabaseWildcard} ${localhostPorts}`,
+      "frame-ancestors 'none'",
+    ].join("; ");
+  } else {
+    // Production policy - strict, no inline scripts
+    return [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: https:",
+      `connect-src 'self' ${supabaseWildcard}`,
+      "frame-ancestors 'none'",
+    ].join("; ");
+  }
+};
+
+// Plugin to add security headers including CSP
+const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
   name: "security-headers",
   configureServer(server: any) {
-    server.middlewares.use((_req: any, res: any, next: any) => {
-      // Security headers (CSP removed - too strict for dev, should be set at server/CDN level)
+    server.middlewares.use((req: any, res: any, next: any) => {
+      const pathname = req.url?.split("?")[0] || "/";
+      
+      // Always set basic security headers
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      
+      // Add CSP header to all application routes for comprehensive XSS protection
+      if (shouldApplyCSP(pathname)) {
+        const cspPolicy = generateCSPPolicy(isDev, supabaseUrl);
+        res.setHeader("Content-Security-Policy", cspPolicy);
+      }
+      
+      next();
+    });
+  },
+  configurePreviewServer(server: any) {
+    // Also apply headers in preview mode (production build testing)
+    server.middlewares.use((req: any, res: any, next: any) => {
+      const pathname = req.url?.split("?")[0] || "/";
+      
+      // Always set basic security headers
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("X-Frame-Options", "DENY");
+      res.setHeader("X-XSS-Protection", "1; mode=block");
+      res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      
+      // Add CSP header to all application routes (production policy in preview)
+      if (shouldApplyCSP(pathname)) {
+        const cspPolicy = generateCSPPolicy(false, supabaseUrl);
+        res.setHeader("Content-Security-Policy", cspPolicy);
+      }
+      
       next();
     });
   },
@@ -46,7 +155,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === "development" && componentTagger(),
-      mode === "development" && securityHeadersPlugin(),
+      securityHeadersPlugin(mode === "development", VITE_SUPABASE_URL),
     ].filter(Boolean),
     resolve: {
       alias: {
