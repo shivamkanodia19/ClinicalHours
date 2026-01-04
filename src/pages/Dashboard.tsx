@@ -87,7 +87,7 @@ const tips = [
 ];
 
 const Dashboard = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isReady } = useAuth();
   const { isComplete, isLoading: profileLoading, missingFields, profile } = useProfileComplete();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -106,13 +106,13 @@ const Dashboard = () => {
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isReady && !user) {
       navigate("/auth");
     }
     return () => {
       isMountedRef.current = false;
     };
-  }, [user, authLoading, navigate]);
+  }, [user, isReady, navigate]);
 
   // Store toast in a ref to avoid recreating fetchData when toast changes
   const toastRef = useRef(toast);
@@ -235,11 +235,11 @@ const Dashboard = () => {
   }, [user?.id, userLocation?.lat, userLocation?.lon]);
 
   useEffect(() => {
-    // Wait for auth to finish loading before fetching data
-    if (!authLoading && user?.id) {
+    // Wait for auth to be ready before fetching data
+    if (isReady && user?.id) {
       fetchData();
     }
-  }, [user?.id, fetchData, authLoading]);
+  }, [user?.id, fetchData, isReady]);
 
   // Debounce search term
   useEffect(() => {
@@ -468,7 +468,7 @@ const Dashboard = () => {
   // Get user's first name for greeting
   const firstName = profile?.full_name?.split(' ')[0] || 'there';
 
-  if (authLoading || loading) {
+  if (authLoading || !isReady || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

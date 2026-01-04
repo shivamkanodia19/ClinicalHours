@@ -34,7 +34,7 @@ import { getGraduationYears } from "@/lib/data/graduationYears";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isReady } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
@@ -133,9 +133,12 @@ const Profile = () => {
   }, [resumeSignedUrl, profile.resume_url, profile.full_name]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    // Wait for auth to be fully ready before taking any action
+    if (!isReady) return;
+    
+    if (!user) {
       navigate("/auth");
-      } else if (user) {
+    } else {
       loadProfile();
       // Load auto-saved draft if available
       const savedDraft = loadSavedData();
@@ -147,7 +150,7 @@ const Profile = () => {
       }
       // CSRF protection is handled by Supabase's built-in JWT token validation
     }
-  }, [user, authLoading, navigate]);
+  }, [user, isReady, navigate]);
 
   const loadProfile = async () => {
     try {
@@ -344,7 +347,7 @@ const Profile = () => {
     <span className="text-destructive ml-1">*</span>
   );
 
-  if (authLoading) {
+  if (authLoading || !isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

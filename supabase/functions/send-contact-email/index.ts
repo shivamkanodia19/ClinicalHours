@@ -9,6 +9,8 @@ if (!RESEND_API_KEY) {
 
 // Allowed origins for CORS - restrict to production and development
 const ALLOWED_ORIGINS = [
+  "https://clinicalhours.org",
+  "https://www.clinicalhours.org",
   "https://sysbtcikrbrrgafffody.lovableproject.com",
   "https://lovable.dev",
   "http://localhost:5173",
@@ -18,7 +20,11 @@ const ALLOWED_ORIGINS = [
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
   const isAllowed = origin && ALLOWED_ORIGINS.some(allowed => 
-    origin === allowed || origin.endsWith('.lovableproject.com') || origin.endsWith('.lovable.dev')
+    origin === allowed || 
+    origin.endsWith('.lovableproject.com') || 
+    origin.endsWith('.lovable.dev') ||
+    origin.endsWith('.clinicalhours.org') ||
+    origin === 'https://clinicalhours.org'
   );
   
   return {
@@ -160,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClinicalHours <support@clinicalhours.org>",
+        from: "ClinicalHours <support@send.clinicalhours.org>",
         to: ["support@clinicalhours.org"],
         reply_to: email,
         subject: `Contact Form: ${safeSubject}`,

@@ -22,7 +22,7 @@ const Opportunities = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(new Set());
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -43,10 +43,10 @@ const Opportunities = () => {
     pageSize: 20,
   });
 
-  // Fetch saved opportunities on mount
+  // Fetch saved opportunities on mount - wait for auth to be ready
   useEffect(() => {
     const fetchSavedOpportunities = async () => {
-      if (!user) return;
+      if (!user || !isReady) return;
       
       const { data, error } = await supabase
         .from("saved_opportunities")
@@ -59,7 +59,7 @@ const Opportunities = () => {
     };
 
     fetchSavedOpportunities();
-  }, [user]);
+  }, [user, isReady]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -143,7 +143,7 @@ const Opportunities = () => {
   };
 
 
-  if (authLoading || !user) {
+  if (authLoading || !isReady || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
