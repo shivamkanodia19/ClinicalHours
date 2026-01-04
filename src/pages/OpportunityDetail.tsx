@@ -37,7 +37,7 @@ interface Opportunity {
 const OpportunityDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isReady } = useAuth();
   const { toast } = useToast();
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,10 +46,10 @@ const OpportunityDetail = () => {
   const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isReady && !user) {
       navigate("/auth");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, isReady, navigate]);
 
   useEffect(() => {
     const fetchOpportunity = async () => {
