@@ -175,6 +175,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create reset link - validate origin
     const allowedOrigins = [
+      'https://clinicalhours.org',
+      'https://www.clinicalhours.org',
       'https://sysbtcikrbrrgafffody.lovableproject.com',
       'https://lovable.dev',
       'http://localhost:5173',
@@ -185,7 +187,9 @@ const handler = async (req: Request): Promise<Response> => {
     const isAllowedOrigin = origin && (
       allowedOrigins.includes(origin) || 
       origin.endsWith('.lovableproject.com') || 
-      origin.endsWith('.lovable.dev')
+      origin.endsWith('.lovable.dev') ||
+      origin.endsWith('.clinicalhours.org') ||
+      origin === 'https://clinicalhours.org'
     );
     
     const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
