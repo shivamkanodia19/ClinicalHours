@@ -3,12 +3,38 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// Protected routes that require CSP headers
-const PROTECTED_ROUTES = ["/auth", "/verify", "/reset-password", "/profile", "/dashboard"];
-
-// Check if a route is protected
-const isProtectedRoute = (pathname: string): boolean => {
-  return PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+// Apply CSP headers to all routes for comprehensive XSS protection
+// This includes all application routes to prevent script injection attacks
+const shouldApplyCSP = (pathname: string): boolean => {
+  // Exclude static assets and API routes from CSP
+  // Apply CSP to all HTML pages and application routes
+  const excludedPaths = [
+    "/@vite",           // Vite dev server internal
+    "/@react-refresh",  // React refresh
+    "/@id",             // Vite module resolution
+    "/node_modules",    // Node modules
+    ".js",              // JavaScript files
+    ".css",             // CSS files
+    ".json",            // JSON files
+    ".png",             // Images
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".ico",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+  ];
+  
+  // Check if path is an excluded static asset
+  const isExcluded = excludedPaths.some((excluded) => 
+    pathname.includes(excluded) || pathname.endsWith(excluded)
+  );
+  
+  // Apply CSP to all HTML pages and application routes
+  return !isExcluded;
 };
 
 // Generate CSP policy based on environment and Supabase URL
@@ -70,8 +96,8 @@ const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
       
-      // Add CSP header for protected routes
-      if (isProtectedRoute(pathname)) {
+      // Add CSP header to all application routes for comprehensive XSS protection
+      if (shouldApplyCSP(pathname)) {
         const cspPolicy = generateCSPPolicy(isDev, supabaseUrl);
         res.setHeader("Content-Security-Policy", cspPolicy);
       }
@@ -90,8 +116,8 @@ const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
       
-      // Add CSP header for protected routes (production policy in preview)
-      if (isProtectedRoute(pathname)) {
+      // Add CSP header to all application routes (production policy in preview)
+      if (shouldApplyCSP(pathname)) {
         const cspPolicy = generateCSPPolicy(false, supabaseUrl);
         res.setHeader("Content-Security-Policy", cspPolicy);
       }
