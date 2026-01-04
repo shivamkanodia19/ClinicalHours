@@ -79,7 +79,7 @@ export function ReminderDialog({
     } catch (error: unknown) {
       toast({
         title: "Error setting reminder",
-        description: error.message,
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {

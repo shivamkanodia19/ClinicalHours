@@ -51,7 +51,7 @@ const VerifyEmail = () => {
     } catch (error: unknown) {
       logger.error("Verification error", error);
       setStatus("error");
-      setErrorMessage(error.message || "Failed to verify email. Please try again.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to verify email. Please try again.");
     }
   };
 
