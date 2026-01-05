@@ -20,6 +20,8 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const MapView = lazy(() => import("./pages/MapView"));
 const AdminImportHospitals = lazy(() => import("./pages/AdminImportHospitals"));
+const AdminRemoveDuplicates = lazy(() => import("./pages/AdminRemoveDuplicates"));
+const AdminFixCoordinates = lazy(() => import("./pages/AdminFixCoordinates"));
 const ImportTexasHospitals = lazy(() => import("./pages/ImportTexasHospitals"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -77,6 +79,8 @@ function AppContent() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/map" element={<MapView />} />
               <Route path="/admin/import-hospitals" element={<AdminImportHospitals />} />
+              <Route path="/admin/remove-duplicates" element={<AdminRemoveDuplicates />} />
+              <Route path="/admin/fix-coordinates" element={<AdminFixCoordinates />} />
               <Route path="/admin/import-texas" element={<ImportTexasHospitals />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />

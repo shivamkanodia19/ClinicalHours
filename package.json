@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "import:texas": "tsx scripts/import-texas-hospitals.ts"
+    "import:texas": "tsx scripts/import-texas-hospitals.ts",
+    "remove:duplicates": "tsx scripts/remove-duplicates.ts",
+    "fix:coordinates": "tsx scripts/fix-map-coordinates.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
