@@ -14,12 +14,20 @@ export async function getCSRFToken(): Promise<string | null> {
   // First try to get from auth hook (in-memory)
   const token = getCSRFTokenFromAuth();
   if (token) {
+    console.log('[CSRF] Got token from auth hook (in-memory)');
     return token;
   }
 
   // If not available, fetch from backend
   try {
-    return await fetchCSRFToken();
+    console.log('[CSRF] Token not in memory, fetching from backend...');
+    const fetchedToken = await fetchCSRFToken();
+    if (fetchedToken) {
+      console.log('[CSRF] Successfully fetched token from backend');
+    } else {
+      console.warn('[CSRF] Backend returned null token');
+    }
+    return fetchedToken;
   } catch (error) {
     console.error("Error fetching CSRF token:", error);
     return null;
