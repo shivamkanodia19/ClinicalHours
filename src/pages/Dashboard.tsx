@@ -637,6 +637,7 @@ const Dashboard = () => {
                     <TableRow>
                       <TableHead className="text-foreground">Name</TableHead>
                       <TableHead className="text-foreground">Type</TableHead>
+                      <TableHead className="text-foreground">Website</TableHead>
                       <TableHead className="text-foreground">Contacted</TableHead>
                       <TableHead className="text-foreground">Applied</TableHead>
                       <TableHead className="text-foreground">Heard Back</TableHead>
@@ -656,6 +657,21 @@ const Dashboard = () => {
                           <Badge variant="outline" className="capitalize">
                             {saved.opportunities.type}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {saved.opportunities?.website ? (
+                            <a
+                              href={saved.opportunities.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                            >
+                              <Globe className="h-3 w-3" />
+                              Visit
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Checkbox

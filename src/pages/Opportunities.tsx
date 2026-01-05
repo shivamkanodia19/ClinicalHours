@@ -2,13 +2,25 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Clock, Star, Loader2, Plus, Check, AlertCircle, ChevronDown } from "lucide-react";
-import { ReminderDialog } from "@/components/ReminderDialog";
+import {
+  Search,
+  MapPin,
+  Clock,
+  Star,
+  Loader2,
+  Plus,
+  Check,
+  AlertCircle,
+  ChevronDown,
+  Phone,
+  Mail,
+  Globe,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useOpportunities } from "@/hooks/useOpportunities";
@@ -129,16 +141,16 @@ const Opportunities = () => {
     });
   };
 
-  const getAcceptanceColor = (rate: string) => {
-    switch (rate.toLowerCase()) {
+  const getAcceptanceColor = (likelihood: string) => {
+    switch (likelihood) {
       case "high":
-        return "bg-success text-success-foreground";
+        return "bg-green-500/20 text-green-300 border-green-500/30";
       case "medium":
-        return "bg-primary text-primary-foreground";
+        return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
       case "low":
-        return "bg-destructive text-destructive-foreground";
+        return "bg-red-500/20 text-red-300 border-red-500/30";
       default:
-        return "bg-muted text-muted-foreground";
+        return "bg-gray-500/20 text-gray-300 border-gray-500/30";
     }
   };
 
@@ -226,97 +238,113 @@ const Opportunities = () => {
               {opportunities.map((opportunity) => (
                 <Card 
                   key={opportunity.id} 
-                  className="hover:border-primary transition-colors cursor-pointer"
-                  onClick={() => navigate(`/opportunities/${opportunity.id}`)}
+                  className="bg-card/50 border-border"
                 >
-                  <CardHeader>
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-2xl mb-2">{opportunity.name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 text-base">
-                          <MapPin className="h-4 w-4" />
-                          {opportunity.location}
-                          {opportunity.distance && (
-                            <span className="text-primary font-medium">
-                              • {opportunity.distance.toFixed(1)} miles away
-                            </span>
-                          )}
-                        </CardDescription>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline">{opportunity.type}</Badge>
-                        <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
-                          {opportunity.acceptance_likelihood} Acceptance
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {opportunity.description && (
-                      <p className="text-muted-foreground line-clamp-2">{opportunity.description}</p>
-                    )}
-
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{opportunity.hours_required}</span>
-                      </div>
-                      {opportunity.avg_rating && (
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-primary fill-primary" />
-                          <span>
-                            {opportunity.avg_rating.toFixed(1)} ({opportunity.review_count && opportunity.review_count > 0 ? `${opportunity.review_count} review${opportunity.review_count !== 1 ? 's' : ''}` : 'No reviews'})
-                          </span>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <h3 className="text-lg font-semibold text-foreground">{opportunity.name}</h3>
+                          <Badge variant="outline" className="capitalize">
+                            {opportunity.type}
+                          </Badge>
+                          <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
+                            {opportunity.acceptance_likelihood} acceptance
+                          </Badge>
                         </div>
-                      )}
-                    </div>
-
-                    {opportunity.requirements.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-2">Requirements:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {opportunity.requirements.slice(0, 3).map((req, idx) => (
-                            <Badge key={idx} variant="secondary">
-                              {req}
-                            </Badge>
-                          ))}
-                          {opportunity.requirements.length > 3 && (
-                            <Badge variant="secondary">
-                              +{opportunity.requirements.length - 3} more
-                            </Badge>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{opportunity.location}</span>
+                            {opportunity.distance && (
+                              <span className="text-primary">({opportunity.distance.toFixed(1)} miles away)</span>
+                            )}
+                          </div>
+                          {opportunity.description && (
+                            <p className="text-muted-foreground mt-2">{opportunity.description}</p>
+                          )}
+                          {opportunity.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <a
+                                href={`tel:${opportunity.phone}`}
+                                className="text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {opportunity.phone}
+                              </a>
+                            </div>
+                          )}
+                          {opportunity.email && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <a
+                                href={`mailto:${opportunity.email}`}
+                                className="text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {opportunity.email}
+                              </a>
+                            </div>
+                          )}
+                          {opportunity.website && (
+                            <div className="flex items-center gap-2">
+                              <Globe className="h-4 w-4" />
+                              <a
+                                href={opportunity.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Visit Website
+                              </a>
+                            </div>
+                          )}
+                          {opportunity.avg_rating && (
+                            <div className="flex items-center gap-2">
+                              <Star className="h-4 w-4 text-primary fill-primary" />
+                              <span>
+                                {opportunity.avg_rating.toFixed(1)} ({opportunity.review_count && opportunity.review_count > 0 ? `${opportunity.review_count} review${opportunity.review_count !== 1 ? 's' : ''}` : 'No reviews'})
+                              </span>
+                            </div>
+                          )}
+                          {opportunity.hours_required && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{opportunity.hours_required}</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    )}
-
-                    <div className="flex flex-wrap gap-3 pt-2" onClick={(e) => e.stopPropagation()}>
-                      {savedOpportunityIds.has(opportunity.id) ? (
-                        <Button variant="secondary" size="sm" disabled>
-                          <Check className="mr-2 h-4 w-4" />
-                          In Tracker
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="default"
+                      <div className="flex flex-col gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                        {savedOpportunityIds.has(opportunity.id) ? (
+                          <Button variant="secondary" size="sm" disabled>
+                            <Check className="h-4 w-4 mr-2" />
+                            In Tracker
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleAddToTracker(opportunity.id)}
+                            size="sm"
+                            disabled={savingIds.has(opportunity.id)}
+                          >
+                            {savingIds.has(opportunity.id) ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Plus className="h-4 w-4 mr-2" />
+                            )}
+                            Add to Tracker
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline" 
                           size="sm"
-                          onClick={() => handleAddToTracker(opportunity.id)}
-                          disabled={savingIds.has(opportunity.id)}
+                          onClick={() => navigate(`/opportunities/${opportunity.id}`)}
                         >
-                          {savingIds.has(opportunity.id) ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="mr-2 h-4 w-4" />
-                          )}
-                          Add to Tracker
+                          View Details
                         </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/opportunities/${opportunity.id}`)}
-                      >
-                        View Details
-                      </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
