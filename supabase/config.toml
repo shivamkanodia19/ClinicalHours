@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.logout]
 verify_jwt = false
+
+[functions.import-texas-hospitals]
+verify_jwt = false
