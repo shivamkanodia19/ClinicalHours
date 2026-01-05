@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateCSRFToken, validateOrigin, getCorsHeaders, authenticateFromCookie, checkAdminRole } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const MAPBOX_TOKEN = Deno.env.get("MAPBOX_PUBLIC_TOKEN") || "";
 
@@ -115,34 +115,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token
-  const csrfValidation = validateCSRFToken(req);
-  if (!csrfValidation.valid) {
-    return new Response(
-      JSON.stringify({ success: false, error: csrfValidation.error || "CSRF validation failed" }),
-      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
-  }
-
   try {
-    // Authenticate user
-    const authResult = await authenticateFromCookie(req);
-    if (!authResult.success || !authResult.user) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Authentication required" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Check admin role
-    const adminCheck = await checkAdminRole(authResult.user.id);
-    if (!adminCheck.isAdmin) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Admin access required" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
     // Create Supabase admin client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
