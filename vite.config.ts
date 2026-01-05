@@ -66,7 +66,7 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      `connect-src 'self' ${supabaseWildcard} ${localhostPorts}`,
+      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com ${localhostPorts}`,
       "frame-ancestors 'none'",
     ].join("; ");
   } else {
@@ -77,7 +77,7 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      `connect-src 'self' ${supabaseWildcard}`,
+      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com`,
       "frame-ancestors 'none'",
     ].join("; ");
   }
@@ -136,6 +136,8 @@ export default defineConfig(({ mode }) => {
   const DEFAULT_VITE_SUPABASE_URL = "https://sysbtcikrbrrgafffody.supabase.co";
   const DEFAULT_VITE_SUPABASE_PUBLISHABLE_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5c2J0Y2lrcmJycmdhZmZmb2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTc5MzUsImV4cCI6MjA3ODYzMzkzNX0.5jN1B2RIscA42w7FYfwxaQHFW6ROldslPzUFYtQCgLc";
+  const DEFAULT_VITE_MAPBOX_PUBLIC_TOKEN =
+    "pk.eyJ1IjoicmFnaGF2dDIwMDciLCJhIjoiY21oeTJzb2dvMDhsdDJ3cTZqMzVtc3Q4cCJ9.DXBjsf0TdbDT_KFXcc2mpg";
 
   const VITE_SUPABASE_URL =
     env.VITE_SUPABASE_URL ??
@@ -147,10 +149,17 @@ export default defineConfig(({ mode }) => {
     (process.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
     DEFAULT_VITE_SUPABASE_PUBLISHABLE_KEY;
 
+  const VITE_MAPBOX_PUBLIC_TOKEN =
+    env.VITE_MAPBOX_PUBLIC_TOKEN ??
+    (process.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined) ??
+    DEFAULT_VITE_MAPBOX_PUBLIC_TOKEN;
+
   return {
     server: {
-      host: "::",
-      port: 8080,
+      host: "127.0.0.1", // Use localhost explicitly
+      port: 3000, // Try a different port that's less likely to be blocked
+      strictPort: false, // Try next available port if 3000 is taken
+      open: false, // Don't auto-open browser
     },
     plugins: [
       react(),
@@ -166,6 +175,9 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(VITE_SUPABASE_URL),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
         VITE_SUPABASE_PUBLISHABLE_KEY
+      ),
+      "import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN": JSON.stringify(
+        VITE_MAPBOX_PUBLIC_TOKEN
       ),
     },
     build: {
