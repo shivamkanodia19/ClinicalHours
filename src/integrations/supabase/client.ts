@@ -81,6 +81,10 @@ const customFetch = async (url: RequestInfo | URL, options: RequestInit = {}): P
         const headers = new Headers(options.headers);
         headers.set('X-CSRF-Token', csrfToken);
         enhancedOptions.headers = headers;
+        // Debug logging (remove in production if needed)
+        console.log('[CSRF] Added X-CSRF-Token header to', urlString);
+      } else {
+        console.warn('[CSRF] No CSRF token available for', urlString);
       }
     } catch (error) {
       console.error('Error adding CSRF token:', error);
