@@ -166,8 +166,8 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClinicalHours <support@send.clinicalhours.org>",
-        to: ["support@clinicalhours.org"],
+        from: "ClinicalHours <help@clinicalhours.org>",
+        to: ["clinicalhours.org@gmail.com"],
         reply_to: email,
         subject: `Contact Form: ${safeSubject}`,
         html: `
@@ -210,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClinicalHours <support@clinicalhours.org>",
+        from: "ClinicalHours <help@clinicalhours.org>",
         to: [email],
         subject: "We received your message!",
         html: `
