@@ -114,13 +114,6 @@ export function logFileAccess(fileType: string, filePath: string): void {
 }
 
 /**
- * Log admin actions
- */
-export function logAdminAction(action: string, details?: ErrorDetails): void {
-  logAuditEvent(`admin_${action}`, details, "high");
-}
-
-/**
  * Log security violations
  */
 export function logSecurityViolation(violationType: string, details?: ErrorDetails): void {

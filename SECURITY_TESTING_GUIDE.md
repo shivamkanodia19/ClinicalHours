@@ -137,7 +137,6 @@ Verify that state-changing requests include CSRF tokens.
      - **Save an opportunity** (if available)
      - **Update profile** (`/profile` page)
      - **Send contact form** (`/contact` page)
-     - **Import hospitals** (if admin, `/admin/import-hospitals`)
 
 3. **For Each POST/PUT/DELETE Request**:
    - Click on the request in Network tab
@@ -299,7 +298,6 @@ Verify that protected routes work correctly with cookie-based auth.
 1. **Test While Logged In**:
    - Navigate to `/dashboard`
    - Navigate to `/profile`
-   - Navigate to `/admin/import-hospitals` (if admin)
    - ✅ All should load without errors
    - ✅ Buttons and interactions should work
 

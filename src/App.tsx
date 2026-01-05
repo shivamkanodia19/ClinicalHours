@@ -19,8 +19,6 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const MapView = lazy(() => import("./pages/MapView"));
-const AdminImportHospitals = lazy(() => import("./pages/AdminImportHospitals"));
-const ImportTexasHospitals = lazy(() => import("./pages/ImportTexasHospitals"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
@@ -55,8 +53,6 @@ function KeyboardShortcuts() {
 }
 
 function AppContent() {
-  // Hospital import is now handled only through the admin page
-  // at /admin/import-hospitals - requires admin authentication
   return (
     <>
       <Toaster />
@@ -76,8 +72,6 @@ function AppContent() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/map" element={<MapView />} />
-              <Route path="/admin/import-hospitals" element={<AdminImportHospitals />} />
-              <Route path="/admin/import-texas" element={<ImportTexasHospitals />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/verify" element={<VerifyEmail />} />
