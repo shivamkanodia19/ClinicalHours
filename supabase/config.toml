@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.restore-session]
 verify_jwt = false
+
+[functions.import-texas-hospitals]
+verify_jwt = false
