@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -7,12 +8,6 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 if (!RESEND_API_KEY) {
   console.error("RESEND_API_KEY is not configured. Please set it in Supabase Edge Functions secrets.");
 }
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 interface SendPasswordResetRequest {
   email: string;
@@ -53,9 +48,32 @@ function cleanupRateLimitMap(): void {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate Origin header
+  const originValidation = validateOrigin(req);
+  if (!originValidation.valid) {
+    console.warn(`Origin validation failed: ${originValidation.error}`);
+    return new Response(
+      JSON.stringify({ error: "Invalid origin" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Validate CSRF token for POST requests
+  const csrfValidation = validateCSRFToken(req);
+  if (!csrfValidation.valid) {
+    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
+    return new Response(
+      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   }
 
   // Cleanup old entries occasionally

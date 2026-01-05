@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { validateCSRFToken, validateOrigin, getCorsHeaders, authenticateFromCookie, checkAdminRole } from "../_shared/auth.ts";
 
 // Rate limiting per admin user
 const adminRateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -190,8 +186,31 @@ function parseCSV(csvText: string): CMSHospital[] {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate Origin header
+  const originValidation = validateOrigin(req);
+  if (!originValidation.valid) {
+    console.warn(`Origin validation failed: ${originValidation.error}`);
+    return new Response(
+      JSON.stringify({ success: false, error: "Invalid origin" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Validate CSRF token
+  const csrfValidation = validateCSRFToken(req);
+  if (!csrfValidation.valid) {
+    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
+    return new Response(
+      JSON.stringify({ success: false, error: csrfValidation.error || "CSRF validation failed" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   }
 
   // Cleanup old rate limit entries occasionally
@@ -200,10 +219,39 @@ serve(async (req) => {
   }
 
   try {
-    // Extract JWT from authorization header
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('Missing or invalid authorization header');
+    // Authenticate user (try cookie first, fallback to Authorization header during migration)
+    let authenticatedUser: { id: string; email?: string } | null = null;
+    
+    const authResult = await authenticateFromCookie(req);
+    if (authResult.success && authResult.user) {
+      authenticatedUser = authResult.user;
+    } else {
+      // Fallback to Authorization header during migration
+      const authHeader = req.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+        
+        if (userError || !user) {
+          console.error('Invalid token or user not found:', userError);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'Invalid authentication' 
+          }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
+        authenticatedUser = { id: user.id, email: user.email };
+      }
+    }
+
+    if (!authenticatedUser) {
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Authentication required' 
@@ -213,41 +261,15 @@ serve(async (req) => {
       });
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Verify the JWT and get user
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user) {
-      console.error('Invalid token or user not found:', userError);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Invalid authentication' 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`User ${user.id} attempting hospital import`);
+    console.log(`User ${authenticatedUser.id} attempting hospital import`);
 
     // Check if user has admin role
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
-
-    if (roleError || !roleData) {
-      console.error(`User ${user.id} is not an admin. Access denied.`);
+    const adminCheck = await checkAdminRole(authenticatedUser.id);
+    if (!adminCheck.isAdmin) {
+      console.error(`User ${authenticatedUser.id} is not an admin. Access denied.`);
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Admin access required' 
+        error: adminCheck.error || 'Admin access required' 
       }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -255,8 +277,8 @@ serve(async (req) => {
     }
 
     // Check rate limit for this admin
-    if (isAdminRateLimited(user.id)) {
-      console.warn(`Admin ${user.id} rate limited for hospital import`);
+    if (isAdminRateLimited(authenticatedUser.id)) {
+      console.warn(`Admin ${authenticatedUser.id} rate limited for hospital import`);
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Rate limit exceeded. Please try again later (max 5 imports per hour).' 
@@ -266,7 +288,12 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Admin user ${user.id} authorized for hospital import`);
+    console.log(`Admin user ${authenticatedUser.id} authorized for hospital import`);
+
+    // Create Supabase admin client for database operations
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { limit = 100, state = null, offset = 0 } = await req.json();
     

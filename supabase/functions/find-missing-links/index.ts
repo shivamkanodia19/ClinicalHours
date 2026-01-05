@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { validateCSRFToken, validateOrigin, getCorsHeaders, authenticateFromCookie, checkAdminRole } from "../_shared/auth.ts";
 
 // Directory sites to exclude
 const EXCLUDED_DOMAINS = [
@@ -360,8 +356,31 @@ async function processOpportunity(
 }
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate Origin header
+  const originValidation = validateOrigin(req);
+  if (!originValidation.valid) {
+    console.warn(`Origin validation failed: ${originValidation.error}`);
+    return new Response(
+      JSON.stringify({ success: false, error: "Invalid origin" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Validate CSRF token
+  const csrfValidation = validateCSRFToken(req);
+  if (!csrfValidation.valid) {
+    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
+    return new Response(
+      JSON.stringify({ success: false, error: csrfValidation.error || "CSRF validation failed" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   }
 
   try {
@@ -369,45 +388,50 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
     // === AUTHENTICATION CHECK ===
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('Missing or invalid authorization header');
+    // Authenticate user (try cookie first, fallback to Authorization header during migration)
+    let authenticatedUser: { id: string; email?: string } | null = null;
+    
+    const authResult = await authenticateFromCookie(req);
+    if (authResult.success && authResult.user) {
+      authenticatedUser = authResult.user;
+    } else {
+      // Fallback to Authorization header during migration
+      const authHeader = req.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+        if (userError || !user) {
+          console.error('Invalid authentication:', userError?.message);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Invalid authentication' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        authenticatedUser = { id: user.id, email: user.email };
+      }
+    }
+
+    if (!authenticatedUser) {
       return new Response(
         JSON.stringify({ success: false, error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
-
-    // Verify JWT and get user
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !user) {
-      console.error('Invalid authentication:', userError?.message);
+    // Check admin role
+    const adminCheck = await checkAdminRole(authenticatedUser.id);
+    if (!adminCheck.isAdmin) {
+      console.error('Admin role check failed:', adminCheck.error || 'Not an admin');
       return new Response(
-        JSON.stringify({ success: false, error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check admin role using service role key
-    const { data: roleData, error: roleError } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
-
-    if (roleError || !roleData) {
-      console.error('Admin role check failed:', roleError?.message || 'Not an admin');
-      return new Response(
-        JSON.stringify({ success: false, error: 'Admin access required' }),
+        JSON.stringify({ success: false, error: adminCheck.error || 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Admin ${user.id} authenticated successfully`);
+    console.log(`Admin ${authenticatedUser.id} authenticated successfully`);
     // === END AUTHENTICATION CHECK ===
 
     const supabase = createClient(supabaseUrl, supabaseKey);

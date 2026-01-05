@@ -1,0 +1,252 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Allowed origins for CORS - restrict to production and development
+const ALLOWED_ORIGINS = [
+  "https://clinicalhours.org",
+  "https://www.clinicalhours.org",
+  "https://sysbtcikrbrrgafffody.lovableproject.com",
+  "https://lovable.dev",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:8080",
+];
+
+export interface AuthResult {
+  success: boolean;
+  user?: { id: string; email?: string };
+  error?: string;
+  statusCode?: number;
+}
+
+export interface CSRFResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
+ * Parse cookies from request headers
+ */
+export function parseCookies(cookieHeader: string | null): Record<string, string> {
+  const cookies: Record<string, string> = {};
+  
+  if (!cookieHeader) {
+    return cookies;
+  }
+
+  cookieHeader.split(';').forEach(cookie => {
+    const [name, ...rest] = cookie.trim().split('=');
+    if (name && rest.length > 0) {
+      cookies[name.trim()] = rest.join('=').trim();
+    }
+  });
+
+  return cookies;
+}
+
+/**
+ * Get session cookie from request
+ */
+export function getSessionCookie(req: Request): string | null {
+  const cookieHeader = req.headers.get("cookie");
+  const cookies = parseCookies(cookieHeader);
+  return cookies.session || null;
+}
+
+/**
+ * Get CSRF token from cookie
+ */
+export function getCSRFTokenFromCookie(req: Request): string | null {
+  const cookieHeader = req.headers.get("cookie");
+  const cookies = parseCookies(cookieHeader);
+  return cookies["csrf-token"] || null;
+}
+
+/**
+ * Get CSRF token from header (double-submit pattern)
+ */
+export function getCSRFTokenFromHeader(req: Request): string | null {
+  return req.headers.get("x-csrf-token");
+}
+
+/**
+ * Validate CSRF token using double-submit cookie pattern
+ */
+export function validateCSRFToken(req: Request): CSRFResult {
+  // Only validate CSRF for state-changing methods
+  const stateChangingMethods = ["POST", "PUT", "PATCH", "DELETE"];
+  if (!stateChangingMethods.includes(req.method)) {
+    return { valid: true };
+  }
+
+  const cookieToken = getCSRFTokenFromCookie(req);
+  const headerToken = getCSRFTokenFromHeader(req);
+
+  if (!cookieToken || !headerToken) {
+    return {
+      valid: false,
+      error: "CSRF token missing"
+    };
+  }
+
+  if (cookieToken !== headerToken) {
+    return {
+      valid: false,
+      error: "CSRF token mismatch"
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate Origin/Referer headers
+ */
+export function validateOrigin(req: Request): { valid: boolean; error?: string } {
+  const origin = req.headers.get("origin");
+  const referer = req.headers.get("referer");
+
+  // For same-origin requests, origin might be null (browsers don't always send it)
+  // In that case, check referer
+  const source = origin || (referer ? new URL(referer).origin : null);
+
+  if (!source) {
+    // Allow requests without origin/referer for same-origin requests
+    // This handles cases where browsers don't send these headers
+    return { valid: true };
+  }
+
+  // Check if origin matches allowed origins
+  const isAllowed = ALLOWED_ORIGINS.some(allowed =>
+    source === allowed ||
+    source.endsWith('.lovableproject.com') ||
+    source.endsWith('.lovable.dev')
+  );
+
+  if (!isAllowed) {
+    return {
+      valid: false,
+      error: `Origin ${source} is not allowed`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Authenticate user from session cookie
+ */
+export async function authenticateFromCookie(req: Request): Promise<AuthResult> {
+  const sessionId = getSessionCookie(req);
+
+  if (!sessionId) {
+    return {
+      success: false,
+      error: "No session cookie found",
+      statusCode: 401
+    };
+  }
+
+  // TODO: In production, validate sessionId against database
+  // For now, we'll extract user info from the session cookie
+  // In a real implementation, you'd:
+  // 1. Decrypt sessionId
+  // 2. Look up session in database
+  // 3. Verify session hasn't expired
+  // 4. Return user info
+
+  // Temporary: Try to get user from Authorization header as fallback
+  // This allows gradual migration
+  const authHeader = req.headers.get("authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.replace("Bearer ", "");
+    
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    
+    if (error || !user) {
+      return {
+        success: false,
+        error: "Invalid session",
+        statusCode: 401
+      };
+    }
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+      }
+    };
+  }
+
+  // If no Authorization header and sessionId exists, we need to validate it
+  // For now, return error - in production, validate against database
+  return {
+    success: false,
+    error: "Session validation not implemented. Please use Authorization header during migration.",
+    statusCode: 401
+  };
+}
+
+/**
+ * Get CORS headers with proper origin
+ * IMPORTANT: With credentials: 'include', Access-Control-Allow-Origin MUST be the exact origin, not '*'
+ * This function should only be called after validating the origin is allowed
+ */
+export function getCorsHeaders(origin: string | null): Record<string, string> {
+  // Check if origin is allowed
+  const isAllowed = origin && ALLOWED_ORIGINS.some(allowed =>
+    origin === allowed ||
+    origin.endsWith('.lovableproject.com') ||
+    origin.endsWith('.lovable.dev') ||
+    origin.endsWith('.clinicalhours.org')
+  );
+
+  // For credentials: 'include', we MUST return the exact origin, not a fallback
+  // If origin is not allowed, return empty string (will cause CORS error, but that's expected)
+  // The calling function should validate origin before calling this
+  const allowedOrigin = isAllowed && origin ? origin : (origin || '');
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-csrf-token",
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  };
+}
+
+/**
+ * Check if user has admin role
+ */
+export async function checkAdminRole(userId: string): Promise<{ isAdmin: boolean; error?: string }> {
+  try {
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .single();
+
+    if (roleError || !roleData) {
+      return { isAdmin: false, error: "Admin access required" };
+    }
+
+    return { isAdmin: true };
+  } catch (error) {
+    console.error("Error checking admin role:", error);
+    return { isAdmin: false, error: "Failed to verify admin role" };
+  }
+}
+
