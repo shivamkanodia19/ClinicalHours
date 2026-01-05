@@ -173,7 +173,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to create reset token");
     }
 
-    // Create reset link - validate origin
+    // Create reset link - always use production domain for password reset emails
+    // This ensures emails always point to the correct production URL
+    const productionDomain = 'https://clinicalhours.org';
+    
+    // Validate origin for security, but always use production domain in email
     const allowedOrigins = [
       'https://clinicalhours.org',
       'https://www.clinicalhours.org',
@@ -182,18 +186,23 @@ const handler = async (req: Request): Promise<Response> => {
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:8080',
+      'http://localhost:3000',
     ];
     
+    // Validate the origin is allowed (for security)
     const isAllowedOrigin = origin && (
       allowedOrigins.includes(origin) || 
       origin.endsWith('.lovableproject.com') || 
       origin.endsWith('.lovable.dev') ||
-      origin.endsWith('.clinicalhours.org') ||
-      origin === 'https://clinicalhours.org'
+      origin.endsWith('.clinicalhours.org')
     );
     
-    const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
-    const resetLink = `${safeOrigin}/reset-password?token=${token}`;
+    if (!isAllowedOrigin && origin) {
+      console.warn(`Unauthorized origin attempted: ${origin}`);
+    }
+    
+    // Always use production domain in email links for consistency
+    const resetLink = `${productionDomain}/reset-password?token=${token}`;
 
     // Validate API key before attempting to send
     if (!RESEND_API_KEY) {

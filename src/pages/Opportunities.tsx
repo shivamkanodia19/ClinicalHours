@@ -7,7 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Clock, Star, Loader2, Plus, Check, AlertCircle, ChevronDown } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  Clock,
+  Star,
+  Loader2,
+  Plus,
+  Check,
+  AlertCircle,
+  ChevronDown,
+  Phone,
+  Mail,
+  Globe,
+} from "lucide-react";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -267,6 +280,53 @@ const Opportunities = () => {
                           <span>
                             {opportunity.avg_rating.toFixed(1)} ({opportunity.review_count && opportunity.review_count > 0 ? `${opportunity.review_count} review${opportunity.review_count !== 1 ? 's' : ''}` : 'No reviews'})
                           </span>
+                        </div>
+                      )}
+                      {/* Contact & hospital info */}
+                      {(opportunity.website || opportunity.phone || opportunity.email) && (
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {opportunity.website && (
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <a
+                                href={opportunity.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2"
+                              >
+                                <Globe className="h-4 w-4" />
+                                Website
+                              </a>
+                            </Button>
+                          )}
+                          {opportunity.phone && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Phone className="h-3 w-3" />
+                              <a
+                                href={`tel:${opportunity.phone}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="underline-offset-2 hover:underline"
+                              >
+                                {opportunity.phone}
+                              </a>
+                            </div>
+                          )}
+                          {opportunity.email && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              <a
+                                href={`mailto:${opportunity.email}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="underline-offset-2 hover:underline"
+                              >
+                                {opportunity.email}
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
