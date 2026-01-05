@@ -81,6 +81,35 @@ export async function getCSRFToken(): Promise<string | null> {
 }
 
 /**
+ * Restore session from httpOnly cookie
+ * Returns access token if session is valid
+ */
+export async function restoreSessionFromCookie(): Promise<{ success: boolean; accessToken?: string; user?: { id: string; email?: string }; error?: string }> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/restore-session`, {
+      method: "GET",
+      credentials: "include", // Important: include cookies
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: "Failed to restore session",
+      };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error restoring session from cookie:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
  * Logout and clear cookies
  */
 export async function logout(): Promise<boolean> {

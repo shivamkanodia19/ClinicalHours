@@ -15,12 +15,35 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   );
 }
 
-// Custom storage adapter that doesn't persist to localStorage
-// This prevents XSS attacks while still allowing Supabase to manage auth state internally
-const noStorageAdapter = {
-  getItem: (_key: string) => null,
-  setItem: (_key: string, _value: string) => {},
-  removeItem: (_key: string) => {},
+// Use sessionStorage instead of localStorage for Supabase sessions
+// sessionStorage is cleared when tab closes, reducing XSS risk while allowing session persistence
+// We still use httpOnly cookies as the primary security mechanism
+const sessionStorageAdapter = {
+  getItem: (key: string) => {
+    try {
+      return typeof window !== 'undefined' ? sessionStorage.getItem(key) : null;
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(key, value);
+      }
+    } catch {
+      // Ignore errors (e.g., quota exceeded)
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(key);
+      }
+    } catch {
+      // Ignore errors
+    }
+  },
 };
 
 // Import the supabase client like this:
@@ -69,9 +92,10 @@ const customFetch = async (url: RequestInfo | URL, options: RequestInit = {}): P
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: noStorageAdapter, // Use no-op storage to prevent localStorage usage
-    persistSession: false, // Don't persist to localStorage
+    storage: sessionStorageAdapter, // Use sessionStorage (cleared on tab close) instead of localStorage
+    persistSession: true, // Allow session persistence in sessionStorage
     autoRefreshToken: true,
+    detectSessionInUrl: false, // Don't detect session in URL
   },
   global: {
     headers: {

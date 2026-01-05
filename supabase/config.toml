@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.logout]
 verify_jwt = false
+
+[functions.restore-session]
+verify_jwt = false
