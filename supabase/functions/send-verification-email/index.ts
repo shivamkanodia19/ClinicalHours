@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateCSRFToken, validateOrigin, getCorsHeaders, authenticateFromCookie } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -7,12 +8,6 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 if (!RESEND_API_KEY) {
   console.error("RESEND_API_KEY is not configured. Please set it in Supabase Edge Functions secrets.");
 }
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 interface SendVerificationEmailRequest {
   userId: string;
@@ -54,9 +49,39 @@ function cleanupRateLimitMap(): void {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate Origin header
+  const originValidation = validateOrigin(req);
+  if (!originValidation.valid) {
+    console.warn(`Origin validation failed: ${originValidation.error}`);
+    return new Response(
+      JSON.stringify({ error: "Invalid origin" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Validate CSRF token (skip if authenticating via Authorization header during sign-up)
+  // During sign-up, users don't have CSRF tokens yet, so we allow Authorization header auth without CSRF
+  const authHeader = req.headers.get('authorization');
+  const isSignUpFlow = authHeader && authHeader.startsWith('Bearer ');
+  
+  if (!isSignUpFlow) {
+    // For authenticated requests (with cookies), require CSRF token
+    const csrfValidation = validateCSRFToken(req);
+    if (!csrfValidation.valid) {
+      console.warn(`CSRF validation failed: ${csrfValidation.error}`);
+      return new Response(
+        JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
   }
 
   // Cleanup old entries occasionally
@@ -65,45 +90,62 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verify JWT - this function requires authentication
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Parse request body first
+    const { userId, email, fullName, origin: requestOrigin }: SendVerificationEmailRequest = await req.json();
+
+    // Authenticate user (try cookie first, fallback to Authorization header during migration)
+    let authenticatedUser: { id: string; email?: string } | null = null;
+    
+    const authResult = await authenticateFromCookie(req);
+    if (authResult.success && authResult.user) {
+      authenticatedUser = authResult.user;
+    } else {
+      // Fallback to Authorization header during migration
+      const authHeader = req.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const supabaseAdmin = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
+        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+        
+        if (userError || !user) {
+          console.error('Invalid token or user not found:', userError);
+          return new Response(
+            JSON.stringify({ error: "Invalid authentication" }),
+            { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        
+        authenticatedUser = { id: user.id, email: user.email };
+      }
+    }
+
+    if (!authenticatedUser) {
       return new Response(
         JSON.stringify({ error: "Authentication required" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Create Supabase client with service role
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    // Verify the JWT and get user
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (userError || !user) {
-      console.error('Invalid token or user not found:', userError);
-      return new Response(
-        JSON.stringify({ error: "Invalid authentication" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    const { userId, email, fullName, origin }: SendVerificationEmailRequest = await req.json();
-
-    // Validate that the request is for the authenticated user (or user can only send to themselves)
-    if (userId !== user.id) {
-      console.error(`User ${user.id} attempted to send verification email for different user ${userId}`);
+    // Validate that the request is for the authenticated user
+    if (userId !== authenticatedUser.id) {
+      console.error(`User ${authenticatedUser.id} attempted to send verification email for different user ${userId}`);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    // Create Supabase admin client for database operations
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
     console.log(`Sending verification email to ${email} for user ${userId}`);
 

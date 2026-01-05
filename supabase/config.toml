@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.find-missing-links]
 verify_jwt = false
+
+[functions.csrf-token]
+verify_jwt = false
+
+[functions.auth-cookie]
+verify_jwt = false
+
+[functions.logout]
+verify_jwt = false

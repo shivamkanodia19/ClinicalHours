@@ -1,30 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 // Validate API key is configured
 if (!RESEND_API_KEY) {
   console.error("RESEND_API_KEY is not configured. Please set it in Supabase Edge Functions secrets.");
-}
-
-// Allowed origins for CORS - restrict to production and development
-const ALLOWED_ORIGINS = [
-  "https://sysbtcikrbrrgafffody.lovableproject.com",
-  "https://lovable.dev",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:8080",
-];
-
-function getCorsHeaders(origin: string | null): Record<string, string> {
-  const isAllowed = origin && ALLOWED_ORIGINS.some(allowed => 
-    origin === allowed || origin.endsWith('.lovableproject.com') || origin.endsWith('.lovable.dev')
-  );
-  
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
 }
 
 interface ContactEmailRequest {
@@ -83,6 +64,32 @@ const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate Origin header
+  const originValidation = validateOrigin(req);
+  if (!originValidation.valid) {
+    console.warn(`Origin validation failed: ${originValidation.error}`);
+    return new Response(
+      JSON.stringify({ error: "Invalid origin" }),
+      {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+
+  // Validate CSRF token for POST requests
+  const csrfValidation = validateCSRFToken(req);
+  if (!csrfValidation.valid) {
+    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
+    return new Response(
+      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
+      {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
 
   // Get client IP for rate limiting
