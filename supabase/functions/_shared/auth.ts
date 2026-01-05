@@ -119,7 +119,8 @@ export function validateOrigin(req: Request): { valid: boolean; error?: string }
   const isAllowed = ALLOWED_ORIGINS.some(allowed =>
     source === allowed ||
     source.endsWith('.lovableproject.com') ||
-    source.endsWith('.lovable.dev')
+    source.endsWith('.lovable.dev') ||
+    source.endsWith('.clinicalhours.org')
   );
 
   if (!isAllowed) {
@@ -208,10 +209,10 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
     origin.endsWith('.clinicalhours.org')
   );
 
-  // For credentials: 'include', we MUST return the exact origin, not a fallback
-  // If origin is not allowed, return empty string (will cause CORS error, but that's expected)
-  // The calling function should validate origin before calling this
-  const allowedOrigin = isAllowed && origin ? origin : (origin || '');
+  // For credentials: 'include', we MUST return the exact origin, not '*' or a fallback
+  // If origin is not allowed, return the first allowed origin as fallback (but this should be validated before calling)
+  // NEVER return '*' when credentials are included
+  const allowedOrigin = isAllowed && origin ? origin : ALLOWED_ORIGINS[0];
 
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
