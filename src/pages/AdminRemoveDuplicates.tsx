@@ -6,25 +6,14 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2, Loader2, CheckCircle, XCircle, ShieldX } from "lucide-react";
+import { Trash2, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
-import { logAdminAction } from "@/lib/auditLogger";
-import { useAdminRole } from "@/hooks/useAdminRole";
 import { useAuth } from "@/hooks/useAuth";
-
-interface DuplicateGroup {
-  name: string;
-  location: string;
-  keep: string;
-  remove: string[];
-}
 
 export default function AdminRemoveDuplicates() {
   const navigate = useNavigate();
-  const { isAdmin, loading: adminLoading } = useAdminRole();
   const { user, loading: authLoading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -35,30 +24,28 @@ export default function AdminRemoveDuplicates() {
     error?: string;
   } | null>(null);
 
-  // Redirect if not admin
-  if (!authLoading && !adminLoading && (!user || !isAdmin)) {
+  // Show loading state
+  if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
         <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
-          <Card className="max-w-2xl mx-auto mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldX className="h-5 w-5 text-destructive" />
-                Access Denied
-              </CardTitle>
-              <CardDescription>
-                You must be an administrator to access this page.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
-            </CardContent>
-          </Card>
+          <div className="max-w-2xl mx-auto flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
     );
+  }
+
+  // Redirect non-authenticated users
+  if (!user) {
+    navigate("/auth");
+    return null;
   }
 
   const handleRemoveDuplicates = async () => {
@@ -86,11 +73,6 @@ export default function AdminRemoveDuplicates() {
 
       setResults({
         success: true,
-        removed: data?.removed || 0,
-        duplicateGroups: data?.duplicateGroups || 0,
-      });
-
-      logAdminAction("remove_duplicates", {
         removed: data?.removed || 0,
         duplicateGroups: data?.duplicateGroups || 0,
       });
@@ -182,7 +164,7 @@ export default function AdminRemoveDuplicates() {
 
                 <Button
                   onClick={handleRemoveDuplicates}
-                  disabled={isProcessing || (adminLoading || authLoading)}
+                  disabled={isProcessing || authLoading}
                   className="w-full"
                 >
                   {isProcessing ? (
