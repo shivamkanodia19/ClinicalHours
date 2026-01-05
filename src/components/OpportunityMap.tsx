@@ -66,7 +66,7 @@ const OpportunityMap = () => {
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const customPinMarkerRef = useRef<mapboxgl.Marker | null>(null);
   
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const [mapLoading, setMapLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
@@ -135,10 +135,10 @@ const OpportunityMap = () => {
     fetchOpportunities();
   }, []);
 
-  // Fetch saved opportunities if user is logged in
+  // Fetch saved opportunities if user is logged in and auth is ready
   useEffect(() => {
     const fetchSavedOpportunities = async () => {
-      if (!user) {
+      if (!user || !isReady) {
         setSavedOpportunities([]);
         return;
       }
@@ -170,7 +170,7 @@ const OpportunityMap = () => {
     };
 
     fetchSavedOpportunities();
-  }, [user]);
+  }, [user, isReady]);
 
   // Get user location
   useEffect(() => {

@@ -193,6 +193,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create reset link - validate origin
     const allowedOrigins = [
+      'https://clinicalhours.org',
+      'https://www.clinicalhours.org',
       'https://sysbtcikrbrrgafffody.lovableproject.com',
       'https://lovable.dev',
       'http://localhost:5173',
@@ -203,7 +205,9 @@ const handler = async (req: Request): Promise<Response> => {
     const isAllowedOrigin = origin && (
       allowedOrigins.includes(origin) || 
       origin.endsWith('.lovableproject.com') || 
-      origin.endsWith('.lovable.dev')
+      origin.endsWith('.lovable.dev') ||
+      origin.endsWith('.clinicalhours.org') ||
+      origin === 'https://clinicalhours.org'
     );
     
     const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
@@ -219,84 +223,92 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Log API key prefix for debugging (only first 8 chars for security)
+    console.log("Using Resend API key starting with:", RESEND_API_KEY?.substring(0, 8) + "...");
+
     // Send branded email via Resend HTTP API
+    // Use root domain clinicalhours.org since that's what's verified in Resend
+    const emailPayload = {
+      from: "ClinicalHours <noreply@clinicalhours.org>",
+      to: [email],
+      subject: "Reset your ClinicalHours password",
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f8;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border-radius: 16px 16px 0 0;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">ClinicalHours</h1>
+                      <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">Password Reset Request</p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 24px; font-weight: 600;">Reset Your Password</h2>
+                      <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                        We received a request to reset your password. Click the button below to create a new password.
+                      </p>
+                      
+                      <!-- CTA Button -->
+                      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                          <td align="center" style="padding: 20px 0;">
+                            <a href="${resetLink}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
+                              Reset Password
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p style="margin: 24px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                        This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+                      </p>
+                      
+                      <!-- Alternative Link -->
+                      <div style="margin-top: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
+                        <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 12px;">If the button doesn't work, copy and paste this link:</p>
+                        <p style="margin: 0; color: #7c3aed; font-size: 12px; word-break: break-all;">${resetLink}</p>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
+                      <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                        © ${new Date().getFullYear()} ClinicalHours. All rights reserved.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    };
+
+    console.log("Sending email with from address:", emailPayload.from);
+    
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: "ClinicalHours <support@clinicalhours.org>",
-        to: [email],
-        subject: "Reset your ClinicalHours password",
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f8;">
-            <table role="presentation" style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td align="center" style="padding: 40px 0;">
-                  <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
-                    <!-- Header -->
-                    <tr>
-                      <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border-radius: 16px 16px 0 0;">
-                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">ClinicalHours</h1>
-                        <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px;">Password Reset Request</p>
-                      </td>
-                    </tr>
-                    
-                    <!-- Content -->
-                    <tr>
-                      <td style="padding: 40px;">
-                        <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 24px; font-weight: 600;">Reset Your Password</h2>
-                        <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                          We received a request to reset your password. Click the button below to create a new password.
-                        </p>
-                        
-                        <!-- CTA Button -->
-                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                          <tr>
-                            <td align="center" style="padding: 20px 0;">
-                              <a href="${resetLink}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);">
-                                Reset Password
-                              </a>
-                            </td>
-                          </tr>
-                        </table>
-                        
-                        <p style="margin: 24px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                          This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
-                        </p>
-                        
-                        <!-- Alternative Link -->
-                        <div style="margin-top: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
-                          <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 12px;">If the button doesn't work, copy and paste this link:</p>
-                          <p style="margin: 0; color: #7c3aed; font-size: 12px; word-break: break-all;">${resetLink}</p>
-                        </div>
-                      </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 16px 16px; text-align: center;">
-                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                          © ${new Date().getFullYear()} ClinicalHours. All rights reserved.
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-          </html>
-        `,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     if (!emailResponse.ok) {

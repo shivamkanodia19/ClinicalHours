@@ -2,6 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Allowed origins for CORS - restrict to production and development
 const ALLOWED_ORIGINS = [
+  "https://clinicalhours.org",
+  "https://www.clinicalhours.org",
   "https://sysbtcikrbrrgafffody.lovableproject.com",
   "https://lovable.dev",
   "http://localhost:5173",
@@ -202,7 +204,8 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
   const isAllowed = origin && ALLOWED_ORIGINS.some(allowed =>
     origin === allowed ||
     origin.endsWith('.lovableproject.com') ||
-    origin.endsWith('.lovable.dev')
+    origin.endsWith('.lovable.dev') ||
+    origin.endsWith('.clinicalhours.org')
   );
 
   // For credentials: 'include', we MUST return the exact origin, not a fallback
