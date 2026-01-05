@@ -155,12 +155,12 @@ export default defineConfig(({ mode }) => {
     DEFAULT_VITE_MAPBOX_PUBLIC_TOKEN;
 
   return {
-    server: {
-      host: "127.0.0.1", // Use localhost explicitly
-      port: 3000, // Try a different port that's less likely to be blocked
-      strictPort: false, // Try next available port if 3000 is taken
-      open: false, // Don't auto-open browser
-    },
+  server: {
+    host: "127.0.0.1",
+    port: 8080,
+    strictPort: false,
+    open: false,
+  },
     plugins: [
       react(),
       mode === "development" && componentTagger(),
