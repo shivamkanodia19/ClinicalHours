@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { logAuthEvent } from "@/lib/auditLogger";
-import { exchangeTokenForCookie, logout as logoutCookie } from "@/lib/authCookie";
+import { exchangeTokenForCookie, logout as logoutCookie, restoreSessionFromCookie } from "@/lib/authCookie";
 
 // Session timeout: 30 minutes of inactivity
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -72,6 +72,7 @@ export const useAuth = () => {
     // This prevents race conditions where the listener fires before we've checked
     const initializeAuth = async () => {
       try {
+        // Check Supabase session (from sessionStorage)
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         
         if (!isMounted) return;
@@ -83,24 +84,56 @@ export const useAuth = () => {
         if (existingSession?.access_token && !exchangeInProgress) {
           exchangeInProgress = true;
           try {
+            // Exchange token for httpOnly cookies and get CSRF token
             const result = await exchangeTokenForCookie(
               existingSession.access_token,
               existingSession.refresh_token
             );
             if (result.success && result.csrfToken) {
               csrfToken = result.csrfToken;
+            } else {
+              // If exchange failed, try to get CSRF token from cookie
+              try {
+                const { getCSRFToken } = await import("@/lib/csrf");
+                const token = await getCSRFToken();
+                if (token) {
+                  csrfToken = token;
+                }
+              } catch {
+                // Ignore CSRF token fetch errors
+              }
             }
           } catch (error) {
             console.error("Error exchanging existing token for cookie:", error);
+            // Try to get CSRF token anyway
+            try {
+              const { getCSRFToken } = await import("@/lib/csrf");
+              const token = await getCSRFToken();
+              if (token) {
+                csrfToken = token;
+              }
+            } catch {
+              // Ignore CSRF token fetch errors
+            }
           } finally {
             exchangeInProgress = false;
           }
           lastActivityRef.current = Date.now();
         } else if (existingSession) {
           lastActivityRef.current = Date.now();
+          // Try to get CSRF token even without access token
+          try {
+            const { getCSRFToken } = await import("@/lib/csrf");
+            const token = await getCSRFToken();
+            if (token) {
+              csrfToken = token;
+            }
+          } catch {
+            // Ignore CSRF token fetch errors
+          }
         }
-      } catch {
-        // Ignore initialization errors
+      } catch (error) {
+        console.error("Error initializing auth:", error);
       } finally {
         if (isMounted) {
           setLoading(false);
