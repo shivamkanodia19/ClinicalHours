@@ -66,7 +66,7 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com ${localhostPorts}`,
+      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org ${localhostPorts}`,
       "frame-ancestors 'none'",
     ].join("; ");
   } else {
@@ -77,7 +77,7 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com`,
+      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org`,
       "frame-ancestors 'none'",
     ].join("; ");
   }

@@ -7,86 +7,93 @@ const corsHeaders = {
 
 interface HospitalCSVRow {
   name: string;
-  city: string;
-  state: string;
-  street: string;
-  housenumber: string;
-  postcode: string;
-  lat: number;
-  lon: number;
-  phone: string;
   website: string;
   email: string;
-  description: string;
-  beds: string;
-  emergency: string;
-  specialty: string;
+  phone: string;
+  bio: string;
+  city: string;
+  state: string;
+  lat: string;
+  lon: string;
+  source: string;
 }
 
-// Parse the CSV data
+// Parse the CSV data (already parsed by local script, just validate and format)
 function parseCSVData(csvData: HospitalCSVRow[]): {
   name: string;
+  type: 'hospital' | 'clinic' | 'hospice' | 'emt' | 'volunteer';
   location: string;
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  phone: string | null;
-  website: string | null;
-  email: string | null;
-  description: string | null;
-  type: 'hospital' | 'clinic';
   hours_required: string;
   acceptance_likelihood: 'medium' | 'high' | 'low';
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  requirements: string[];
+  description: string | null;
 }[] {
   const hospitals: ReturnType<typeof parseCSVData> = [];
   
   for (const row of csvData) {
-    if (!row.name) continue;
+    if (!row.name || !row.city) continue;
     
     // Build location string
-    const city = row.city || '';
-    const state = row.state || 'TX';
-    const location = city ? `${city}, ${state}` : `Texas`;
-    
-    // Build address
-    const parts: string[] = [];
-    if (row.housenumber) parts.push(row.housenumber);
-    if (row.street) parts.push(row.street);
-    if (row.city) parts.push(row.city);
-    if (row.state || !row.city) parts.push(row.state || 'TX');
-    if (row.postcode) parts.push(row.postcode);
-    const address = parts.join(', ') || null;
+    const location = row.state 
+      ? `${row.city}, ${row.state}` 
+      : row.city;
     
     // Parse coordinates
-    const latitude = row.lat && !isNaN(row.lat) ? row.lat : null;
-    const longitude = row.lon && !isNaN(row.lon) ? row.lon : null;
+    const latitude = row.lat ? parseFloat(row.lat) : null;
+    const longitude = row.lon ? parseFloat(row.lon) : null;
     
-    // Clean website URL
-    let website = row.website?.trim() || null;
-    if (website && !website.startsWith('http')) {
-      website = `https://${website}`;
+    // Validate coordinates
+    if (latitude === null || longitude === null || isNaN(latitude) || isNaN(longitude)) {
+      continue;
     }
     
-    // Determine type based on name/specialty
+    // Infer type from name/bio (default to hospital)
+    let type: 'hospital' | 'clinic' | 'hospice' | 'emt' | 'volunteer' = 'hospital';
     const nameLower = row.name.toLowerCase();
-    const specialty = (row.specialty || '').toLowerCase();
-    const isClinic = nameLower.includes('clinic') || 
-                     specialty.includes('clinic') ||
-                     nameLower.includes('center') && !nameLower.includes('medical center');
+    const bioLower = (row.bio || '').toLowerCase();
+    
+    if (nameLower.includes('clinic') || bioLower.includes('clinic')) {
+      type = 'clinic';
+    } else if (nameLower.includes('hospice') || bioLower.includes('hospice')) {
+      type = 'hospice';
+    } else if (nameLower.includes('emt') || nameLower.includes('emergency medical')) {
+      type = 'emt';
+    } else if (nameLower.includes('volunteer') || bioLower.includes('volunteer')) {
+      type = 'volunteer';
+    }
+    
+    // Clean phone number
+    const phone = row.phone?.trim() || null;
+    
+    // Clean email
+    const email = row.email?.trim() || null;
+    
+    // Clean website
+    const website = row.website?.trim() || null;
+    
+    // Use bio as description
+    const description = row.bio?.trim() || null;
     
     hospitals.push({
-      name: row.name,
+      name: row.name.trim(),
+      type,
       location,
-      address,
+      address: null, // Not in CSV
       latitude,
       longitude,
-      phone: row.phone?.trim() || null,
-      website,
-      email: row.email?.trim() || null,
-      description: row.description?.trim() || null,
-      type: isClinic ? 'clinic' : 'hospital',
-      hours_required: 'Flexible',
+      hours_required: '4-8 hours/week',
       acceptance_likelihood: 'medium',
+      phone,
+      email,
+      website,
+      requirements: [],
+      description,
     });
   }
   
@@ -105,7 +112,7 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Get the CSV data from request body
+    // Get the CSV data from request body (already parsed by local script)
     const { csvData } = await req.json();
     
     if (!csvData || !Array.isArray(csvData)) {
@@ -116,11 +123,11 @@ Deno.serve(async (req) => {
       );
     }
     
-    console.log(`Received ${csvData.length} rows to process`);
+    console.log(`Received ${csvData.length} pre-parsed records to process`);
     
-    // Parse the CSV data into hospital records
+    // Validate and format the data (already mostly parsed by local script)
     const hospitals = parseCSVData(csvData);
-    console.log(`Parsed ${hospitals.length} valid hospitals`);
+    console.log(`Validated ${hospitals.length} valid hospitals`);
     
     // Fetch existing opportunities to check for duplicates
     const { data: existingOpps, error: fetchError } = await supabase
