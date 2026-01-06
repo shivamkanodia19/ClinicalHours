@@ -97,8 +97,11 @@ export function sortByDistance<T extends { distance?: number }>(
   opportunities: T[]
 ): T[] {
   return [...opportunities].sort((a, b) => {
-    if (a.distance === undefined) return 1;
-    if (b.distance === undefined) return -1;
+    // Put opportunities without distance at the end
+    if (a.distance === undefined && b.distance === undefined) return 0;
+    if (a.distance === undefined) return 1; // a goes after b
+    if (b.distance === undefined) return -1; // a goes before b (b goes to end)
+    // Sort by distance ascending (closest first)
     return a.distance - b.distance;
   });
 }

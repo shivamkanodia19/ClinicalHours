@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -66,15 +66,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token for POST requests
-  const csrfValidation = validateCSRFToken(req);
-  if (!csrfValidation.valid) {
-    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-    return new Response(
-      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
-  }
+  // Note: CSRF validation is skipped for password reset as it's a public endpoint
+  // for unauthenticated users who don't have CSRF tokens yet.
+  // Security is provided by: rate limiting, email validation, token expiration, and origin validation.
 
   // Cleanup old entries occasionally
   if (Math.random() < 0.01) {

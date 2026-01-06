@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -79,18 +79,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token for POST requests
-  const csrfValidation = validateCSRFToken(req);
-  if (!csrfValidation.valid) {
-    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-    return new Response(
-      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-      {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
-  }
+  // Note: CSRF validation is skipped for contact form as it's a public endpoint
+  // for unauthenticated users who may not have CSRF tokens.
+  // Security is provided by: rate limiting, email validation, input sanitization, and origin validation.
 
   // Get client IP for rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
@@ -117,7 +108,11 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { name, email, subject, message }: ContactEmailRequest = await req.json();
 
-    console.log("Received contact form submission:", { name: escapeHtml(name), email: escapeHtml(email), subject: escapeHtml(subject) });
+    // Input length limits to prevent DoS attacks
+    const MAX_NAME_LENGTH = 100;
+    const MAX_EMAIL_LENGTH = 255;
+    const MAX_SUBJECT_LENGTH = 200;
+    const MAX_MESSAGE_LENGTH = 10000; // ~10KB
 
     // Validate required fields
     if (!name || !email || !subject || !message) {
@@ -130,6 +125,53 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
+
+    // Validate input lengths
+    if (name.length > MAX_NAME_LENGTH) {
+      console.error("Name too long:", name.length);
+      return new Response(
+        JSON.stringify({ error: `Name must be ${MAX_NAME_LENGTH} characters or less` }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (email.length > MAX_EMAIL_LENGTH) {
+      console.error("Email too long:", email.length);
+      return new Response(
+        JSON.stringify({ error: `Email must be ${MAX_EMAIL_LENGTH} characters or less` }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (subject.length > MAX_SUBJECT_LENGTH) {
+      console.error("Subject too long:", subject.length);
+      return new Response(
+        JSON.stringify({ error: `Subject must be ${MAX_SUBJECT_LENGTH} characters or less` }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      console.error("Message too long:", message.length);
+      return new Response(
+        JSON.stringify({ error: `Message must be ${MAX_MESSAGE_LENGTH.toLocaleString()} characters or less` }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log("Received contact form submission:", { name: escapeHtml(name), email: escapeHtml(email), subject: escapeHtml(subject) });
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
