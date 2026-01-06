@@ -5,88 +5,52 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface CSVRow {
+interface OpportunityInsert {
   name: string;
-  website: string;
-  email: string;
-  phone: string;
-  bio: string;
-  city: string;
-  state: string;
-  lat: string;
-  lon: string;
-  source: string;
-}
-
-function parseCSV(csvText: string): CSVRow[] {
-  const lines = csvText.split('\n');
-  const headers = lines[0].split(',').map(h => h.trim());
-  
-  const rows: CSVRow[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    // Handle CSV parsing with quotes
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let j = 0; j < line.length; j++) {
-      const char = line[j];
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
-    
-    const row: Record<string, string> = {};
-    headers.forEach((header, index) => {
-      row[header] = values[index] || '';
-    });
-    
-    rows.push(row as unknown as CSVRow);
-  }
-  
-  return rows;
-}
-
-function inferOpportunityType(name: string): 'hospital' | 'clinic' | 'hospice' | 'emt' | 'volunteer' {
-  const lowerName = name.toLowerCase();
-  
-  if (lowerName.includes('hospice')) return 'hospice';
-  if (lowerName.includes('ems') || lowerName.includes('emt') || lowerName.includes('ambulance')) return 'emt';
-  if (lowerName.includes('clinic') || lowerName.includes('center') || lowerName.includes('med spa')) return 'clinic';
-  if (lowerName.includes('volunteer')) return 'volunteer';
-  
-  return 'hospital';
+  type: 'hospital' | 'clinic' | 'hospice' | 'emt' | 'volunteer';
+  location: string;
+  latitude: number;
+  longitude: number;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  description: string | null;
+  hours_required: string;
+  acceptance_likelihood: 'high' | 'medium' | 'low';
+  requirements: string[];
 }
 
 Deno.serve(async (req) => {
+  console.log("Import function called, method:", req.method);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing env vars");
+      throw new Error("Missing Supabase configuration");
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { csvData, clearExisting } = await req.json();
+    const body = await req.json();
+    const { opportunities, clearExisting } = body as { 
+      opportunities: OpportunityInsert[]; 
+      clearExisting?: boolean 
+    };
+    
+    console.log(`Received ${opportunities?.length || 0} opportunities, clearExisting: ${clearExisting}`);
 
     if (clearExisting) {
-      // Delete all existing opportunities
       const { error: deleteError } = await supabase
         .from("opportunities")
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all rows
+        .neq("id", "00000000-0000-0000-0000-000000000000");
       
       if (deleteError) {
         console.error("Error clearing opportunities:", deleteError);
@@ -95,66 +59,29 @@ Deno.serve(async (req) => {
       console.log("Cleared existing opportunities");
     }
 
-    // Parse CSV data
-    const rows = parseCSV(csvData);
-    console.log(`Parsed ${rows.length} rows from CSV`);
-
-    // Transform and insert in batches
-    const batchSize = 50;
-    let imported = 0;
-    let failed = 0;
-
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const batch = rows.slice(i, i + batchSize);
-      
-      const opportunities = batch
-        .filter(row => row.name && row.lat && row.lon)
-        .map(row => {
-          const lat = parseFloat(row.lat);
-          const lon = parseFloat(row.lon);
-          
-          if (isNaN(lat) || isNaN(lon)) return null;
-          
-          const location = [row.city, row.state].filter(Boolean).join(', ') || 'Texas';
-          
-          return {
-            name: row.name.replace(/^"|"$/g, ''),
-            type: inferOpportunityType(row.name),
-            location,
-            latitude: lat,
-            longitude: lon,
-            phone: row.phone || null,
-            email: row.email || null,
-            website: row.website || null,
-            description: null,
-            hours_required: "Varies",
-            acceptance_likelihood: "medium" as const,
-            requirements: [],
-          };
-        })
-        .filter(Boolean);
-
-      if (opportunities.length > 0) {
-        const { error: insertError } = await supabase
-          .from("opportunities")
-          .insert(opportunities);
-
-        if (insertError) {
-          console.error(`Batch ${i / batchSize + 1} insert error:`, insertError);
-          failed += batch.length;
-        } else {
-          imported += opportunities.length;
-          console.log(`Imported batch ${i / batchSize + 1}: ${opportunities.length} records`);
-        }
-      }
+    if (!opportunities || opportunities.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, imported: 0, message: "No opportunities to import" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    // Insert the batch
+    const { error: insertError } = await supabase
+      .from("opportunities")
+      .insert(opportunities);
+
+    if (insertError) {
+      console.error("Insert error:", insertError);
+      throw new Error(`Insert failed: ${insertError.message}`);
+    }
+
+    console.log(`Imported ${opportunities.length} opportunities`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        imported,
-        failed,
-        total: rows.length,
+        imported: opportunities.length,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
