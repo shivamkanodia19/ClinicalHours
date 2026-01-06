@@ -71,16 +71,38 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
     ].join("; ");
   } else {
     // Production policy - strict, no inline scripts
+    // Include wss:// for Supabase realtime websocket connections
+    const supabaseWss = supabaseDomain.includes("supabase.co") 
+      ? "wss://*.supabase.co"
+      : supabaseUrl.replace(/^https:/, "wss:");
+    
     return [
       "default-src 'self'",
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org`,
+      `connect-src 'self' ${supabaseWildcard} ${supabaseWss} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org`,
       "frame-ancestors 'none'",
     ].join("; ");
   }
+};
+
+// Generate Permissions Policy header
+// Explicitly disallows unused permissions while allowing necessary ones
+// Note: geolocation is allowed as the app uses it for sorting opportunities by distance
+const generatePermissionsPolicy = (): string => {
+  return [
+    "camera=()",
+    "microphone=()",
+    "geolocation=(self)", // Allowed: app uses navigator.geolocation for distance sorting
+    "magnetometer=()",
+    "gyroscope=()",
+    "accelerometer=()",
+    "payment=()",
+    "autoplay=(self)",
+    "fullscreen=(self)",
+  ].join(", ");
 };
 
 // Plugin to add security headers including CSP
@@ -95,6 +117,9 @@ const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      
+      // Add Permissions Policy header to restrict device feature access
+      res.setHeader("Permissions-Policy", generatePermissionsPolicy());
       
       // Add CSP header to all application routes for comprehensive XSS protection
       if (shouldApplyCSP(pathname)) {
@@ -115,6 +140,9 @@ const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      
+      // Add Permissions Policy header to restrict device feature access
+      res.setHeader("Permissions-Policy", generatePermissionsPolicy());
       
       // Add CSP header to all application routes (production policy in preview)
       if (shouldApplyCSP(pathname)) {
