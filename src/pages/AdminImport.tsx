@@ -110,37 +110,52 @@ const AdminImport = () => {
         })
         .filter(Boolean);
       
-      setStatus(`Clearing existing data and importing ${allOpportunities.length} hospitals...`);
+      setStatus(`Clearing existing data via edge function...`);
       
-      // First call: clear existing and import first batch
-      const batchSize = 100;
+      // Clear existing data using the edge function (uses service role)
+      const { data: clearData, error: clearError } = await supabase.functions.invoke("import-csv-hospitals", {
+        body: { opportunities: [], clearExisting: true },
+      });
+
+      if (clearError) {
+        console.error("Clear error:", clearError);
+        throw new Error(`Failed to clear data: ${clearError.message}`);
+      }
+      
+      console.log("Clear response:", clearData);
+      setStatus(`Data cleared. Importing ${allOpportunities.length} hospitals in batches...`);
+      
+      // Insert in batches using edge function
+      const batchSize = 20;
       let imported = 0;
+      const totalBatches = Math.ceil(allOpportunities.length / batchSize);
       
       for (let i = 0; i < allOpportunities.length; i += batchSize) {
         const batch = allOpportunities.slice(i, i + batchSize);
-        const isFirst = i === 0;
+        const batchNum = Math.floor(i / batchSize) + 1;
+        
+        console.log(`Sending batch ${batchNum}/${totalBatches}`);
         
         const { data, error } = await supabase.functions.invoke("import-csv-hospitals", {
-          body: {
-            opportunities: batch,
-            clearExisting: isFirst,
-          },
+          body: { opportunities: batch, clearExisting: false },
         });
 
         if (error) {
-          console.error("Batch error:", error);
-          throw error;
+          console.error(`Batch ${batchNum} error:`, error);
+          // Continue with next batch instead of failing completely
+          continue;
         }
         
         if (data?.success) {
           imported += data.imported || 0;
-        } else {
-          throw new Error(data?.error || "Import failed");
         }
         
         const progressPercent = Math.round(((i + batchSize) / allOpportunities.length) * 100);
         setProgress(Math.min(progressPercent, 100));
-        setStatus(`Importing... ${imported} hospitals added (${Math.min(progressPercent, 100)}%)`);
+        setStatus(`Batch ${batchNum}/${totalBatches}: ${imported} hospitals added`);
+        
+        // Small delay between batches
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       setStatus(`Import complete! Added ${imported} hospitals.`);
