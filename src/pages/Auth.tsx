@@ -12,20 +12,10 @@ import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-// Password validation: min 10 characters, at least 2 of: uppercase, lowercase, digit, special character
+// Password validation: minimum length only (requirements set via Supabase/Lovable cloud)
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).max(255),
-  password: z.string()
-    .min(10, { message: "Password must be at least 10 characters long" })
-    .max(128)
-    .refine((password) => {
-      const hasUpperCase = /[A-Z]/.test(password);
-      const hasLowerCase = /[a-z]/.test(password);
-      const hasDigit = /[0-9]/.test(password);
-      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-      const complexityCount = [hasUpperCase, hasLowerCase, hasDigit, hasSpecialChar].filter(Boolean).length;
-      return complexityCount >= 2;
-    }, { message: "Password must contain at least 2 of: uppercase letters, lowercase letters, numbers, or special characters" }),
+  password: z.string().min(1, { message: "Password is required" }).max(128),
   fullName: z.string().trim().min(1, { message: "Full name is required" }).max(100).optional(),
   phone: z.string().max(20).optional().or(z.literal("")),
 });
@@ -235,7 +225,6 @@ const Auth = () => {
       isSubmittingRef.current = false;
     }
   };
-
 
   // Show forgot password screen
   if (showForgotPassword) {

@@ -605,7 +605,7 @@ const OpportunityMap = () => {
           variant={viewMode === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setViewMode('all')}
-          className="bg-background/90 backdrop-blur-sm"
+          className="bg-background/90 backdrop-blur-sm !text-[#EF4444] font-semibold"
         >
           <Map className="h-4 w-4 mr-2" />
           All Opportunities
@@ -615,7 +615,7 @@ const OpportunityMap = () => {
           size="sm"
           onClick={() => setViewMode('saved')}
           disabled={!user}
-          className="bg-background/90 backdrop-blur-sm"
+          className="bg-background/90 backdrop-blur-sm !text-[#EF4444] font-semibold"
         >
           <List className="h-4 w-4 mr-2" />
           My Saved

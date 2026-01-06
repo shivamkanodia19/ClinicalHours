@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "import:texas": "tsx scripts/import-texas-hospitals.ts",
     "remove:duplicates": "tsx scripts/remove-duplicates.ts",
-    "fix:coordinates": "tsx scripts/fix-map-coordinates.ts"
+    "fix:coordinates": "tsx scripts/fix-map-coordinates.ts",
+    "fix:coordinates:direct": "tsx scripts/fix-coordinates-direct.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

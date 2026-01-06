@@ -171,11 +171,7 @@ const ResetPassword = () => {
               required
               disabled={loading}
               className="h-11"
-              minLength={10}
             />
-            <p className="text-xs text-muted-foreground">
-              Password must be at least 10 characters and contain at least 2 of: uppercase, lowercase, numbers, or special characters
-            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -188,7 +184,6 @@ const ResetPassword = () => {
               required
               disabled={loading}
               className="h-11"
-              minLength={10}
             />
           </div>
           <Button type="submit" className="w-full h-11" disabled={loading}>

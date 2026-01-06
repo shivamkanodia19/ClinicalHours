@@ -26,6 +26,36 @@ export const MAX_LENGTHS = {
 } as const;
 
 /**
+ * Validates email format and length
+ * Uses same basic regex as backend functions and enforces max length
+ */
+export function validateEmail(email: string | null | undefined): { valid: boolean; error?: string } {
+  if (!email || typeof email !== "string") {
+    return { valid: false, error: "Email is required" };
+  }
+
+  const trimmed = email.trim();
+
+  if (trimmed.length === 0) {
+    return { valid: false, error: "Email is required" };
+  }
+
+  if (trimmed.length > MAX_LENGTHS.CONTACT_EMAIL) {
+    return {
+      valid: false,
+      error: `Email must be ${MAX_LENGTHS.CONTACT_EMAIL} characters or less`,
+    };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(trimmed)) {
+    return { valid: false, error: "Invalid email address" };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Sanitizes text input by trimming whitespace and removing dangerous patterns
  */
 export function sanitizeTextInput(input: string | null | undefined): string {
@@ -220,36 +250,21 @@ export function validateLinkedInURL(url: string | null | undefined): { valid: bo
 
 /**
  * Validates password strength
- * Requirements: minimum 10 characters, at least 2 of: uppercase, lowercase, digit, special character
+ * Minimum requirements only (complexity requirements set via Supabase/Lovable cloud)
  */
 export function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
   if (!password || typeof password !== 'string') {
     return { valid: false, error: "Password is required" };
   }
 
-  // Minimum length: 10 characters
-  if (password.length < 10) {
-    return { valid: false, error: "Password must be at least 10 characters long" };
+  // Minimum length: 1 character
+  if (password.length < 1) {
+    return { valid: false, error: "Password is required" };
   }
 
   // Maximum length: 128 characters
   if (password.length > 128) {
     return { valid: false, error: "Password is too long (maximum 128 characters)" };
-  }
-
-  // Check for at least 2 of: uppercase, lowercase, digit, special character
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasDigit = /[0-9]/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
-  const complexityCount = [hasUpperCase, hasLowerCase, hasDigit, hasSpecialChar].filter(Boolean).length;
-
-  if (complexityCount < 2) {
-    return { 
-      valid: false, 
-      error: "Password must contain at least 2 of the following: uppercase letters, lowercase letters, numbers, or special characters" 
-    };
   }
 
   return { valid: true };
