@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import { Progress } from "@/components/ui/progress";
+
+const SUPABASE_URL = "https://sysbtcikrbrrgafffody.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5c2J0Y2lrcmJycmdhZmZmb2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTc5MzUsImV4cCI6MjA3ODYzMzkzNX0.5jN1B2RIscA42w7FYfwxaQHFW6ROldslPzUFYtQCgLc";
 
 interface CSVRow {
   name: string;
@@ -64,6 +66,25 @@ function inferOpportunityType(name: string): 'hospital' | 'clinic' | 'hospice' |
   return 'hospital';
 }
 
+async function callEdgeFunction(body: object): Promise<{ success: boolean; imported?: number; error?: string }> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/import-csv-hospitals`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
+  
+  return response.json();
+}
+
 const AdminImport = () => {
   const [importing, setImporting] = useState(false);
   const [status, setStatus] = useState<string>("");
@@ -110,55 +131,53 @@ const AdminImport = () => {
         })
         .filter(Boolean);
       
-      setStatus(`Clearing existing data via edge function...`);
+      setStatus(`Clearing existing data...`);
       
-      // Clear existing data using the edge function (uses service role)
-      const { data: clearData, error: clearError } = await supabase.functions.invoke("import-csv-hospitals", {
-        body: { opportunities: [], clearExisting: true },
-      });
-
-      if (clearError) {
-        console.error("Clear error:", clearError);
-        throw new Error(`Failed to clear data: ${clearError.message}`);
+      // Clear existing data
+      console.log("Calling edge function to clear data...");
+      const clearResult = await callEdgeFunction({ opportunities: [], clearExisting: true });
+      console.log("Clear result:", clearResult);
+      
+      if (!clearResult.success && clearResult.error) {
+        throw new Error(clearResult.error);
       }
       
-      console.log("Clear response:", clearData);
-      setStatus(`Data cleared. Importing ${allOpportunities.length} hospitals in batches...`);
+      setStatus(`Data cleared. Importing ${allOpportunities.length} hospitals...`);
       
-      // Insert in batches using edge function
-      const batchSize = 20;
+      // Insert in very small batches
+      const batchSize = 10;
       let imported = 0;
+      let failed = 0;
       const totalBatches = Math.ceil(allOpportunities.length / batchSize);
       
       for (let i = 0; i < allOpportunities.length; i += batchSize) {
         const batch = allOpportunities.slice(i, i + batchSize);
         const batchNum = Math.floor(i / batchSize) + 1;
         
-        console.log(`Sending batch ${batchNum}/${totalBatches}`);
-        
-        const { data, error } = await supabase.functions.invoke("import-csv-hospitals", {
-          body: { opportunities: batch, clearExisting: false },
-        });
-
-        if (error) {
-          console.error(`Batch ${batchNum} error:`, error);
-          // Continue with next batch instead of failing completely
-          continue;
-        }
-        
-        if (data?.success) {
-          imported += data.imported || 0;
+        try {
+          console.log(`Sending batch ${batchNum}/${totalBatches}`);
+          const data = await callEdgeFunction({ opportunities: batch, clearExisting: false });
+          
+          if (data.success) {
+            imported += data.imported || 0;
+          } else {
+            console.error(`Batch ${batchNum} failed:`, data.error);
+            failed += batch.length;
+          }
+        } catch (err) {
+          console.error(`Batch ${batchNum} error:`, err);
+          failed += batch.length;
         }
         
         const progressPercent = Math.round(((i + batchSize) / allOpportunities.length) * 100);
         setProgress(Math.min(progressPercent, 100));
-        setStatus(`Batch ${batchNum}/${totalBatches}: ${imported} hospitals added`);
+        setStatus(`Batch ${batchNum}/${totalBatches}: ${imported} added, ${failed} failed`);
         
         // Small delay between batches
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       
-      setStatus(`Import complete! Added ${imported} hospitals.`);
+      setStatus(`Import complete! Added ${imported} hospitals. Failed: ${failed}`);
       toast.success(`Successfully imported ${imported} hospitals!`);
     } catch (error) {
       console.error("Import error:", error);
