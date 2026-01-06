@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { MAX_LENGTHS, validateEmail } from "@/lib/inputValidation";
 // CSRF protection is handled by Supabase's built-in JWT token validation
 
 const Contact = () => {
@@ -23,6 +24,7 @@ const Contact = () => {
     subject: "",
     message: "",
   });
+  const [emailError, setEmailError] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
 
   // Auto-save contact form data
@@ -41,6 +43,18 @@ const Contact = () => {
     
     // Prevent double submission
     if (isSubmittingRef.current || loading) {
+      return;
+    }
+
+    // Validate email before submitting
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.valid) {
+      setEmailError(emailValidation.error || "Invalid email address");
+      toast({
+        title: "Invalid email",
+        description: emailValidation.error || "Please enter a valid email address.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -76,13 +90,28 @@ const Contact = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    // Sanitize and limit input lengths
+    // Sanitize and limit input lengths using shared max length constants
     let sanitizedValue = value;
-    if (name === "name") sanitizedValue = value.slice(0, 100);
-    if (name === "email") sanitizedValue = value.slice(0, 255);
-    if (name === "subject") sanitizedValue = value.slice(0, 200);
-    if (name === "message") sanitizedValue = value.slice(0, 5000);
+    if (name === "name") sanitizedValue = value.slice(0, MAX_LENGTHS.CONTACT_NAME);
+    if (name === "email") {
+      sanitizedValue = value.slice(0, MAX_LENGTHS.CONTACT_EMAIL);
+      // Clear email error as user edits
+      if (emailError) {
+        setEmailError(null);
+      }
+    }
+    if (name === "subject") sanitizedValue = value.slice(0, MAX_LENGTHS.CONTACT_SUBJECT);
+    if (name === "message") sanitizedValue = value.slice(0, MAX_LENGTHS.CONTACT_MESSAGE);
     setFormData({ ...formData, [name]: sanitizedValue });
+  };
+
+  const handleEmailBlur = () => {
+    const result = validateEmail(formData.email);
+    if (!result.valid) {
+      setEmailError(result.error || "Invalid email address");
+    } else {
+      setEmailError(null);
+    }
   };
 
   return (
@@ -227,7 +256,11 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="Your name"
                       required
+                      maxLength={MAX_LENGTHS.CONTACT_NAME}
                     />
+                    <p className="text-xs text-muted-foreground text-right">
+                      {formData.name.length}/{MAX_LENGTHS.CONTACT_NAME} characters
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -239,7 +272,17 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="your.email@example.com"
                       required
+                      maxLength={MAX_LENGTHS.CONTACT_EMAIL}
+                      onBlur={handleEmailBlur}
                     />
+                    <p className="text-xs text-muted-foreground text-right">
+                      {formData.email.length}/{MAX_LENGTHS.CONTACT_EMAIL} characters
+                    </p>
+                    {emailError && (
+                      <p className="text-xs text-destructive mt-1">
+                        {emailError}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -251,7 +294,11 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="What is this about?"
                     required
+                    maxLength={MAX_LENGTHS.CONTACT_SUBJECT}
                   />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {formData.subject.length}/{MAX_LENGTHS.CONTACT_SUBJECT} characters
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
