@@ -48,6 +48,36 @@ function recordFailedAttempt(clientIp: string): void {
   }
 }
 
+// Validate password strength
+function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
+  // Minimum length: 10 characters (increased from 6)
+  if (password.length < 10) {
+    return { valid: false, error: "Password must be at least 10 characters long" };
+  }
+
+  // Maximum length: 128 characters
+  if (password.length > 128) {
+    return { valid: false, error: "Password is too long (maximum 128 characters)" };
+  }
+
+  // Check for at least 2 of: uppercase, lowercase, digit, special character
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+  const complexityCount = [hasUpperCase, hasLowerCase, hasDigit, hasSpecialChar].filter(Boolean).length;
+
+  if (complexityCount < 2) {
+    return { 
+      valid: false, 
+      error: "Password must contain at least 2 of the following: uppercase letters, lowercase letters, numbers, or special characters" 
+    };
+  }
+
+  return { valid: true };
+}
+
 // Clean up old entries periodically
 function cleanupRateLimitMap(): void {
   const now = Date.now();
@@ -129,16 +159,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (newPassword.length < 6) {
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(newPassword);
+    if (!passwordValidation.valid) {
       return new Response(
-        JSON.stringify({ error: "Password must be at least 6 characters" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (newPassword.length > 128) {
-      return new Response(
-        JSON.stringify({ error: "Password is too long" }),
+        JSON.stringify({ error: passwordValidation.error }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

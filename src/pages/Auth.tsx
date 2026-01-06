@@ -12,12 +12,20 @@ import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-// Password validation: min 6 characters, no other requirements
+// Password validation: min 10 characters, at least 2 of: uppercase, lowercase, digit, special character
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).max(255),
   password: z.string()
-    .min(6, { message: "Password must be at least 6 characters" })
-    .max(128),
+    .min(10, { message: "Password must be at least 10 characters long" })
+    .max(128)
+    .refine((password) => {
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasDigit = /[0-9]/.test(password);
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+      const complexityCount = [hasUpperCase, hasLowerCase, hasDigit, hasSpecialChar].filter(Boolean).length;
+      return complexityCount >= 2;
+    }, { message: "Password must contain at least 2 of: uppercase letters, lowercase letters, numbers, or special characters" }),
   fullName: z.string().trim().min(1, { message: "Full name is required" }).max(100).optional(),
   phone: z.string().max(20).optional().or(z.literal("")),
 });
