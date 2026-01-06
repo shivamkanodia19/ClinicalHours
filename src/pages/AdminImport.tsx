@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const SUPABASE_URL = "https://sysbtcikrbrrgafffody.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5c2J0Y2lrcmJycmdhZmZmb2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTc5MzUsImV4cCI6MjA3ODYzMzkzNX0.5jN1B2RIscA42w7FYfwxaQHFW6ROldslPzUFYtQCgLc";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 interface CSVRow {
   name: string;
@@ -90,25 +91,16 @@ function inferOpportunityType(name: string): 'hospital' | 'clinic' | 'hospice' |
 }
 
 async function callEdgeFunction(body: object): Promise<{ success: boolean; imported?: number; error?: string }> {
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/import-csv-hospitals`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'apikey': SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify(body),
+  const { data, error } = await supabase.functions.invoke('import-csv-hospitals', {
+    body,
   });
   
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`HTTP ${response.status}: ${text}`);
+  if (error) {
+    throw new Error(error.message);
   }
   
-  return response.json();
+  return data;
 }
-
-// DataSource interface moved below
 
 interface DataSource {
   id: string;
@@ -154,10 +146,60 @@ const dataSources: DataSource[] = [
 ];
 
 const AdminImport = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [importing, setImporting] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [progress, setProgress] = useState(0);
   const [selectedSource, setSelectedSource] = useState<string>("texas");
+
+  // Check authentication and admin role
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (authLoading) return;
+      
+      if (!user) {
+        toast.error("Authentication required");
+        navigate("/auth");
+        return;
+      }
+
+      try {
+        // Check if user has admin role
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error checking admin role:", error);
+          toast.error("Failed to verify admin access");
+          navigate("/dashboard");
+          return;
+        }
+
+        if (!data) {
+          toast.error("Admin access required");
+          navigate("/dashboard");
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch (err) {
+        console.error("Admin check error:", err);
+        toast.error("Failed to verify admin access");
+        navigate("/dashboard");
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [user, authLoading, navigate]);
 
   const handleImport = async (clearExisting: boolean = true) => {
     const source = dataSources.find(s => s.id === selectedSource);
@@ -325,6 +367,23 @@ const AdminImport = () => {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
   };
+
+  // Show loading while checking auth/admin status
+  if (authLoading || checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto pt-28 px-4 flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  // Only render if user is admin
+  if (!isAdmin) {
+    return null;
+  }
 
   const currentSource = dataSources.find(s => s.id === selectedSource);
 
