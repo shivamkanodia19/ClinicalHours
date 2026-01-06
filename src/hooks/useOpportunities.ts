@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
 import { Opportunity, UserLocation } from "@/types";
 import { fetchOpportunities } from "@/services/opportunities";
-import { calculateDistances, sortByDistance } from "@/lib/geolocation";
 
 interface UseOpportunitiesOptions {
   userLocation: UserLocation | null;
@@ -60,26 +59,15 @@ export function useOpportunities({
 
       let processedData: Opportunity[] = data || [];
 
-      // Calculate distance and sort if user location available (client-side for now)
-      // TODO: Move to server-side with PostGIS when available
-      if (userLocation) {
-        processedData = calculateDistances(processedData, userLocation);
-        processedData = sortByDistance(processedData);
-      }
+      // Distance is now calculated server-side when userLocation is provided
+      // The data comes back already sorted by distance
 
-      // For first page, replace data; for subsequent pages, append and re-sort
+      // For first page, replace data; for subsequent pages, append
+      // Since server returns data already sorted by distance, we just append
       if (pageNum === 0) {
         setOpportunities(processedData);
       } else {
-        // Append new data and re-sort all opportunities by distance to maintain correct order
-        setOpportunities((prev) => {
-          const combined = [...prev, ...processedData];
-          // Re-sort all opportunities by distance if user location is available
-          if (userLocation) {
-            return sortByDistance(combined);
-          }
-          return combined;
-        });
+        setOpportunities((prev) => [...prev, ...processedData]);
       }
 
       // Update total count and hasMore

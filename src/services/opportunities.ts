@@ -27,7 +27,12 @@ export async function fetchOpportunities(
   options: FetchOpportunitiesOptions = {}
 ): Promise<FetchOpportunitiesResult> {
   try {
-    const { filterType, searchTerm, limit, offset } = options;
+    const { filterType, searchTerm, limit, offset, userLocation } = options;
+
+    // If user location provided, use RPC to get distance-sorted results
+    if (userLocation) {
+      return await fetchOpportunitiesWithDistance(options);
+    }
 
     let query = supabase
       .from("opportunities_with_ratings")
@@ -51,6 +56,9 @@ export async function fetchOpportunities(
         query = query.or(`name.ilike.${searchPattern.replace(/,/g, "\\,")},location.ilike.${searchPattern.replace(/,/g, "\\,")}`);
       }
     }
+
+    // Sort by name when no location
+    query = query.order("name", { ascending: true });
 
     // Apply pagination with proper defaults
     const pageLimit = limit || 20; // Default to 20 items per page
@@ -98,6 +106,96 @@ export async function fetchOpportunities(
 }
 
 /**
+ * Fetch opportunities sorted by distance using server-side calculation
+ */
+async function fetchOpportunitiesWithDistance(
+  options: FetchOpportunitiesOptions
+): Promise<FetchOpportunitiesResult> {
+  try {
+    const { filterType, searchTerm, limit, offset, userLocation } = options;
+
+    if (!userLocation) {
+      return fetchOpportunities({ ...options, userLocation: undefined });
+    }
+
+    const pageLimit = limit || 20;
+    const pageOffset = offset || 0;
+
+    // Use server-side distance sorting function
+    const { data, error } = await supabase.rpc("get_opportunities_by_distance", {
+      user_lat: userLocation.lat,
+      user_lon: userLocation.lng,
+      filter_type: filterType && filterType !== "all" ? filterType : null,
+      search_term: searchTerm?.trim().slice(0, 100) || null,
+      page_limit: pageLimit,
+      page_offset: pageOffset,
+    });
+
+    if (error) throw error;
+
+    // Get total count
+    const { data: countData, error: countError } = await supabase.rpc("count_opportunities", {
+      filter_type: filterType && filterType !== "all" ? filterType : null,
+      search_term: searchTerm?.trim().slice(0, 100) || null,
+    });
+
+    if (countError) {
+      logger.error("Error getting count", countError);
+    }
+
+    const opportunities: Opportunity[] = (data || []).map((opp: {
+      id: string;
+      name: string;
+      type: string;
+      location: string;
+      address?: string;
+      latitude?: number;
+      longitude?: number;
+      hours_required: string;
+      acceptance_likelihood: string;
+      description?: string;
+      requirements?: string[];
+      phone?: string;
+      email?: string;
+      website?: string;
+      avg_rating?: number;
+      review_count?: number;
+      distance_miles?: number;
+    }) => ({
+      id: opp.id,
+      name: opp.name,
+      type: opp.type,
+      location: opp.location,
+      latitude: opp.latitude,
+      longitude: opp.longitude,
+      hours_required: opp.hours_required,
+      acceptance_likelihood: opp.acceptance_likelihood,
+      description: opp.description,
+      requirements: opp.requirements || [],
+      phone: opp.phone,
+      email: opp.email,
+      website: opp.website,
+      avg_rating: opp.avg_rating,
+      review_count: opp.review_count,
+      distance: opp.distance_miles,
+    }));
+
+    return {
+      data: opportunities,
+      count: countData || null,
+      error: null,
+    };
+  } catch (error) {
+    logger.error("Error fetching opportunities with distance", error);
+    return {
+      data: [],
+      count: null,
+      error: error as Error,
+    };
+  }
+}
+
+/**
  * Fetch a single opportunity by ID
  */
 export async function fetchOpportunityById(
@@ -136,4 +234,3 @@ export async function fetchOpportunityById(
     return { data: null, error: error as Error };
   }
 }
-

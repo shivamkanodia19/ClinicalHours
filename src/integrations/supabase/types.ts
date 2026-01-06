@@ -705,6 +705,39 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      count_opportunities: {
+        Args: { filter_type?: string; search_term?: string }
+        Returns: number
+      }
+      get_opportunities_by_distance: {
+        Args: {
+          filter_type?: string
+          page_limit?: number
+          page_offset?: number
+          search_term?: string
+          user_lat: number
+          user_lon: number
+        }
+        Returns: {
+          acceptance_likelihood: string
+          address: string
+          avg_rating: number
+          description: string
+          distance_miles: number
+          email: string
+          hours_required: string
+          id: string
+          latitude: number
+          location: string
+          longitude: number
+          name: string
+          phone: string
+          requirements: string[]
+          review_count: number
+          type: string
+          website: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
