@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Bell, CalendarPlus } from "lucide-react";
 import { format } from "date-fns";
-import { enUS } from "date-fns/locale/en-US";
+import { enUS } from "date-fns/locale";
 import { downloadIcsFile, createOpportunityReminder } from "@/lib/calendar";
 
 interface ReminderDialogProps {
@@ -46,6 +46,34 @@ export function ReminderDialog({
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  // Get user's timezone
+  const getUserTimezone = () => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return "UTC";
+    }
+  };
+
+  // Format timezone abbreviation (e.g., "EST", "PST")
+  const getTimezoneAbbr = () => {
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZoneName: "short",
+        timeZone: getUserTimezone(),
+      });
+      const parts = formatter.formatToParts(now);
+      const timeZoneName = parts.find((part) => part.type === "timeZoneName");
+      return timeZoneName?.value || getUserTimezone();
+    } catch {
+      return getUserTimezone();
+    }
+  };
+
+  const userTimezone = getUserTimezone();
+  const timezoneAbbr = getTimezoneAbbr();
+
   const handleSetReminder = async () => {
     if (!date) {
       toast({
@@ -70,9 +98,13 @@ export function ReminderDialog({
 
       if (error) throw error;
 
+      // Format with timezone info
+      const formattedDate = format(reminderDate, "PPP 'at' p", { locale: enUS });
+      const timezoneInfo = `(${timezoneAbbr})`;
+
       toast({
         title: "Reminder set!",
-        description: `You'll receive an email reminder on ${format(reminderDate, "PPP 'at' p", { locale: enUS })}`,
+        description: `You'll receive an email reminder on ${formattedDate} ${timezoneInfo}`,
       });
 
       setOpen(false);
@@ -146,12 +178,16 @@ export function ReminderDialog({
               onSelect={setDate}
               disabled={(date) => date < new Date()}
               className="rounded-md border"
-              locale={enUS}
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Time</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Time</label>
+              <span className="text-xs text-muted-foreground">
+                Your timezone: {timezoneAbbr}
+              </span>
+            </div>
             <Select value={time} onValueChange={setTime}>
               <SelectTrigger>
                 <SelectValue placeholder="Select time" />
@@ -164,12 +200,20 @@ export function ReminderDialog({
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Reminder will be sent at this time in your local timezone ({timezoneAbbr})
+            </p>
           </div>
 
           {date && (
-            <p className="text-sm text-muted-foreground text-center">
-              Reminder: {format(date, "EEEE, MMMM d, yyyy", { locale: enUS })} at {time}
-            </p>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground text-center">
+                Reminder: {format(date, "EEEE, MMMM d, yyyy", { locale: enUS })} at {time} {timezoneAbbr}
+              </p>
+              <p className="text-xs text-muted-foreground text-center">
+                Email will be sent at this time in your local timezone
+              </p>
+            </div>
           )}
         </div>
 
