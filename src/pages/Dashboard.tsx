@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { useToast } from "@/hooks/use-toast";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { Opportunity, SavedOpportunityWithDetails } from "@/types";
@@ -102,6 +103,7 @@ const Dashboard = () => {
   const [totalOpportunities, setTotalOpportunities] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [opportunityToDelete, setOpportunityToDelete] = useState<string | null>(null);
+  const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
   const isMountedRef = useRef(true);
   const isFetchingRef = useRef(false);
 
@@ -221,6 +223,15 @@ const Dashboard = () => {
       }
       
       setSavedOpportunities(processedSaved);
+      
+      // Initialize local notes state from saved opportunities
+      const notesMap: Record<string, string> = {};
+      processedSaved.forEach((saved: DashboardSavedOpportunity) => {
+        if (saved.notes) {
+          notesMap[saved.id] = saved.notes;
+        }
+      });
+      setLocalNotes(notesMap);
     } catch (error: unknown) {
       logger.error("Error loading dashboard data", error);
       toastRef.current({
@@ -366,6 +377,12 @@ const Dashboard = () => {
     // Optimistic update: remove from local state immediately
     const opportunityToRemove = savedOpportunities.find(s => s.id === savedId);
     setSavedOpportunities(prev => prev.filter(s => s.id !== savedId));
+    // Also remove from localNotes
+    setLocalNotes(prev => {
+      const updated = { ...prev };
+      delete updated[savedId];
+      return updated;
+    });
     
     setDeleteDialogOpen(false);
     const tempOpportunityToDelete = opportunityToDelete;
@@ -428,6 +445,35 @@ const Dashboard = () => {
       });
     }
   };
+
+  // Debounced function to save notes to database
+  const saveNotesToDatabase = useDebouncedCallback(
+    async (savedId: string, notes: string) => {
+      try {
+        const { error } = await supabase
+          .from("saved_opportunities")
+          .update({ notes: notes || null })
+          .eq("id", savedId);
+
+        if (error) throw error;
+
+        // Update savedOpportunities state to keep it in sync
+        setSavedOpportunities((prev) =>
+          prev.map((item) =>
+            item.id === savedId ? { ...item, notes: notes || undefined } : item
+          )
+        );
+      } catch (error: unknown) {
+        logger.error("Error saving notes", error);
+        toast({
+          title: "Error saving notes",
+          description: sanitizeErrorMessage(error),
+          variant: "destructive",
+        });
+      }
+    },
+    500
+  );
 
   const filteredOpportunities = opportunities.filter((opp) => {
     const matchesSearch =
@@ -722,10 +768,17 @@ const Dashboard = () => {
                         <TableCell>
                           <Input
                             placeholder="Add notes..."
-                            value={saved.notes || ""}
-                            onChange={(e) =>
-                              updateTrackerField(saved.id, "notes", e.target.value)
-                            }
+                            value={localNotes[saved.id] ?? saved.notes ?? ""}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              // Update local state immediately for smooth typing
+                              setLocalNotes((prev) => ({
+                                ...prev,
+                                [saved.id]: newValue,
+                              }));
+                              // Debounce database update
+                              saveNotesToDatabase(saved.id, newValue);
+                            }}
                             className="w-48"
                           />
                         </TableCell>
