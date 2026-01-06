@@ -144,6 +144,13 @@ const dataSources: DataSource[] = [
     description: 'Additional hospitals from mid-region states (OSM data)',
     isOSMFormat: true,
   },
+  {
+    id: 'batch4',
+    name: 'Batch 4 (Central/South)',
+    csvPath: '/data/batch4-hospitals.csv',
+    description: 'Hospitals from Iowa, Missouri, Arkansas and surrounding states (OSM data)',
+    isOSMFormat: true,
+  },
 ];
 
 const AdminImport = () => {
