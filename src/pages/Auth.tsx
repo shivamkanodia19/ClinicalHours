@@ -12,10 +12,15 @@ import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-// Password validation: minimum length only (requirements set via Supabase/Lovable cloud)
+// Password validation: letters and numbers (both required) and at least 8 characters
 const authSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }).max(255),
-  password: z.string().min(1, { message: "Password is required" }).max(128),
+  password: z.string()
+    .min(8, { message: "Use letters and numbers (both required) and at least 8 digits" })
+    .max(128)
+    .refine((val) => /[a-zA-Z]/.test(val) && /[0-9]/.test(val), {
+      message: "Use letters and numbers (both required) and at least 8 digits"
+    }),
   fullName: z.string().trim().min(1, { message: "Full name is required" }).max(100).optional(),
   phone: z.string().max(20).optional().or(z.literal("")),
 });
@@ -122,12 +127,41 @@ const Auth = () => {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        // Generic error message to prevent email enumeration
-        // Don't reveal if email exists or specific error details
-        toast.error("Unable to create account. Please check your information and try again.");
+        // Show actual error message from Supabase to help diagnose issues
+        let errorMessage = "Unable to create account. Please check your information and try again.";
+        
+        // Extract error message from various error formats
+        let errorMsg = "";
+        if (error instanceof Error) {
+          errorMsg = error.message;
+        } else if (error && typeof error === 'object') {
+          if ('message' in error && typeof error.message === 'string') {
+            errorMsg = error.message;
+          } else if ('error' in error && typeof error.error === 'string') {
+            errorMsg = error.error;
+          }
+        }
+        
+        if (errorMsg) {
+          const lowerMsg = errorMsg.toLowerCase();
+          // Show only the specific password error message
+          if (lowerMsg.includes('password') || lowerMsg.includes('length') || lowerMsg.includes('character') || lowerMsg.includes('letter') || lowerMsg.includes('number') || lowerMsg.includes('digit')) {
+            errorMessage = "Use letters and numbers (both required) and at least 8 digits";
+          } else if (lowerMsg.includes('email') || lowerMsg.includes('already') || lowerMsg.includes('exists')) {
+            // Don't reveal if email exists for security (prevent email enumeration)
+            errorMessage = "Unable to create account. Please check your information and try again.";
+          } else {
+            // For other errors, show the message
+            errorMessage = errorMsg;
+          }
+        }
+        
+        console.error("Sign up error:", error);
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 

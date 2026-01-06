@@ -31,7 +31,7 @@ const ResetPassword = () => {
 
     const passwordValidation = validatePasswordStrength(password);
     if (!passwordValidation.valid) {
-      toast.error(passwordValidation.error || "Password does not meet requirements");
+      toast.error(passwordValidation.error || "Use letters and numbers (both required) and at least 8 digits");
       return;
     }
 
@@ -52,8 +52,8 @@ const ResetPassword = () => {
       const errMsg = error instanceof Error ? error.message : "";
       const displayMessage = errMsg.includes("expired") || errMsg.includes("invalid")
         ? "This reset link is invalid or has expired. Please request a new one."
-        : errMsg.includes("password")
-        ? "Password does not meet requirements"
+        : errMsg.includes("password") || errMsg.includes("length") || errMsg.includes("character") || errMsg.includes("letter") || errMsg.includes("number") || errMsg.includes("digit")
+        ? "Use letters and numbers (both required) and at least 8 digits"
         : "Failed to reset password. Please try again.";
       setErrorMessage(displayMessage);
       toast.error(displayMessage);

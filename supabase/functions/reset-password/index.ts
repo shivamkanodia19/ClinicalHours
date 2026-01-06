@@ -49,16 +49,25 @@ function recordFailedAttempt(clientIp: string): void {
 }
 
 // Validate password strength
-// Minimum requirements only (complexity requirements set via Supabase/Lovable cloud)
+// Requirements: letters and numbers (both required) and at least 8 characters
 function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
-  // Minimum length: 1 character
-  if (password.length < 1) {
-    return { valid: false, error: "Password is required" };
+  // Minimum length: 8 characters
+  if (password.length < 8) {
+    return { valid: false, error: "Use letters and numbers (both required) and at least 8 digits" };
   }
 
   // Maximum length: 128 characters
   if (password.length > 128) {
-    return { valid: false, error: "Password is too long (maximum 128 characters)" };
+    return { valid: false, error: "Use letters and numbers (both required) and at least 8 digits" };
+  }
+
+  // Check for letters
+  const hasLetter = /[a-zA-Z]/.test(password);
+  // Check for numbers
+  const hasNumber = /[0-9]/.test(password);
+
+  if (!hasLetter || !hasNumber) {
+    return { valid: false, error: "Use letters and numbers (both required) and at least 8 digits" };
   }
 
   return { valid: true };
@@ -140,7 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Validate password
     if (!newPassword || typeof newPassword !== 'string') {
       return new Response(
-        JSON.stringify({ error: "Password is required" }),
+        JSON.stringify({ error: "Use letters and numbers (both required) and at least 8 digits" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
