@@ -67,11 +67,19 @@ export function useOpportunities({
         processedData = sortByDistance(processedData);
       }
 
-      // For first page, replace data; for subsequent pages, append
+      // For first page, replace data; for subsequent pages, append and re-sort
       if (pageNum === 0) {
         setOpportunities(processedData);
       } else {
-        setOpportunities((prev) => [...prev, ...processedData]);
+        // Append new data and re-sort all opportunities by distance to maintain correct order
+        setOpportunities((prev) => {
+          const combined = [...prev, ...processedData];
+          // Re-sort all opportunities by distance if user location is available
+          if (userLocation) {
+            return sortByDistance(combined);
+          }
+          return combined;
+        });
       }
 
       // Update total count and hasMore
