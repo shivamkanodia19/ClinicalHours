@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const SUPABASE_URL = "https://sysbtcikrbrrgafffody.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5c2J0Y2lrcmJycmdhZmZmb2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTc5MzUsImV4cCI6MjA3ODYzMzkzNX0.5jN1B2RIscA42w7FYfwxaQHFW6ROldslPzUFYtQCgLc";
@@ -17,6 +18,7 @@ interface CSVRow {
   state: string;
   lat: string;
   lon: string;
+  bio?: string;
 }
 
 function parseCSV(csvText: string): CSVRow[] {
@@ -85,19 +87,45 @@ async function callEdgeFunction(body: object): Promise<{ success: boolean; impor
   return response.json();
 }
 
+interface DataSource {
+  id: string;
+  name: string;
+  csvPath: string;
+  description: string;
+}
+
+const dataSources: DataSource[] = [
+  {
+    id: 'texas',
+    name: 'Texas Hospitals',
+    csvPath: '/data/texas-hospitals.csv',
+    description: 'Import hospitals and clinics from Texas',
+  },
+  {
+    id: 'west-coast',
+    name: 'West Coast Hospitals',
+    csvPath: '/data/west-coast-hospitals.csv',
+    description: 'Import hospitals and clinics from California, Oregon, and Washington',
+  },
+];
+
 const AdminImport = () => {
   const [importing, setImporting] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [progress, setProgress] = useState(0);
+  const [selectedSource, setSelectedSource] = useState<string>("texas");
 
-  const handleImport = async () => {
+  const handleImport = async (clearExisting: boolean = true) => {
+    const source = dataSources.find(s => s.id === selectedSource);
+    if (!source) return;
+
     setImporting(true);
     setProgress(0);
-    setStatus("Fetching CSV data...");
+    setStatus(`Fetching ${source.name} CSV data...`);
     
     try {
       // Fetch the CSV file
-      const response = await fetch("/data/texas-hospitals.csv");
+      const response = await fetch(source.csvPath);
       const csvText = await response.text();
       const rows = parseCSV(csvText);
       
@@ -112,7 +140,7 @@ const AdminImport = () => {
           
           if (isNaN(lat) || isNaN(lon)) return null;
           
-          const location = [row.city, row.state].filter(Boolean).join(', ') || 'Texas';
+          const location = [row.city, row.state].filter(Boolean).join(', ') || source.name;
           
           return {
             name: row.name.replace(/^"|"$/g, ''),
@@ -123,7 +151,7 @@ const AdminImport = () => {
             phone: row.phone || null,
             email: row.email || null,
             website: row.website || null,
-            description: null,
+            description: row.bio || null,
             hours_required: "Varies",
             acceptance_likelihood: "medium" as const,
             requirements: [],
@@ -131,18 +159,18 @@ const AdminImport = () => {
         })
         .filter(Boolean);
       
-      setStatus(`Clearing existing data...`);
-      
-      // Clear existing data
-      console.log("Calling edge function to clear data...");
-      const clearResult = await callEdgeFunction({ opportunities: [], clearExisting: true });
-      console.log("Clear result:", clearResult);
-      
-      if (!clearResult.success && clearResult.error) {
-        throw new Error(clearResult.error);
+      if (clearExisting) {
+        setStatus(`Clearing existing data...`);
+        console.log("Calling edge function to clear data...");
+        const clearResult = await callEdgeFunction({ opportunities: [], clearExisting: true });
+        console.log("Clear result:", clearResult);
+        
+        if (!clearResult.success && clearResult.error) {
+          throw new Error(clearResult.error);
+        }
       }
       
-      setStatus(`Data cleared. Importing ${allOpportunities.length} hospitals...`);
+      setStatus(`${clearExisting ? 'Data cleared. ' : ''}Importing ${allOpportunities.length} hospitals...`);
       
       // Insert in very small batches
       const batchSize = 10;
@@ -178,7 +206,7 @@ const AdminImport = () => {
       }
       
       setStatus(`Import complete! Added ${imported} hospitals. Failed: ${failed}`);
-      toast.success(`Successfully imported ${imported} hospitals!`);
+      toast.success(`Successfully imported ${imported} hospitals from ${source.name}!`);
     } catch (error) {
       console.error("Import error:", error);
       setStatus(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -188,26 +216,138 @@ const AdminImport = () => {
     }
   };
 
+  const handleImportAll = async () => {
+    setImporting(true);
+    setProgress(0);
+    
+    try {
+      // First clear and import Texas
+      setStatus("Clearing existing data and importing Texas hospitals...");
+      await handleImportSource(dataSources[0], true);
+      
+      // Then add West Coast without clearing
+      setStatus("Adding West Coast hospitals...");
+      await handleImportSource(dataSources[1], false);
+      
+      toast.success("Successfully imported all hospitals!");
+    } catch (error) {
+      console.error("Import all error:", error);
+      toast.error("Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleImportSource = async (source: DataSource, clearExisting: boolean) => {
+    const response = await fetch(source.csvPath);
+    const csvText = await response.text();
+    const rows = parseCSV(csvText);
+    
+    const allOpportunities = rows
+      .filter(row => row.name && row.lat && row.lon)
+      .map(row => {
+        const lat = parseFloat(row.lat);
+        const lon = parseFloat(row.lon);
+        
+        if (isNaN(lat) || isNaN(lon)) return null;
+        
+        const location = [row.city, row.state].filter(Boolean).join(', ') || source.name;
+        
+        return {
+          name: row.name.replace(/^"|"$/g, ''),
+          type: inferOpportunityType(row.name),
+          location,
+          latitude: lat,
+          longitude: lon,
+          phone: row.phone || null,
+          email: row.email || null,
+          website: row.website || null,
+          description: row.bio || null,
+          hours_required: "Varies",
+          acceptance_likelihood: "medium" as const,
+          requirements: [],
+        };
+      })
+      .filter(Boolean);
+    
+    if (clearExisting) {
+      await callEdgeFunction({ opportunities: [], clearExisting: true });
+    }
+    
+    const batchSize = 10;
+    for (let i = 0; i < allOpportunities.length; i += batchSize) {
+      const batch = allOpportunities.slice(i, i + batchSize);
+      await callEdgeFunction({ opportunities: batch, clearExisting: false });
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  };
+
+  const currentSource = dataSources.find(s => s.id === selectedSource);
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto pt-28 px-4">
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle>Import Texas Hospitals</CardTitle>
+            <CardTitle>Import Hospitals & Clinics</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              This will clear all existing opportunities and import the new Texas hospitals data with coordinates for the map.
-            </p>
+          <CardContent className="space-y-6">
+            <Tabs value={selectedSource} onValueChange={setSelectedSource}>
+              <TabsList className="grid w-full grid-cols-2">
+                {dataSources.map(source => (
+                  <TabsTrigger key={source.id} value={source.id} disabled={importing}>
+                    {source.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              
+              {dataSources.map(source => (
+                <TabsContent key={source.id} value={source.id}>
+                  <p className="text-muted-foreground mb-4">
+                    {source.description}
+                  </p>
+                </TabsContent>
+              ))}
+            </Tabs>
             
-            <Button 
-              onClick={handleImport} 
-              disabled={importing}
-              className="w-full"
-            >
-              {importing ? "Importing..." : "Clear & Import Hospitals"}
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => handleImport(true)} 
+                disabled={importing}
+                className="w-full"
+                variant="default"
+              >
+                {importing ? "Importing..." : `Clear All & Import ${currentSource?.name}`}
+              </Button>
+              
+              <Button 
+                onClick={() => handleImport(false)} 
+                disabled={importing}
+                className="w-full"
+                variant="outline"
+              >
+                {importing ? "Importing..." : `Add ${currentSource?.name} (Keep Existing)`}
+              </Button>
+              
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleImportAll} 
+                disabled={importing}
+                className="w-full"
+                variant="secondary"
+              >
+                {importing ? "Importing..." : "Import All Regions (Clear & Import All)"}
+              </Button>
+            </div>
             
             {importing && (
               <Progress value={progress} className="w-full" />
