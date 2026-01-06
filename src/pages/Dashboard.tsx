@@ -98,7 +98,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [totalOpportunities, setTotalOpportunities] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [opportunityToDelete, setOpportunityToDelete] = useState<string | null>(null);
@@ -146,7 +146,7 @@ const Dashboard = () => {
           const distance = opp.latitude && opp.longitude
             ? calculateDistance(
                 userLocation.lat,
-                userLocation.lon,
+                userLocation.lng,
                 opp.latitude,
                 opp.longitude
               )
@@ -187,7 +187,7 @@ const Dashboard = () => {
         if (userLocation && opp?.latitude && opp?.longitude) {
           distance = calculateDistance(
             userLocation.lat,
-            userLocation.lon,
+            userLocation.lng,
             opp.latitude,
             opp.longitude
           );
@@ -232,7 +232,7 @@ const Dashboard = () => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [user?.id, userLocation?.lat, userLocation?.lon]);
+  }, [user?.id, userLocation?.lat, userLocation?.lng]);
 
   useEffect(() => {
     // Wait for auth to be ready before fetching data
@@ -255,7 +255,7 @@ const Dashboard = () => {
         (position) => {
           setUserLocation({
             lat: position.coords.latitude,
-            lon: position.coords.longitude,
+            lng: position.coords.longitude,
           });
         },
         (error) => {
