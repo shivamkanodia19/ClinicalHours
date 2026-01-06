@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Bell, CalendarPlus } from "lucide-react";
 import { format } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
 import { downloadIcsFile, createOpportunityReminder } from "@/lib/calendar";
 
 interface ReminderDialogProps {
@@ -71,7 +72,7 @@ export function ReminderDialog({
 
       toast({
         title: "Reminder set!",
-        description: `You'll receive an email reminder on ${format(reminderDate, "PPP 'at' p")}`,
+        description: `You'll receive an email reminder on ${format(reminderDate, "PPP 'at' p", { locale: enUS })}`,
       });
 
       setOpen(false);
@@ -145,6 +146,7 @@ export function ReminderDialog({
               onSelect={setDate}
               disabled={(date) => date < new Date()}
               className="rounded-md border"
+              locale={enUS}
             />
           </div>
 
@@ -166,7 +168,7 @@ export function ReminderDialog({
 
           {date && (
             <p className="text-sm text-muted-foreground text-center">
-              Reminder: {format(date, "EEEE, MMMM d, yyyy")} at {time}
+              Reminder: {format(date, "EEEE, MMMM d, yyyy", { locale: enUS })} at {time}
             </p>
           )}
         </div>
