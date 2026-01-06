@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Lock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/lib/logger";
+import { validatePasswordStrength } from "@/lib/inputValidation";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -28,8 +29,9 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      toast.error(passwordValidation.error || "Password does not meet requirements");
       return;
     }
 
@@ -169,8 +171,11 @@ const ResetPassword = () => {
               required
               disabled={loading}
               className="h-11"
-              minLength={6}
+              minLength={10}
             />
+            <p className="text-xs text-muted-foreground">
+              Password must be at least 10 characters and contain at least 2 of: uppercase, lowercase, numbers, or special characters
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -183,7 +188,7 @@ const ResetPassword = () => {
               required
               disabled={loading}
               className="h-11"
-              minLength={6}
+              minLength={10}
             />
           </div>
           <Button type="submit" className="w-full h-11" disabled={loading}>
