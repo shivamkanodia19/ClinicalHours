@@ -24,6 +24,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const TestHeaders = lazy(() => import("./pages/TestHeaders"));
+const AdminImport = lazy(() => import("./pages/AdminImport"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -77,6 +78,7 @@ function AppContent() {
               <Route path="/verify" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/test-headers" element={<TestHeaders />} />
+              <Route path="/admin/import" element={<AdminImport />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ErrorBoundary>
