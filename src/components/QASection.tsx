@@ -12,6 +12,7 @@ import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Collapsible,
   CollapsibleContent,
@@ -66,6 +67,7 @@ const LOAD_MORE_COUNT = 5;
 const INITIAL_ANSWERS = 3;
 
 export function QASection({ opportunityId, opportunityName }: QASectionProps) {
+  const { user, loading: authLoading, isReady } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAskForm, setShowAskForm] = useState(false);
@@ -86,48 +88,51 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   const { toast } = useToast();
   const { isComplete, isLoading: profileLoading, missingFields } = useProfileComplete();
 
+  // Keep local userId in sync with auth state to avoid race conditions
+  useEffect(() => {
+    setUserId(user?.id ?? null);
+  }, [user]);
+
   useEffect(() => {
     let isMounted = true;
     
     const fetchData = async () => {
       if (!isMounted) return;
+
       await fetchQuestions();
       if (!isMounted) return;
-      await fetchUserId();
-      if (!isMounted) return;
-      await fetchUserVotes();
+
+      // Only fetch user votes once auth is ready and we have a user
+      if (isReady && user?.id) {
+        await fetchUserVotes(user.id);
+      }
     };
     
-    fetchData();
+    // Wait for auth to be initialized before running
+    if (isReady) {
+      fetchData();
+    }
     
     return () => {
       isMounted = false;
     };
-  }, [opportunityId]);
+  }, [opportunityId, isReady, user?.id]);
 
   // Reset display count when opportunity changes
   useEffect(() => {
     setDisplayCount(INITIAL_QUESTIONS);
   }, [opportunityId]);
 
-  const fetchUserId = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUserId(user?.id || null);
-  };
+  const fetchUserVotes = async (authUserId: string) => {
+    const { data: votes } = await supabase
+      .from("discussion_votes")
+      .select("votable_id, value")
+      .eq("user_id", authUserId);
 
-  const fetchUserVotes = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: votes } = await supabase
-        .from("discussion_votes")
-        .select("votable_id, value")
-        .eq("user_id", user.id);
-
-      if (votes) {
-        const voteMap: Record<string, number> = {};
-        votes.forEach(v => { voteMap[v.votable_id] = v.value; });
-        setUserVotes(voteMap);
-      }
+    if (votes) {
+      const voteMap: Record<string, number> = {};
+      votes.forEach(v => { voteMap[v.votable_id] = v.value; });
+      setUserVotes(voteMap);
     }
   };
 
@@ -232,6 +237,11 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   }, [answerDisplayCount, expandedQuestion]);
 
   const handleShowAskForm = () => {
+    // If auth is still initializing, ignore the click rather than showing an error
+    if (authLoading || !isReady) {
+      return;
+    }
+
     if (!userId) {
       toast({ title: "Please sign in to ask a question", variant: "destructive" });
       return;
@@ -268,9 +278,14 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use auth state instead of calling supabase.auth.getUser() to avoid flashes
     if (!user) {
-      toast({ title: "Please sign in to ask a question", variant: "destructive" });
+      if (authLoading || !isReady) {
+        // Auth still stabilizing – don't show a misleading error
+        toast({ title: "Finishing sign-in, please try again in a moment", variant: "destructive" });
+      } else {
+        toast({ title: "Please sign in to ask a question", variant: "destructive" });
+      }
       return;
     }
 
@@ -386,9 +401,13 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use auth state instead of calling supabase.auth.getUser() to avoid flashes
     if (!user) {
-      toast({ title: "Please sign in to answer", variant: "destructive" });
+      if (authLoading || !isReady) {
+        toast({ title: "Finishing sign-in, please try again in a moment", variant: "destructive" });
+      } else {
+        toast({ title: "Please sign in to answer", variant: "destructive" });
+      }
       return;
     }
 
@@ -466,9 +485,13 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   };
 
   const handleVote = async (votableId: string, votableType: "question" | "answer", value: 1 | -1) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use auth state instead of calling supabase.auth.getUser() to avoid flashes
     if (!user) {
-      toast({ title: "Please sign in to vote", variant: "destructive" });
+      if (authLoading || !isReady) {
+        toast({ title: "Finishing sign-in, please try again in a moment", variant: "destructive" });
+      } else {
+        toast({ title: "Please sign in to vote", variant: "destructive" });
+      }
       return;
     }
 
