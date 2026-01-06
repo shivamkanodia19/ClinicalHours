@@ -21,9 +21,9 @@ interface CSVRow {
   bio?: string;
 }
 
-function parseCSV(csvText: string): CSVRow[] {
+function parseCSV(csvText: string, isOSMFormat: boolean = false): CSVRow[] {
   const lines = csvText.split('\n');
-  const headers = lines[0].split(',').map(h => h.trim());
+  const headers = lines[0].replace(/^\uFEFF/, '').split(',').map(h => h.trim().replace(/^"|"$/g, ''));
   
   const rows: CSVRow[] = [];
   
@@ -48,12 +48,33 @@ function parseCSV(csvText: string): CSVRow[] {
     }
     values.push(current.trim());
     
-    const row: Record<string, string> = {};
+    const rawRow: Record<string, string> = {};
     headers.forEach((header, index) => {
-      row[header] = values[index] || '';
+      rawRow[header] = values[index] || '';
     });
     
-    rows.push(row as unknown as CSVRow);
+    // Transform OSM format to standard format
+    if (isOSMFormat) {
+      const name = rawRow['elements__tags__name'] || '';
+      if (!name) continue; // Skip rows without name
+      
+      const lat = rawRow['elements__lat'] || rawRow['elements__center__lat'] || '';
+      const lon = rawRow['elements__lon'] || rawRow['elements__center__lon'] || '';
+      
+      rows.push({
+        name,
+        website: rawRow['elements__tags__website'] || rawRow['elements__tags__contact:website'] || '',
+        email: rawRow['elements__tags__email'] || '',
+        phone: rawRow['elements__tags__phone'] || rawRow['elements__tags__contact:phone'] || '',
+        city: rawRow['elements__tags__addr:city'] || '',
+        state: rawRow['elements__tags__addr:state'] || '',
+        lat,
+        lon,
+        bio: rawRow['elements__tags__description'] || '',
+      });
+    } else {
+      rows.push(rawRow as unknown as CSVRow);
+    }
   }
   
   return rows;
@@ -87,11 +108,14 @@ async function callEdgeFunction(body: object): Promise<{ success: boolean; impor
   return response.json();
 }
 
+// DataSource interface moved below
+
 interface DataSource {
   id: string;
   name: string;
   csvPath: string;
   description: string;
+  isOSMFormat?: boolean;
 }
 
 const dataSources: DataSource[] = [
@@ -113,6 +137,13 @@ const dataSources: DataSource[] = [
     csvPath: '/data/middle-region-hospitals.csv',
     description: 'Import hospitals and clinics from Nevada, Colorado, Arizona, and surrounding states',
   },
+  {
+    id: 'batch3',
+    name: 'Batch 3 (Mid)',
+    csvPath: '/data/batch3-hospitals.csv',
+    description: 'Additional hospitals from mid-region states (OSM data)',
+    isOSMFormat: true,
+  },
 ];
 
 const AdminImport = () => {
@@ -133,7 +164,7 @@ const AdminImport = () => {
       // Fetch the CSV file
       const response = await fetch(source.csvPath);
       const csvText = await response.text();
-      const rows = parseCSV(csvText);
+      const rows = parseCSV(csvText, source.isOSMFormat);
       
       setStatus(`Parsed ${rows.length} hospitals. Processing...`);
       
@@ -247,7 +278,7 @@ const AdminImport = () => {
   const handleImportSource = async (source: DataSource, clearExisting: boolean) => {
     const response = await fetch(source.csvPath);
     const csvText = await response.text();
-    const rows = parseCSV(csvText);
+    const rows = parseCSV(csvText, source.isOSMFormat);
     
     const allOpportunities = rows
       .filter(row => row.name && row.lat && row.lon)
@@ -300,7 +331,7 @@ const AdminImport = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Tabs value={selectedSource} onValueChange={setSelectedSource}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 {dataSources.map(source => (
                   <TabsTrigger key={source.id} value={source.id} disabled={importing}>
                     {source.name}
