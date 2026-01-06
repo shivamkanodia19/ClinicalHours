@@ -107,6 +107,12 @@ const dataSources: DataSource[] = [
     csvPath: '/data/west-coast-hospitals.csv',
     description: 'Import hospitals and clinics from California, Oregon, and Washington',
   },
+  {
+    id: 'middle-region',
+    name: 'Middle Region',
+    csvPath: '/data/middle-region-hospitals.csv',
+    description: 'Import hospitals and clinics from Nevada, Colorado, Arizona, and surrounding states',
+  },
 ];
 
 const AdminImport = () => {
@@ -294,7 +300,7 @@ const AdminImport = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Tabs value={selectedSource} onValueChange={setSelectedSource}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 {dataSources.map(source => (
                   <TabsTrigger key={source.id} value={source.id} disabled={importing}>
                     {source.name}
