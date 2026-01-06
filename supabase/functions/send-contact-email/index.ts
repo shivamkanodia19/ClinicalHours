@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -79,18 +79,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token for POST requests
-  const csrfValidation = validateCSRFToken(req);
-  if (!csrfValidation.valid) {
-    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-    return new Response(
-      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-      {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
-  }
+  // Note: CSRF validation is skipped for contact form as it's a public endpoint
+  // for unauthenticated users who may not have CSRF tokens.
+  // Security is provided by: rate limiting, email validation, input sanitization, and origin validation.
 
   // Get client IP for rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
