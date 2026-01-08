@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { REQUIRED_FIELDS } from "@/hooks/useProfileComplete";
 import { toast } from "sonner";
-import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle, Mail } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logProfileUpdate, logFileAccess } from "@/lib/auditLogger";
@@ -433,6 +433,30 @@ const Profile = () => {
                 {/* Basic Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Basic Information</h3>
+                  
+                  {/* Email (read-only) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      Email Address
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        type="email"
+                        value={user?.email || ""}
+                        disabled
+                        className="bg-muted/50 text-muted-foreground cursor-not-allowed"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        Cannot be changed
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This is the email associated with your account and cannot be modified.
+                    </p>
+                  </div>
+
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="full_name">
