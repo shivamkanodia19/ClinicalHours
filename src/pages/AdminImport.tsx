@@ -155,7 +155,7 @@ const dataSources: DataSource[] = [
     name: 'Batch 5 (Amrit)',
     csvPath: '/data/batch5-hospitals.csv',
     description: '2473 hospitals from Michigan, Tennessee, West Virginia, and more (OpenStreetMap data)',
-    isOSMFormat: true,
+    isOSMFormat: false,
   },
 ];
 
