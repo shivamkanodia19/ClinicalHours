@@ -17,10 +17,14 @@ export interface CookieExchangeResponse {
 
 /**
  * Exchange Supabase JWT token for httpOnly session cookie
+ * @param accessToken - The Supabase access token
+ * @param refreshToken - The Supabase refresh token
+ * @param rememberMe - If true, stores a persistent cookie to keep user logged in across browser sessions
  */
 export async function exchangeTokenForCookie(
   accessToken: string,
-  refreshToken?: string
+  refreshToken?: string,
+  rememberMe?: boolean
 ): Promise<CookieExchangeResponse> {
   try {
     // Use Supabase function invoke which handles authentication properly
@@ -30,6 +34,7 @@ export async function exchangeTokenForCookie(
       body: {
         accessToken,
         refreshToken,
+        rememberMe: rememberMe ?? false,
       },
       headers: {
         "Authorization": `Bearer ${accessToken}`,
