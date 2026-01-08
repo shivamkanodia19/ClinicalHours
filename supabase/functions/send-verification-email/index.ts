@@ -194,6 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
       allowedOrigins.includes(origin) || 
       origin.endsWith('.lovableproject.com') || 
       origin.endsWith('.lovable.dev') ||
+      origin.endsWith('.lovable.app') ||
       origin.endsWith('.clinicalhours.org') ||
       origin === 'https://clinicalhours.org'
     );
