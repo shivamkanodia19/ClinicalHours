@@ -168,6 +168,13 @@ const dataSources: DataSource[] = [
     description: '2473 hospitals from Michigan, Tennessee, West Virginia, and more (OpenStreetMap data)',
     isOSMFormat: false,
   },
+  {
+    id: 'batch-csv-5-raghav',
+    name: 'Batch CSV 5 (Raghav)',
+    csvPath: '/data/hospitals_lovable_ready_raghav.csv',
+    description: '1339 hospitals from Michigan, Tennessee, and more (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
 ];
 
 const AdminImport = () => {
