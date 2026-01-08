@@ -17,7 +17,8 @@ interface SavedOpportunity {
 type ViewMode = 'all' | 'saved';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN || '';
-const DEFAULT_RADIUS_MILES = 100;
+const RADIUS_OPTIONS = [1, 5, 10, 25, 50, 100, 200]; // miles
+const DEFAULT_RADIUS_INDEX = 4; // 50 miles
 
 // Type colors for clustering
 const TYPE_COLORS: Record<string, string> = {
@@ -75,7 +76,7 @@ const OpportunityMap = () => {
   const [customPin, setCustomPin] = useState<{ lat: number; lng: number } | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isPinMode, setIsPinMode] = useState(false);
-  const [radiusMiles, setRadiusMiles] = useState(DEFAULT_RADIUS_MILES);
+  const [radiusMiles, setRadiusMiles] = useState(RADIUS_OPTIONS[DEFAULT_RADIUS_INDEX]);
   const [mapReady, setMapReady] = useState(false);
 
   // Combined loading state
@@ -97,56 +98,71 @@ const OpportunityMap = () => {
     try {
       // If we have an active center (user location or custom pin), use server-side distance filtering
       if (activeCenter) {
-        // Use RPC with distance filter - no arbitrary cap needed since we're filtering by radius
-        const { data, error } = await supabase.rpc('get_opportunities_by_distance', {
-          user_lat: activeCenter.lat,
-          user_lon: activeCenter.lng,
-          max_distance_miles: radiusMiles,
-          page_limit: 10000, // High limit since we're filtering by distance
-          page_offset: 0,
-        });
+        // Use RPC with distance filter - paginate to avoid Supabase's default row limit
+        const allData: Opportunity[] = [];
+        const batchSize = 1000;
+        let offset = 0;
+        let hasMore = true;
 
-        if (error) throw error;
+        while (hasMore) {
+          const { data, error } = await supabase.rpc('get_opportunities_by_distance', {
+            user_lat: activeCenter.lat,
+            user_lon: activeCenter.lng,
+            max_distance_miles: radiusMiles,
+            page_limit: batchSize,
+            page_offset: offset,
+          });
 
-        const mappedData: Opportunity[] = (data || []).map((opp: {
-          id: string;
-          name: string;
-          type: string;
-          location: string;
-          address?: string;
-          latitude?: number;
-          longitude?: number;
-          hours_required: string;
-          acceptance_likelihood: string;
-          description?: string;
-          requirements?: string[];
-          phone?: string;
-          email?: string;
-          website?: string;
-          avg_rating?: number;
-          review_count?: number;
-          distance_miles?: number;
-        }) => ({
-          id: opp.id,
-          name: opp.name,
-          type: opp.type,
-          location: opp.location,
-          latitude: opp.latitude,
-          longitude: opp.longitude,
-          hours_required: opp.hours_required,
-          acceptance_likelihood: opp.acceptance_likelihood,
-          description: opp.description,
-          requirements: opp.requirements || [],
-          phone: opp.phone,
-          email: opp.email,
-          website: opp.website,
-          avg_rating: opp.avg_rating,
-          review_count: opp.review_count,
-          distance: opp.distance_miles,
-        }));
+          if (error) throw error;
 
-        logger.debug('Map: Loaded', mappedData.length, 'opportunities within', radiusMiles, 'miles (server-side filtered)');
-        setOpportunities(mappedData);
+          if (data && data.length > 0) {
+            const mappedBatch: Opportunity[] = data.map((opp: {
+              id: string;
+              name: string;
+              type: string;
+              location: string;
+              address?: string;
+              latitude?: number;
+              longitude?: number;
+              hours_required: string;
+              acceptance_likelihood: string;
+              description?: string;
+              requirements?: string[];
+              phone?: string;
+              email?: string;
+              website?: string;
+              avg_rating?: number;
+              review_count?: number;
+              distance_miles?: number;
+            }) => ({
+              id: opp.id,
+              name: opp.name,
+              type: opp.type,
+              location: opp.location,
+              latitude: opp.latitude,
+              longitude: opp.longitude,
+              hours_required: opp.hours_required,
+              acceptance_likelihood: opp.acceptance_likelihood,
+              description: opp.description,
+              requirements: opp.requirements || [],
+              phone: opp.phone,
+              email: opp.email,
+              website: opp.website,
+              avg_rating: opp.avg_rating,
+              review_count: opp.review_count,
+              distance: opp.distance_miles,
+            }));
+
+            allData.push(...mappedBatch);
+            offset += batchSize;
+            hasMore = data.length === batchSize;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        logger.debug('Map: Loaded', allData.length, 'opportunities within', radiusMiles, 'miles (server-side filtered)');
+        setOpportunities(allData);
       } else {
         // No location - load all opportunities (with batching for large datasets)
         const allData: Opportunity[] = [];
@@ -340,7 +356,7 @@ const OpportunityMap = () => {
           source: 'opportunities',
           filter: ['has', 'point_count'],
           layout: {
-            'text-field': ['get', 'point_count_abbreviated'],
+            'text-field': ['to-string', ['get', 'point_count']],
             'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
             'text-size': 12,
           },
@@ -695,15 +711,15 @@ const OpportunityMap = () => {
       {activeCenter && (
         <div className="absolute top-28 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border">
           <label className="text-xs font-medium text-foreground mb-2 block">
-            Radius: {radiusMiles} miles
+            Radius: {radiusMiles} mile{radiusMiles !== 1 ? 's' : ''}
           </label>
           <input
             type="range"
-            min="25"
-            max="500"
-            step="25"
-            value={radiusMiles}
-            onChange={(e) => setRadiusMiles(Number(e.target.value))}
+            min="0"
+            max={RADIUS_OPTIONS.length - 1}
+            step="1"
+            value={RADIUS_OPTIONS.indexOf(radiusMiles)}
+            onChange={(e) => setRadiusMiles(RADIUS_OPTIONS[Number(e.target.value)])}
             className="w-32 h-2 bg-muted rounded-lg appearance-none cursor-pointer"
           />
         </div>
