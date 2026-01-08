@@ -6,6 +6,8 @@ const ALLOWED_ORIGINS = [
   "https://www.clinicalhours.org",
   "https://sysbtcikrbrrgafffody.lovableproject.com",
   "https://lovable.dev",
+  // Lovable preview domains
+  "https://lovable.app",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:8080",

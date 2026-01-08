@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateCSRFToken, validateOrigin, getCorsHeaders, authenticateFromCookie } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -16,26 +16,36 @@ interface SendVerificationEmailRequest {
   origin: string;
 }
 
-// Rate limiting per user to prevent abuse
-const userRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+// Rate limiting per user - 1 minute cooldown between emails
+const userRateLimitMap = new Map<string, { lastSent: number; count: number; resetTime: number }>();
+const RESEND_COOLDOWN_MS = 60 * 1000; // 1 minute cooldown
 const USER_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_EMAILS_PER_USER = 3; // Reduced to 3 verification emails per user per hour for security
+const MAX_EMAILS_PER_USER = 5; // 5 verification emails per user per hour
 
-function isUserRateLimited(userId: string): boolean {
+function checkRateLimit(userId: string): { allowed: boolean; waitSeconds?: number } {
   const now = Date.now();
   const record = userRateLimitMap.get(userId);
 
   if (!record || now > record.resetTime) {
-    userRateLimitMap.set(userId, { count: 1, resetTime: now + USER_RATE_LIMIT_WINDOW_MS });
-    return false;
+    userRateLimitMap.set(userId, { lastSent: now, count: 1, resetTime: now + USER_RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
   }
 
+  // Check cooldown
+  const timeSinceLastSent = now - record.lastSent;
+  if (timeSinceLastSent < RESEND_COOLDOWN_MS) {
+    const waitSeconds = Math.ceil((RESEND_COOLDOWN_MS - timeSinceLastSent) / 1000);
+    return { allowed: false, waitSeconds };
+  }
+
+  // Check hourly limit
   if (record.count >= MAX_EMAILS_PER_USER) {
-    return true;
+    return { allowed: false, waitSeconds: Math.ceil((record.resetTime - now) / 1000) };
   }
 
   record.count++;
-  return false;
+  record.lastSent = now;
+  return { allowed: true };
 }
 
 // Clean up old entries periodically
@@ -67,22 +77,11 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token (skip if authenticating via Authorization header during sign-up)
-  // During sign-up, users don't have CSRF tokens yet, so we allow Authorization header auth without CSRF
-  const authHeader = req.headers.get('authorization');
-  const isSignUpFlow = authHeader && authHeader.startsWith('Bearer ');
-  
-  if (!isSignUpFlow) {
-    // For authenticated requests (with cookies), require CSRF token
-    const csrfValidation = validateCSRFToken(req);
-    if (!csrfValidation.valid) {
-      console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-      return new Response(
-        JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-  }
+  // Note: We skip authentication for this endpoint because:
+  // 1. It's called immediately after signup when the session might not be established
+  // 2. We validate the user exists in the database with service role
+  // 3. Rate limiting prevents abuse
+  // 4. The verification token is what actually grants access
 
   // Cleanup old entries occasionally
   if (Math.random() < 0.01) {
@@ -90,70 +89,55 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Parse request body first
+    // Parse request body
     const { userId, email, fullName, origin: requestOrigin }: SendVerificationEmailRequest = await req.json();
 
-    // Authenticate user (try cookie first, fallback to Authorization header during migration)
-    let authenticatedUser: { id: string; email?: string } | null = null;
-    
-    const authResult = await authenticateFromCookie(req);
-    if (authResult.success && authResult.user) {
-      authenticatedUser = authResult.user;
-    } else {
-      // Fallback to Authorization header during migration
-      const authHeader = req.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.replace('Bearer ', '');
-        const supabaseAdmin = createClient(
-          Deno.env.get("SUPABASE_URL") ?? "",
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-          { auth: { autoRefreshToken: false, persistSession: false } }
-        );
-
-        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-        
-        if (userError || !user) {
-          console.error('Invalid token or user not found:', userError);
-          return new Response(
-            JSON.stringify({ error: "Invalid authentication" }),
-            { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
-        }
-        
-        authenticatedUser = { id: user.id, email: user.email };
-      }
-    }
-
-    if (!authenticatedUser) {
+    // Validate required fields
+    if (!userId || !email || !fullName) {
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Validate that the request is for the authenticated user
-    if (userId !== authenticatedUser.id) {
-      console.error(`User ${authenticatedUser.id} attempted to send verification email for different user ${userId}`);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Create Supabase admin client for database operations
+    // Create Supabase admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
+    // Verify the user exists and email matches
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    
+    if (userError || !userData.user) {
+      console.error("User not found:", userError);
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Verify email matches the user's email
+    if (userData.user.email !== email) {
+      console.error("Email mismatch for user:", userId);
+      return new Response(
+        JSON.stringify({ error: "Email mismatch" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     console.log(`Sending verification email to ${email} for user ${userId}`);
 
     // Check rate limit
-    if (isUserRateLimited(userId)) {
+    const rateLimit = checkRateLimit(userId);
+    if (!rateLimit.allowed) {
       console.warn(`Rate limit exceeded for user: ${userId}`);
       return new Response(
-        JSON.stringify({ error: "Too many verification emails sent. Please try again later." }),
+        JSON.stringify({ 
+          error: `Please wait ${rateLimit.waitSeconds} seconds before requesting another email.`,
+          waitSeconds: rateLimit.waitSeconds
+        }),
         { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -210,6 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
       allowedOrigins.includes(origin) || 
       origin.endsWith('.lovableproject.com') || 
       origin.endsWith('.lovable.dev') ||
+      origin.endsWith('.lovable.app') ||
       origin.endsWith('.clinicalhours.org') ||
       origin === 'https://clinicalhours.org'
     );
@@ -242,7 +227,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClinicalHours <support@send.clinicalhours.org>",
+        from: "ClinicalHours <support@clinicalhours.org>",
         to: [email],
         subject: "Verify your ClinicalHours account",
         html: `

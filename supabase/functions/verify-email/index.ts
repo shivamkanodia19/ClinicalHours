@@ -76,9 +76,10 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Note: CSRF validation is intentionally skipped for email verification
-  // The verification token itself acts as a secure, one-time secret that protects against CSRF
-  // Users clicking email links won't have CSRF cookies set in their new browser context
+  // Note: We skip CSRF validation for email verification because:
+  // 1. Users click verification links from email clients (unauthenticated)
+  // 2. The verification token itself provides protection against CSRF
+  // 3. Rate limiting prevents brute force attacks
 
   // Get client IP for rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
