@@ -9,6 +9,16 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Clock, Plus, MoreVertical, Trash2, Calendar } from 'lucide-react';
 import AddMomentDialog from './AddMomentDialog';
 import LogHoursDialog from './LogHoursDialog';
@@ -31,6 +41,8 @@ const ExperienceCard = ({
 }: ExperienceCardProps) => {
   const [momentDialogOpen, setMomentDialogOpen] = useState(false);
   const [hoursDialogOpen, setHoursDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   const { opportunity, savedOpportunityId, totalHours, entries } = experience;
 
@@ -71,6 +83,19 @@ const ExperienceCard = ({
   const handleLogHours = async (hours: number, date: string) => {
     await onAddEntry(opportunity.id, { hours, entry_date: date });
     setHoursDialogOpen(false);
+  };
+
+  const handleDeleteMoment = async () => {
+    if (entryToDelete) {
+      await onDeleteEntry(entryToDelete);
+      setEntryToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const openDeleteConfirmation = (entryId: string) => {
+    setEntryToDelete(entryId);
+    setDeleteDialogOpen(true);
   };
 
   return (
@@ -149,7 +174,7 @@ const ExperienceCard = ({
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => onDeleteEntry(entry.id)}
+                        onClick={() => openDeleteConfirmation(entry.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                       </Button>
@@ -208,6 +233,27 @@ const ExperienceCard = ({
         opportunityName={opportunity.name}
         onSave={handleLogHours}
       />
+
+      {/* Delete Moment Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this moment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this reflection from your experience log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMoment}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
