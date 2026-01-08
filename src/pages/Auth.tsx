@@ -60,11 +60,27 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [signedUpUserId, setSignedUpUserId] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
   const isSubmittingRef = useRef(false);
+  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      cooldownTimerRef.current = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1);
+      }, 1000);
+    }
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearTimeout(cooldownTimerRef.current);
+      }
+    };
+  }, [resendCooldown]);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -239,13 +255,14 @@ const Auth = () => {
   };
 
   const handleResendVerification = async () => {
-    if (!signedUpUserId || !email || !fullName) return;
+    if (!signedUpUserId || !email || !fullName || resendCooldown > 0) return;
     
     setResendLoading(true);
     try {
       const success = await sendVerificationEmail(signedUpUserId, email, fullName);
       if (success) {
         toast.success("Verification email sent! Please check your inbox.");
+        setResendCooldown(60); // Start 60 second cooldown
       } else {
         toast.error("Failed to send verification email. Please try again.");
       }
@@ -445,12 +462,17 @@ const Auth = () => {
               variant="outline"
               className="w-full"
               onClick={handleResendVerification}
-              disabled={resendLoading}
+              disabled={resendLoading || resendCooldown > 0}
             >
               {resendLoading ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                   Sending...
+                </>
+              ) : resendCooldown > 0 ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Resend in {resendCooldown}s
                 </>
               ) : (
                 <>
