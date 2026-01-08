@@ -107,10 +107,37 @@ const Dashboard = () => {
   const isMountedRef = useRef(true);
   const isFetchingRef = useRef(false);
 
+  // Handle OAuth callback tokens and auth redirect
   useEffect(() => {
-    if (isReady && !user) {
-      navigate("/auth");
-    }
+    const handleAuthCallback = async () => {
+      // Check for OAuth callback in URL hash (for Google Sign-In redirect to dashboard)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      
+      if (accessToken) {
+        // Set the session from the OAuth callback
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || '',
+        });
+        
+        if (data.session && !error) {
+          // Clear the hash from the URL
+          window.history.replaceState(null, '', window.location.pathname);
+          // Session is now set, useAuth will pick it up
+          return;
+        }
+      }
+      
+      // If no OAuth tokens and auth is ready with no user, redirect to auth
+      if (isReady && !user) {
+        navigate("/auth");
+      }
+    };
+    
+    handleAuthCallback();
+    
     return () => {
       isMountedRef.current = false;
     };
