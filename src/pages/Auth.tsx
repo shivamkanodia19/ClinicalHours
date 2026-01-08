@@ -274,7 +274,7 @@ const Auth = () => {
       // This ensures the useAuth hook picks it up when exchanging tokens
       setRememberMePreference(rememberMe);
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: validatedData.email,
         password: validatedData.password,
       });
@@ -282,6 +282,26 @@ const Auth = () => {
       if (error) {
         logAuthEvent("login_failure", { email: validatedData.email });
         throw error;
+      }
+
+      // Check if email is verified
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email_verified")
+          .eq("id", data.user.id)
+          .single();
+
+        if (!profile?.email_verified) {
+          // Sign out the user since they're not verified
+          await supabase.auth.signOut();
+          
+          // Store user info for resend functionality
+          setSignedUpUserId(data.user.id);
+          setShowVerificationMessage(true);
+          toast.error("Please verify your email before signing in. Check your inbox for the verification link.");
+          return;
+        }
       }
 
       logAuthEvent("login_success", { email: validatedData.email });
