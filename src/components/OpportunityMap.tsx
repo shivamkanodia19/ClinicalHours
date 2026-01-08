@@ -604,7 +604,7 @@ const OpportunityMap = () => {
           variant={isPinMode ? 'default' : 'outline'}
           size="sm"
           onClick={() => setIsPinMode(!isPinMode)}
-          className="bg-background/90 backdrop-blur-sm"
+          className="bg-background/90 backdrop-blur-sm !text-[#EF4444] font-semibold"
         >
           <MapPin className="h-4 w-4 mr-2" />
           {isPinMode ? 'Click map to place pin...' : 'Drop Pin'}
@@ -614,7 +614,7 @@ const OpportunityMap = () => {
             variant="outline"
             size="sm"
             onClick={handleResetToMyLocation}
-            className="bg-background/90 backdrop-blur-sm"
+            className="bg-background/90 backdrop-blur-sm !text-[#EF4444] font-semibold"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset to My Location

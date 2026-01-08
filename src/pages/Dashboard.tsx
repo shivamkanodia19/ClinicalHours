@@ -376,8 +376,35 @@ const Dashboard = () => {
   const appliedCount = savedOpportunities.filter(s => s.applied).length;
   const interviewCount = savedOpportunities.filter(s => s.scheduled_interview).length;
   
-  // Get user's first name for greeting - will be fetched from profile data
+  // Get user's first name for greeting - fetched from profile data
   const [firstName, setFirstName] = useState('there');
+  
+  // Fetch user's first name from profile
+  useEffect(() => {
+    const fetchFirstName = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data?.full_name) {
+          // Extract first name from full name
+          const name = data.full_name.trim().split(' ')[0];
+          setFirstName(name || 'there');
+        }
+      } catch (error) {
+        logger.error("Error fetching user name", error);
+      }
+    };
+    
+    fetchFirstName();
+  }, [user?.id]);
 
   if (authLoading || !isReady || loading) {
     return (
