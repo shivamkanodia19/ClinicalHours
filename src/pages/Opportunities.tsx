@@ -247,8 +247,8 @@ const Opportunities = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <h3 className="text-lg font-semibold text-foreground">{opportunity.name}</h3>
-                          <Badge className={`capitalize ${getTypeColor(opportunity.type)}`}>
-                            {opportunity.type}
+<Badge className={getTypeColor(opportunity.type)}>
+                            {opportunity.type === 'emt' ? 'EMT' : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}
                           </Badge>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">

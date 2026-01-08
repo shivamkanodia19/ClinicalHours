@@ -729,8 +729,8 @@ const Dashboard = () => {
                           {saved.opportunities.name}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {saved.opportunities.type}
+                          <Badge variant="outline">
+                            {saved.opportunities.type === 'emt' ? 'EMT' : saved.opportunities.type.charAt(0).toUpperCase() + saved.opportunities.type.slice(1)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -876,8 +876,8 @@ const Dashboard = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <h3 className="text-lg font-semibold text-foreground">{opp.name}</h3>
-                          <Badge className={`capitalize ${getTypeColor(opp.type)}`}>
-                            {opp.type}
+<Badge className={getTypeColor(opp.type)}>
+                            {opp.type === 'emt' ? 'EMT' : opp.type.charAt(0).toUpperCase() + opp.type.slice(1)}
                           </Badge>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">

@@ -21,11 +21,10 @@ const DEFAULT_RADIUS_MILES = 100;
 
 // Type colors for clustering
 const TYPE_COLORS: Record<string, string> = {
-  hospital: '#3B82F6',
-  clinic: '#10B981',
+  hospital: '#EF4444',
+  clinic: '#3B82F6',
   hospice: '#8B5CF6',
   emt: '#F59E0B',
-  volunteer: '#EC4899',
 };
 
 
@@ -64,6 +63,7 @@ const OpportunityMap = () => {
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const customPinMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const isPinModeRef = useRef(false);
   
   const { user, isReady } = useAuth();
   const [mapLoading, setMapLoading] = useState(true);
@@ -83,6 +83,11 @@ const OpportunityMap = () => {
 
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
+
+  // Keep isPinModeRef in sync with state so map click handlers can access current value
+  useEffect(() => {
+    isPinModeRef.current = isPinMode;
+  }, [isPinMode]);
 
   // Fetch opportunities with server-side distance filtering
   // When user has a location, only fetch opportunities within radius (much faster)
@@ -358,7 +363,6 @@ const OpportunityMap = () => {
               'clinic', TYPE_COLORS.clinic,
               'hospice', TYPE_COLORS.hospice,
               'emt', TYPE_COLORS.emt,
-              'volunteer', TYPE_COLORS.volunteer,
               '#6B7280', // default gray
             ],
             'circle-radius': 10,
@@ -422,8 +426,8 @@ const OpportunityMap = () => {
               <div style="padding: 12px 16px; font-family: system-ui, sans-serif; min-width: 300px;">
                 <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 600; color: #1f2937; line-height: 1.3; word-wrap: break-word;">${props?.name || 'Unknown'}</h3>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                  <p style="margin: 0; font-size: 13px; color: #6b7280; text-transform: capitalize; line-height: 1.4;">
-                    <strong style="color: #374151;">Type:</strong> ${props?.type || 'N/A'}
+                  <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4;">
+                    <strong style="color: #374151;">Type:</strong> ${props?.type === 'emt' ? 'EMT' : (props?.type ? props.type.charAt(0).toUpperCase() + props.type.slice(1) : 'N/A')}
                   </p>
                   <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4; word-wrap: break-word;">
                     <strong style="color: #374151;">Location:</strong> ${props?.location || 'N/A'}
@@ -446,13 +450,13 @@ const OpportunityMap = () => {
           if (map.current) map.current.getCanvas().style.cursor = 'pointer';
         });
         map.current.on('mouseleave', 'clusters', () => {
-          if (map.current && !isPinMode) map.current.getCanvas().style.cursor = '';
+          if (map.current && !isPinModeRef.current) map.current.getCanvas().style.cursor = '';
         });
         map.current.on('mouseenter', 'unclustered-point', () => {
           if (map.current) map.current.getCanvas().style.cursor = 'pointer';
         });
         map.current.on('mouseleave', 'unclustered-point', () => {
-          if (map.current && !isPinMode) map.current.getCanvas().style.cursor = '';
+          if (map.current && !isPinModeRef.current) map.current.getCanvas().style.cursor = '';
         });
 
         setMapReady(true);
@@ -467,7 +471,7 @@ const OpportunityMap = () => {
 
       // Handle map click for custom pin (only when not clicking on features)
       map.current.on('click', (e) => {
-        if (!isPinMode || !map.current) return;
+        if (!isPinModeRef.current || !map.current) return;
         
         // Check if clicked on a cluster or point
         const features = map.current.queryRenderedFeatures(e.point, {
@@ -719,11 +723,11 @@ const OpportunityMap = () => {
         <p className="text-xs font-medium text-foreground mb-2">Legend</p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-[#3B82F6] border-2 border-white"></span>
+            <span className="w-4 h-4 rounded-full bg-[#EF4444] border-2 border-white"></span>
             <span className="text-muted-foreground">Hospital</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-[#10B981] border-2 border-white"></span>
+            <span className="w-4 h-4 rounded-full bg-[#3B82F6] border-2 border-white"></span>
             <span className="text-muted-foreground">Clinic</span>
           </div>
           <div className="flex items-center gap-2">
@@ -733,14 +737,6 @@ const OpportunityMap = () => {
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-full bg-[#F59E0B] border-2 border-white"></span>
             <span className="text-muted-foreground">EMT</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-[#EC4899] border-2 border-white"></span>
-            <span className="text-muted-foreground">Volunteer</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#51bbd6] border border-white"></span>
-            <span className="text-muted-foreground">Cluster</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-[#3B82F6] border-2 border-white shadow-[0_0_0_4px_rgba(59,130,246,0.3)]"></span>

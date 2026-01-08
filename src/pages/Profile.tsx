@@ -27,7 +27,7 @@ import {
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useAutoSaveProfile } from "@/hooks/useAutoSaveProfile";
 import { DatalistInput } from "@/components/DatalistInput";
-import { AsyncSearchInput } from "@/components/AsyncSearchInput";
+import { CityAutocomplete } from "@/components/CityAutocomplete";
 import { US_STATES } from "@/lib/data/usStates";
 import { COMMON_MAJORS } from "@/lib/data/majors";
 import { COMMON_UNIVERSITIES } from "@/lib/data/universities";
@@ -542,15 +542,10 @@ const Profile = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <AsyncSearchInput
-                        id="city"
+                      <CityAutocomplete
                         value={profile.city}
                         onValueChange={(value) => setProfile({ ...profile, city: value })}
-                        searchFunction={async (query) => {
-                          const { searchCities } = await import("@/lib/api/citySearch");
-                          return searchCities(query, 10);
-                        }}
-                        placeholder="Type to search for a city..."
+                        placeholder="Search for a city..."
                         disabled={loading}
                       />
                     </div>
