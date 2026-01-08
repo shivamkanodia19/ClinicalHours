@@ -71,6 +71,54 @@ export type Database = {
         }
         Relationships: []
       }
+      experience_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          hours: number | null
+          id: string
+          moment: string | null
+          opportunity_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          hours?: number | null
+          id?: string
+          moment?: string | null
+          opportunity_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          hours?: number | null
+          id?: string
+          moment?: string | null
+          opportunity_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_entries_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experience_entries_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities_with_ratings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           acceptance_likelihood: Database["public"]["Enums"]["acceptance_likelihood"]
@@ -444,44 +492,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      experience_entries: {
-        Row: {
-          id: string
-          user_id: string
-          opportunity_id: string
-          hours: number | null
-          moment: string | null
-          entry_date: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          opportunity_id: string
-          hours?: number | null
-          moment?: string | null
-          entry_date?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          opportunity_id?: string
-          hours?: number | null
-          moment?: string | null
-          entry_date?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "experience_entries_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
         ]

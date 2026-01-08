@@ -45,7 +45,21 @@ const ExperienceBuilder = () => {
 
       if (savedError) throw savedError;
 
-      setSavedOpportunities((savedData || []) as SavedOpportunityWithOpp[]);
+      // Process and filter the data
+      const processedData: SavedOpportunityWithOpp[] = [];
+      for (const item of savedData || []) {
+        // When using select with foreign key, opportunities comes as an object (or null), not array
+        const opp = item.opportunities as unknown;
+        if (opp && typeof opp === 'object' && !Array.isArray(opp) && 'id' in opp) {
+          processedData.push({
+            id: item.id,
+            opportunity_id: item.opportunity_id,
+            is_active_experience: item.is_active_experience ?? false,
+            opportunities: opp as Opportunity,
+          });
+        }
+      }
+      setSavedOpportunities(processedData);
 
       // Fetch experience entries
       const { data: entriesData, error: entriesError } = await supabase
