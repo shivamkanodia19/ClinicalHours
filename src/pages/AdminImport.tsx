@@ -155,10 +155,10 @@ const dataSources: DataSource[] = [
     isOSMFormat: false,
   },
   {
-    id: 'shivam-batch',
-    name: 'Shivam Batch',
+    id: 'batch-shirt',
+    name: 'Batch Shirt',
     csvPath: '/data/hospitals_lovable_ready_shivam.csv',
-    description: '494 hospitals from Iowa, Missouri, Arkansas, and more (OpenStreetMap data)',
+    description: '1339 hospitals from Michigan, Tennessee, and more (OpenStreetMap data)',
     isOSMFormat: false,
   },
   {
