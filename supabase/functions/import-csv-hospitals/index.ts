@@ -22,10 +22,22 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   const allowedOrigin = isAllowed && origin ? origin : ALLOWED_ORIGINS[0];
 
   return {
+    // CORS headers
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-csrf-token",
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    // Security headers - prevent clickjacking
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+    // Prevent MIME type sniffing
+    "X-Content-Type-Options": "nosniff",
+    // Enforce HTTPS (1 year)
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    // Control referrer information
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    // Prevent XSS attacks in older browsers
+    "X-XSS-Protection": "1; mode=block",
   };
 }
 

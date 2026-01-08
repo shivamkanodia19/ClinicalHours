@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { REQUIRED_FIELDS } from "@/hooks/useProfileComplete";
 import { toast } from "sonner";
-import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle, Mail } from "lucide-react";
+import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle, Mail, Cloud, CloudOff, Check, LogOut } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logProfileUpdate, logFileAccess } from "@/lib/auditLogger";
@@ -25,6 +25,7 @@ import {
   sanitizeProfileData 
 } from "@/lib/inputValidation";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { useAutoSaveProfile } from "@/hooks/useAutoSaveProfile";
 import { DatalistInput } from "@/components/DatalistInput";
 import { AsyncSearchInput } from "@/components/AsyncSearchInput";
 import { US_STATES } from "@/lib/data/usStates";
@@ -34,7 +35,7 @@ import { getGraduationYears } from "@/lib/data/graduationYears";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, isReady } = useAuth();
+  const { user, loading: authLoading, isReady, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
@@ -76,8 +77,15 @@ const Profile = () => {
   const completeness = getCompletenessInfo();
   const isProfileComplete = completeness.percentage === 100;
 
-  // Auto-save profile data
+  // Auto-save profile data to localStorage (for drafts)
   const { loadSavedData, clearSavedData } = useAutoSave(profile, "profile-form-draft", true);
+
+  // Auto-save profile data to database
+  const { status: autoSaveStatus, saveNow, markAsSaved } = useAutoSaveProfile(profile, {
+    userId: user?.id,
+    enabled: !!user?.id,
+    debounceMs: 2000, // Save 2 seconds after user stops typing
+  });
 
   // Get graduation years list
   const graduationYears = useMemo(() => getGraduationYears(), []);
@@ -186,6 +194,10 @@ const Profile = () => {
           const signedUrl = await getSignedResumeUrl(data.resume_url);
           setResumeSignedUrl(signedUrl);
         }
+        
+        // Mark current state as "saved" for auto-save tracking
+        // Use setTimeout to ensure profile state is updated first
+        setTimeout(() => markAsSaved(), 100);
       }
     } catch (error: unknown) {
       logger.error("Error loading profile", error);
@@ -329,6 +341,9 @@ const Profile = () => {
 
       // Clear auto-saved draft after successful save
       clearSavedData();
+      
+      // Sync auto-save state
+      markAsSaved();
 
       toast.success("Profile updated successfully!");
     } catch (error: unknown) {
@@ -337,6 +352,11 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
   };
 
   const isFieldRequired = (fieldKey: string) => {
@@ -422,10 +442,46 @@ const Profile = () => {
           {/* Main Profile Form */}
           <Card>
             <CardHeader>
-              <CardTitle>My Profile</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>My Profile</CardTitle>
+                {/* Auto-save status indicator */}
+                <div className="flex items-center gap-2 text-sm">
+                  {autoSaveStatus === "saving" && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground animate-pulse">
+                      <Cloud className="h-4 w-4" />
+                      Saving...
+                    </span>
+                  )}
+                  {autoSaveStatus === "saved" && (
+                    <span className="flex items-center gap-1.5 text-green-600">
+                      <Check className="h-4 w-4" />
+                      Saved
+                    </span>
+                  )}
+                  {autoSaveStatus === "unsaved" && (
+                    <span className="flex items-center gap-1.5 text-amber-600">
+                      <Cloud className="h-4 w-4" />
+                      Unsaved changes
+                    </span>
+                  )}
+                  {autoSaveStatus === "error" && (
+                    <span className="flex items-center gap-1.5 text-destructive">
+                      <CloudOff className="h-4 w-4" />
+                      Save failed
+                    </span>
+                  )}
+                  {autoSaveStatus === "idle" && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Check className="h-4 w-4" />
+                      Auto-save on
+                    </span>
+                  )}
+                </div>
+              </div>
               <CardDescription>
                 Update your information to get personalized clinical opportunity recommendations.
                 Fields marked with <span className="text-destructive">*</span> are required for participation.
+                <span className="block mt-1 text-xs">Changes are saved automatically.</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -691,17 +747,30 @@ const Profile = () => {
                 </div>
 
 
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Profile"
-                  )}
-                </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Logout Section */}
+          <Card className="border-destructive/20">
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-medium text-destructive">Sign Out</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Sign out of your account on this device
+                  </p>
+                </div>
+                <Button 
+                  type="button"
+                  variant="destructive"
+                  onClick={handleSignOut}
+                  className="w-full sm:w-auto"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

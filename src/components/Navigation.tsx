@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -9,8 +9,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   // Check if we're on the home page for transparent nav
   const isHomePage = location.pathname === "/";
@@ -29,11 +28,6 @@ const Navigation = () => {
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   // Show different links based on auth state
   const publicLinks = [
@@ -95,20 +89,12 @@ const Navigation = () => {
               </Link>
             ))}
             {user ? (
-              <>
-                <Link
-                  to="/profile"
-                  className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-                >
-                  Profile
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-                >
-                  Log Out
-                </button>
-              </>
+              <Link
+                to="/profile"
+                className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
+              >
+                Profile
+              </Link>
             ) : (
               <Link
                 to="/auth"
@@ -150,25 +136,13 @@ const Navigation = () => {
               </Link>
             ))}
             {user ? (
-              <>
-                <Link
-                  to="/profile"
-                  onClick={() => setIsOpen(false)}
-                  className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-                >
-                  Profile
-                </Link>
-                <button
-                  onClick={() => {
-                    handleSignOut();
-                    setIsOpen(false);
-                  }}
-                  className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
-                  aria-label="Sign out"
-                >
-                  Log Out
-                </button>
-              </>
+              <Link
+                to="/profile"
+                onClick={() => setIsOpen(false)}
+                className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
+              >
+                Profile
+              </Link>
             ) : (
               <Link
                 to="/auth"

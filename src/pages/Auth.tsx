@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
+import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
 import { z } from "zod";
 import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -61,6 +63,7 @@ const Auth = () => {
   const [signedUpUserId, setSignedUpUserId] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -100,6 +103,10 @@ const Auth = () => {
     setGoogleLoading(true);
     
     try {
+      // Save "remember me" preference BEFORE OAuth redirect
+      // This ensures the useAuth hook picks it up when user returns
+      setRememberMePreference(rememberMe);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -262,6 +269,10 @@ const Auth = () => {
 
     try {
       const validatedData = authSchema.parse({ email, password });
+      
+      // Save "remember me" preference BEFORE signing in
+      // This ensures the useAuth hook picks it up when exchanging tokens
+      setRememberMePreference(rememberMe);
       
       const { error } = await supabase.auth.signInWithPassword({
         email: validatedData.email,
@@ -568,6 +579,20 @@ const Auth = () => {
                     disabled={loading || googleLoading}
                     className="h-11"
                   />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    disabled={loading || googleLoading}
+                  />
+                  <Label
+                    htmlFor="remember-me"
+                    className="text-sm font-normal text-muted-foreground cursor-pointer"
+                  >
+                    Keep me signed in
+                  </Label>
                 </div>
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading || googleLoading}>
                   {loading ? "Signing in..." : "Sign In"}

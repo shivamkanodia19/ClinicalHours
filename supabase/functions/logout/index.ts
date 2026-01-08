@@ -38,9 +38,10 @@ const handler = async (req: Request): Promise<Response> => {
     const isProduction = Deno.env.get("ENVIRONMENT") === "production" || 
                         !Deno.env.get("ENVIRONMENT");
 
-    // Clear both session and CSRF cookies
+    // Clear session, CSRF, and refresh token cookies
     const clearSessionCookie = createClearCookie("session", isProduction);
     const clearCSRFCookie = createClearCookie("csrf-token", isProduction);
+    const clearRefreshTokenCookie = createClearCookie("refresh-token", isProduction);
 
     // TODO: Invalidate session in database if you're storing sessions server-side
     // For now, clearing cookies is sufficient
@@ -55,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Set-Cookie": `${clearSessionCookie}, ${clearCSRFCookie}`,
+          "Set-Cookie": `${clearSessionCookie}, ${clearCSRFCookie}, ${clearRefreshTokenCookie}`,
           ...corsHeaders,
         },
       }

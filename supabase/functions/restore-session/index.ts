@@ -1,6 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateOrigin, getCorsHeaders, getSessionCookie } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders, getSessionCookie, parseCookies } from "../_shared/auth.ts";
+
+/**
+ * Get refresh token from httpOnly cookie
+ */
+function getRefreshTokenFromCookie(req: Request): string | null {
+  const cookieHeader = req.headers.get("cookie");
+  const cookies = parseCookies(cookieHeader);
+  return cookies["refresh-token"] || null;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin");
@@ -29,54 +38,52 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get session cookie
-    const sessionId = getSessionCookie(req);
+    // Get refresh token from httpOnly cookie (persistent "remember me" token)
+    const refreshToken = getRefreshTokenFromCookie(req);
 
-    if (!sessionId) {
+    if (!refreshToken) {
       return new Response(
         JSON.stringify({ success: false, error: "No session found" }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // TODO: In production, validate sessionId against database
-    // For now, we'll use a fallback: try to get user from Authorization header if available
-    // This allows gradual migration
+    // Use the refresh token to get a new access token
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     
-    // Try to get user from Authorization header as fallback
-    const authHeader = req.headers.get("authorization");
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const token = authHeader.replace("Bearer ", "");
-      
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
+    // Create a client to refresh the session
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
 
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-      
-      if (!error && user) {
-        // Return user info - frontend will use this to restore Supabase session
-        return new Response(
-          JSON.stringify({ 
-            success: true,
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-            // Return the token so frontend can restore session
-            accessToken: token,
-          }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
+    // Refresh the session using the stored refresh token
+    const { data: refreshData, error: refreshError } = await supabaseClient.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (refreshError || !refreshData.session) {
+      console.error("Failed to refresh session:", refreshError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: "Session expired. Please log in again." }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    // If no valid session, return error
+    const { session, user } = refreshData;
+
+    // Return the new tokens so frontend can restore the Supabase session
     return new Response(
-      JSON.stringify({ success: false, error: "Invalid session" }),
-      { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({ 
+        success: true,
+        user: {
+          id: user?.id,
+          email: user?.email,
+        },
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token, // New refresh token (tokens rotate)
+      }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error) {
     console.error("Error in restore-session:", error);

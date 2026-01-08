@@ -50,11 +50,14 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
     : supabaseUrl.replace(/^https:/, "wss:");
 
   // Base directives shared between dev and prod
+  // img-src restricted to specific trusted domains instead of wildcard https:
+  // Fonts are self-hosted via @fontsource-variable, no external font CDNs needed
   const baseDirectives = [
     "default-src 'self'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
-    "img-src 'self' data: https: blob:",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
+    `img-src 'self' data: blob: ${supabaseWildcard} https://*.tiles.mapbox.com https://api.mapbox.com https://storage.googleapis.com https://lovable.dev https://*.r2.dev`,
+    "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "child-src 'self' blob:",
     "object-src 'none'",
@@ -124,6 +127,8 @@ const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      // HSTS - enforce HTTPS (1 year, include subdomains, allow preload)
+      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
       
       // Add Permissions Policy header to restrict device feature access
       res.setHeader("Permissions-Policy", generatePermissionsPolicy());
@@ -147,6 +152,8 @@ const securityHeadersPlugin = (isDev: boolean, supabaseUrl: string) => ({
       res.setHeader("X-Frame-Options", "DENY");
       res.setHeader("X-XSS-Protection", "1; mode=block");
       res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+      // HSTS - enforce HTTPS (1 year, include subdomains, allow preload)
+      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
       
       // Add Permissions Policy header to restrict device feature access
       res.setHeader("Permissions-Policy", generatePermissionsPolicy());
@@ -191,7 +198,7 @@ export default defineConfig(({ mode }) => {
 
   return {
   server: {
-    host: "127.0.0.1",
+    host: "localhost",
     port: 8080,
     strictPort: false,
     open: false,

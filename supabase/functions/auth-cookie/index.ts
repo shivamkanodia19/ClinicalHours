@@ -5,10 +5,12 @@ import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 interface AuthCookieRequest {
   accessToken: string;
   refreshToken?: string;
+  rememberMe?: boolean; // If true, persist session across browser closes
 }
 
 // Session configuration
-const SESSION_MAX_AGE = 30 * 60; // 30 minutes in seconds
+const SESSION_MAX_AGE = 30 * 60; // 30 minutes in seconds (for short-lived session cookie)
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 days for "remember me" (refresh token cookie)
 const CSRF_TOKEN_LENGTH = 32;
 
 // Generate a secure random token
@@ -33,6 +35,18 @@ function createSessionCookie(sessionId: string, isProduction: boolean): string {
 function createCSRFCookie(token: string, isProduction: boolean): string {
   const secureFlag = isProduction ? "; Secure" : "";
   return `csrf-token=${token}; HttpOnly; SameSite=Lax${secureFlag}; Path=/; Max-Age=${SESSION_MAX_AGE}`;
+}
+
+// Create refresh token cookie string (long-lived for "remember me")
+function createRefreshTokenCookie(refreshToken: string, isProduction: boolean): string {
+  const secureFlag = isProduction ? "; Secure" : "";
+  return `refresh-token=${refreshToken}; HttpOnly; SameSite=Lax${secureFlag}; Path=/; Max-Age=${REFRESH_TOKEN_MAX_AGE}`;
+}
+
+// Clear refresh token cookie
+function clearRefreshTokenCookie(isProduction: boolean): string {
+  const secureFlag = isProduction ? "; Secure" : "";
+  return `refresh-token=; HttpOnly; SameSite=Lax${secureFlag}; Path=/; Max-Age=0`;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -62,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { accessToken, refreshToken }: AuthCookieRequest = await req.json();
+    const { accessToken, refreshToken, rememberMe }: AuthCookieRequest = await req.json();
 
     if (!accessToken) {
       return new Response(
@@ -114,6 +128,18 @@ const handler = async (req: Request): Promise<Response> => {
     // Create cookie headers
     const sessionCookie = createSessionCookie(sessionId, isProduction);
     const csrfCookie = createCSRFCookie(csrfToken, isProduction);
+    
+    // Build cookies array
+    const cookies = [sessionCookie, csrfCookie];
+    
+    // If "remember me" is enabled and we have a refresh token, store it in a persistent cookie
+    if (rememberMe && refreshToken) {
+      const refreshCookie = createRefreshTokenCookie(refreshToken, isProduction);
+      cookies.push(refreshCookie);
+    } else if (!rememberMe) {
+      // Clear any existing refresh token cookie if user didn't opt for "remember me"
+      cookies.push(clearRefreshTokenCookie(isProduction));
+    }
 
     // Return response with cookies
     return new Response(
@@ -123,13 +149,14 @@ const handler = async (req: Request): Promise<Response> => {
         user: {
           id: user.id,
           email: user.email,
-        }
+        },
+        rememberMe: !!rememberMe, // Echo back for confirmation
       }),
       {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Set-Cookie": `${sessionCookie}, ${csrfCookie}`,
+          "Set-Cookie": cookies.join(", "),
           ...corsHeaders,
         },
       }
