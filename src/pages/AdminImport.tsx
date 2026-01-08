@@ -143,6 +143,13 @@ const dataSources: DataSource[] = [
     description: 'Hospitals from Iowa, Missouri, Arkansas and surrounding states',
     isOSMFormat: false,
   },
+  {
+    id: 'shivam-batch',
+    name: 'Shivam Batch',
+    csvPath: '/data/hospitals_lovable_ready_shivam.csv',
+    description: '494 hospitals from Iowa, Missouri, Arkansas, and more (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
 ];
 
 const AdminImport = () => {
@@ -397,7 +404,7 @@ const AdminImport = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Tabs value={selectedSource} onValueChange={setSelectedSource}>
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
                 {dataSources.map(source => (
                   <TabsTrigger key={source.id} value={source.id} disabled={importing}>
                     {source.name}
