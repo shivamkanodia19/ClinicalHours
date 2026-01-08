@@ -383,25 +383,28 @@ const OpportunityMap = () => {
           popupRef.current = new mapboxgl.Popup({
             closeButton: true,
             closeOnClick: true,
-            maxWidth: '300px',
+            maxWidth: '400px',
+            anchor: 'bottom',
           })
             .setLngLat(coordinates)
             .setHTML(`
-              <div style="padding: 8px; font-family: system-ui, sans-serif;">
-                <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">${props?.name || 'Unknown'}</h3>
-                <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280; text-transform: capitalize;">
-                  <strong>Type:</strong> ${props?.type || 'N/A'}
-                </p>
-                <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280;">
-                  <strong>Location:</strong> ${props?.location || 'N/A'}
-                </p>
-                <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280;">
-                  <strong>Hours:</strong> ${props?.hours_required || 'N/A'}
-                </p>
-                <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: capitalize;">
-                  <strong>Acceptance:</strong> ${props?.acceptance_likelihood || 'N/A'}
-                </p>
-                ${props?.website ? `<a href="${props.website}" target="_blank" rel="noopener" style="font-size: 12px; color: #3b82f6; text-decoration: underline;">Visit Website</a>` : ''}
+              <div style="padding: 12px 16px; font-family: system-ui, sans-serif; min-width: 300px;">
+                <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 600; color: #1f2937; line-height: 1.3; word-wrap: break-word;">${props?.name || 'Unknown'}</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <p style="margin: 0; font-size: 13px; color: #6b7280; text-transform: capitalize; line-height: 1.4;">
+                    <strong style="color: #374151;">Type:</strong> ${props?.type || 'N/A'}
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4; word-wrap: break-word;">
+                    <strong style="color: #374151;">Location:</strong> ${props?.location || 'N/A'}
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4;">
+                    <strong style="color: #374151;">Hours:</strong> ${props?.hours_required || 'N/A'}
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #6b7280; text-transform: capitalize; line-height: 1.4;">
+                    <strong style="color: #374151;">Acceptance:</strong> ${props?.acceptance_likelihood || 'N/A'}
+                  </p>
+                  ${props?.website ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;"><a href="${props.website}" target="_blank" rel="noopener" style="font-size: 13px; color: #3b82f6; text-decoration: underline; font-weight: 500;">Visit Website →</a></div>` : ''}
+                </div>
               </div>
             `)
             .addTo(map.current);
@@ -514,9 +517,9 @@ const OpportunityMap = () => {
       box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(0,0,0,0.3);
     `;
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-      <div style="padding: 8px; font-family: system-ui, sans-serif;">
-        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1f2937;">📍 Your Location</h3>
+    const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '250px' }).setHTML(`
+      <div style="padding: 10px 12px; font-family: system-ui, sans-serif;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600; color: #1f2937;">📍 Your Location</h3>
       </div>
     `);
 
@@ -552,10 +555,10 @@ const OpportunityMap = () => {
     `;
     el.textContent = '📌';
 
-    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-      <div style="padding: 8px; font-family: system-ui, sans-serif;">
-        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #1f2937;">📌 Custom Location</h3>
-        <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">Showing opportunities within ${radiusMiles} miles</p>
+    const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '280px' }).setHTML(`
+      <div style="padding: 10px 12px; font-family: system-ui, sans-serif;">
+        <h3 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #1f2937;">📌 Custom Location</h3>
+        <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4;">Showing opportunities within ${radiusMiles} miles</p>
       </div>
     `);
 
