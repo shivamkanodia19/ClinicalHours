@@ -38,12 +38,30 @@ const shouldApplyCSP = (pathname: string): boolean => {
 };
 
 // Generate CSP policy based on environment and Supabase URL
+// Policy balances security (blocks injection) with functionality (allows app features)
 const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
   // Extract domain from Supabase URL (e.g., https://xxx.supabase.co -> *.supabase.co)
   const supabaseDomain = supabaseUrl.replace(/^https?:\/\/([^/]+).*$/, "$1");
   const supabaseWildcard = supabaseDomain.includes("supabase.co") 
     ? "https://*.supabase.co" 
     : supabaseUrl;
+  const supabaseWss = supabaseDomain.includes("supabase.co") 
+    ? "wss://*.supabase.co"
+    : supabaseUrl.replace(/^https:/, "wss:");
+
+  // Base directives shared between dev and prod
+  const baseDirectives = [
+    "default-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: https: blob:",
+    "worker-src 'self' blob:",
+    "child-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ];
 
   if (isDev) {
     // Development policy - more permissive for Vite HMR
@@ -61,29 +79,18 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
     ].join(" ");
     
     return [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: https:",
-      `connect-src 'self' ${supabaseWildcard} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org ${localhostPorts}`,
-      "frame-ancestors 'none'",
+      ...baseDirectives,
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Vite HMR
+      `connect-src 'self' ${supabaseWildcard} ${supabaseWss} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org ${localhostPorts}`,
     ].join("; ");
   } else {
-    // Production policy - strict, no inline scripts
-    // Include wss:// for Supabase realtime websocket connections
-    const supabaseWss = supabaseDomain.includes("supabase.co") 
-      ? "wss://*.supabase.co"
-      : supabaseUrl.replace(/^https:/, "wss:");
-    
+    // Production policy - tighter, but allows unsafe-inline for React bundled apps
+    // Note: Removing unsafe-inline requires CSP nonces which need server-side rendering
     return [
-      "default-src 'self'",
-      "script-src 'self'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: https:",
+      ...baseDirectives,
+      "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for React; no unsafe-eval
       `connect-src 'self' ${supabaseWildcard} ${supabaseWss} https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org`,
-      "frame-ancestors 'none'",
+      "upgrade-insecure-requests",
     ].join("; ");
   }
 };
