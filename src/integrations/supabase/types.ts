@@ -709,66 +709,36 @@ export type Database = {
         Args: { filter_type?: string; search_term?: string }
         Returns: number
       }
-      get_opportunities_by_distance:
-        | {
-            Args: {
-              filter_type?: string
-              page_limit?: number
-              page_offset?: number
-              search_term?: string
-              user_lat: number
-              user_lon: number
-            }
-            Returns: {
-              acceptance_likelihood: string
-              address: string
-              avg_rating: number
-              description: string
-              distance_miles: number
-              email: string
-              hours_required: string
-              id: string
-              latitude: number
-              location: string
-              longitude: number
-              name: string
-              phone: string
-              requirements: string[]
-              review_count: number
-              type: string
-              website: string
-            }[]
-          }
-        | {
-            Args: {
-              filter_type?: string
-              max_distance_miles?: number
-              page_limit?: number
-              page_offset?: number
-              search_term?: string
-              user_lat: number
-              user_lon: number
-            }
-            Returns: {
-              acceptance_likelihood: string
-              address: string
-              avg_rating: number
-              description: string
-              distance_miles: number
-              email: string
-              hours_required: string
-              id: string
-              latitude: number
-              location: string
-              longitude: number
-              name: string
-              phone: string
-              requirements: string[]
-              review_count: number
-              type: string
-              website: string
-            }[]
-          }
+      get_opportunities_by_distance: {
+        Args: {
+          filter_type?: string
+          max_distance_miles?: number
+          page_limit?: number
+          page_offset?: number
+          search_term?: string
+          user_lat: number
+          user_lon: number
+        }
+        Returns: {
+          acceptance_likelihood: string
+          address: string
+          avg_rating: number
+          description: string
+          distance_miles: number
+          email: string
+          hours_required: string
+          id: string
+          latitude: number
+          location: string
+          longitude: number
+          name: string
+          phone: string
+          requirements: string[]
+          review_count: number
+          type: string
+          website: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
