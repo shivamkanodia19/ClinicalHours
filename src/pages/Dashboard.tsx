@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
-import { Opportunity } from "@/types";
+import { Opportunity, SavedOpportunityWithDetails } from "@/types";
 import { calculateDistance } from "@/lib/geolocation";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -52,7 +52,8 @@ interface DashboardSavedOpportunity {
   scheduled_interview?: boolean;
   deadline?: string;
   notes?: string;
-  opportunities?: Opportunity;
+  is_active_experience?: boolean;
+  opportunities?: Opportunity & { distance?: number };
 }
 
 const tips = [
@@ -79,7 +80,7 @@ const tips = [
 ];
 
 const Dashboard = () => {
-  const { user, loading: authLoading, isReady, profile } = useAuth();
+  const { user, loading: authLoading, isReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -165,7 +166,7 @@ const Dashboard = () => {
       if (savedError) throw savedError;
       
       // Process and sort saved opportunities
-      let processedSaved = (savedData || []).map((saved: SavedOpportunityWithDetails) => {
+      let processedSaved = (savedData || []).map((saved: DashboardSavedOpportunity) => {
         const opp = saved.opportunities;
         let distance: number | undefined;
         
@@ -181,16 +182,16 @@ const Dashboard = () => {
         
         return {
           ...saved,
-          opportunities: {
+          opportunities: opp ? {
             ...opp,
             distance,
-          },
+          } : undefined,
         };
       });
       
       // Sort saved opportunities: by distance if available, otherwise alphabetically
       if (userLocation) {
-        processedSaved.sort((a: SavedOpportunityWithDetails, b: SavedOpportunityWithDetails) => {
+        processedSaved.sort((a: DashboardSavedOpportunity, b: DashboardSavedOpportunity) => {
           const distA = a.opportunities?.distance ?? Infinity;
           const distB = b.opportunities?.distance ?? Infinity;
           if (distA !== Infinity || distB !== Infinity) {
@@ -201,7 +202,7 @@ const Dashboard = () => {
         });
       } else {
         // Sort alphabetically if no location
-        processedSaved.sort((a: SavedOpportunityWithDetails, b: SavedOpportunityWithDetails) => 
+        processedSaved.sort((a: DashboardSavedOpportunity, b: DashboardSavedOpportunity) => 
           (a.opportunities?.name || "").localeCompare(b.opportunities?.name || "")
         );
       }
@@ -375,8 +376,8 @@ const Dashboard = () => {
   const appliedCount = savedOpportunities.filter(s => s.applied).length;
   const interviewCount = savedOpportunities.filter(s => s.scheduled_interview).length;
   
-  // Get user's first name for greeting
-  const firstName = profile?.full_name?.split(' ')[0] || 'there';
+  // Get user's first name for greeting - will be fetched from profile data
+  const [firstName, setFirstName] = useState('there');
 
   if (authLoading || !isReady || loading) {
     return (
