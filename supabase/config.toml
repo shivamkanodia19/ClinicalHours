@@ -37,10 +37,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.import-texas-hospitals]
-verify_jwt = false
+verify_jwt = true
 
 [functions.remove-duplicates]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fix-coordinates]
-verify_jwt = false
+verify_jwt = true

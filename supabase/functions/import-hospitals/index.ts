@@ -1,38 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateCSRFToken, validateOrigin, getCorsHeaders, authenticateFromCookie, checkAdminRole } from "../_shared/auth.ts";
-
-// Rate limiting per admin user
-const adminRateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const ADMIN_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const MAX_IMPORTS_PER_ADMIN = 5; // 5 imports per hour per admin
-
-function isAdminRateLimited(adminId: string): boolean {
-  const now = Date.now();
-  const record = adminRateLimitMap.get(adminId);
-
-  if (!record || now > record.resetTime) {
-    adminRateLimitMap.set(adminId, { count: 1, resetTime: now + ADMIN_RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  if (record.count >= MAX_IMPORTS_PER_ADMIN) {
-    return true;
-  }
-
-  record.count++;
-  return false;
-}
-
-// Clean up old entries periodically
-function cleanupAdminRateLimitMap(): void {
-  const now = Date.now();
-  for (const [key, value] of adminRateLimitMap.entries()) {
-    if (now > value.resetTime) {
-      adminRateLimitMap.delete(key);
-    }
-  }
-}
+import { 
+  validateCSRFToken, 
+  validateOrigin, 
+  getCorsHeaders, 
+  authenticateFromCookie, 
+  checkAdminRole,
+  checkRateLimit,
+  RATE_LIMIT_CONFIGS
+} from "../_shared/auth.ts";
 
 interface CMSHospital {
   'Facility ID': string;
@@ -213,11 +189,6 @@ serve(async (req) => {
     );
   }
 
-  // Cleanup old rate limit entries occasionally
-  if (Math.random() < 0.01) {
-    cleanupAdminRateLimitMap();
-  }
-
   try {
     // Authenticate user (try cookie first, fallback to Authorization header during migration)
     let authenticatedUser: { id: string; email?: string } | null = null;
@@ -276,12 +247,16 @@ serve(async (req) => {
       });
     }
 
-    // Check rate limit for this admin
-    if (isAdminRateLimited(authenticatedUser.id)) {
+    // Check rate limit for this admin (using database-backed rate limiting)
+    const rateLimitKey = `admin_import:${authenticatedUser.id}`;
+    const rateLimitResult = await checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.ADMIN_IMPORT);
+    
+    if (!rateLimitResult.allowed) {
       console.warn(`Admin ${authenticatedUser.id} rate limited for hospital import`);
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Rate limit exceeded. Please try again later (max 5 imports per hour).' 
+        error: rateLimitResult.blockReason || 'Rate limit exceeded. Please try again later (max 5 imports per hour).',
+        resetAt: rateLimitResult.resetAt.toISOString()
       }), {
         status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
