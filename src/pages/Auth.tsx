@@ -41,13 +41,35 @@ const Auth = () => {
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    const checkSession = async () => {
+    const handleAuthCallback = async () => {
+      // Check for OAuth callback in URL hash (for Google Sign-In)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      
+      if (accessToken) {
+        // Set the session from the OAuth callback
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || '',
+        });
+        
+        if (data.session && !error) {
+          // Clear the hash from the URL
+          window.history.replaceState(null, '', window.location.pathname);
+          navigate("/dashboard");
+          return;
+        }
+      }
+      
+      // Check for existing session
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate("/dashboard");
       }
     };
-    checkSession();
+    
+    handleAuthCallback();
   }, [navigate]);
 
   const sendVerificationEmail = async (userId: string, userEmail: string, userName: string) => {
