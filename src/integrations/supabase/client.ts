@@ -99,7 +99,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     storage: sessionStorageAdapter, // Use sessionStorage (cleared on tab close) instead of localStorage
     persistSession: true, // Allow session persistence in sessionStorage
     autoRefreshToken: true,
-    detectSessionInUrl: false, // Don't detect session in URL
+    detectSessionInUrl: true, // Detect OAuth tokens from URL after redirect
   },
   global: {
     headers: {
