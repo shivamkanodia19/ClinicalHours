@@ -310,67 +310,17 @@ const OpportunityMap = () => {
       map.current.on('load', () => {
         if (!map.current) return;
         
-        // Add empty source for opportunities (will be updated later)
+        // Add empty source for opportunities (no clustering - show all markers individually)
         map.current.addSource('opportunities', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
-          cluster: true,
-          clusterMaxZoom: 14,
-          clusterRadius: 50,
         });
 
-        // Cluster circle layer
+        // Individual point layer - color by type (all markers visible at all zoom levels)
         map.current.addLayer({
-          id: 'clusters',
+          id: 'opportunity-points',
           type: 'circle',
           source: 'opportunities',
-          filter: ['has', 'point_count'],
-          paint: {
-            'circle-color': [
-              'step',
-              ['get', 'point_count'],
-              '#51bbd6',
-              100,
-              '#f1f075',
-              500,
-              '#f28cb1',
-            ],
-            'circle-radius': [
-              'step',
-              ['get', 'point_count'],
-              20,
-              100,
-              30,
-              500,
-              40,
-            ],
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-          },
-        });
-
-        // Cluster count label layer
-        map.current.addLayer({
-          id: 'cluster-count',
-          type: 'symbol',
-          source: 'opportunities',
-          filter: ['has', 'point_count'],
-          layout: {
-            'text-field': ['to-string', ['get', 'point_count']],
-            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
-          },
-          paint: {
-            'text-color': '#000000',
-          },
-        });
-
-        // Unclustered point layer - color by type
-        map.current.addLayer({
-          id: 'unclustered-point',
-          type: 'circle',
-          source: 'opportunities',
-          filter: ['!', ['has', 'point_count']],
           paint: {
             'circle-color': [
               'match',
@@ -381,37 +331,15 @@ const OpportunityMap = () => {
               'emt', TYPE_COLORS.emt,
               '#6B7280', // default gray
             ],
-            'circle-radius': 10,
+            'circle-radius': 8,
             'circle-stroke-width': 2,
             'circle-stroke-color': '#ffffff',
+            'circle-opacity': 0.9,
           },
         });
 
-        // Click on cluster to zoom in
-        map.current.on('click', 'clusters', (e) => {
-          if (!map.current) return;
-          const features = map.current.queryRenderedFeatures(e.point, {
-            layers: ['clusters'],
-          });
-          if (!features.length) return;
-          
-          const clusterId = features[0].properties?.cluster_id;
-          const source = map.current.getSource('opportunities') as mapboxgl.GeoJSONSource;
-          
-          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err || !map.current) return;
-            const geometry = features[0].geometry;
-            if (geometry.type === 'Point') {
-              map.current.easeTo({
-                center: geometry.coordinates as [number, number],
-                zoom: zoom,
-              });
-            }
-          });
-        });
-
-        // Click on individual point to show popup
-        map.current.on('click', 'unclustered-point', (e) => {
+        // Click on point to show popup
+        map.current.on('click', 'opportunity-points', (e) => {
           if (!map.current || !e.features?.length) return;
           
           const feature = e.features[0];
@@ -462,16 +390,10 @@ const OpportunityMap = () => {
         });
 
         // Change cursor on hover
-        map.current.on('mouseenter', 'clusters', () => {
+        map.current.on('mouseenter', 'opportunity-points', () => {
           if (map.current) map.current.getCanvas().style.cursor = 'pointer';
         });
-        map.current.on('mouseleave', 'clusters', () => {
-          if (map.current && !isPinModeRef.current) map.current.getCanvas().style.cursor = '';
-        });
-        map.current.on('mouseenter', 'unclustered-point', () => {
-          if (map.current) map.current.getCanvas().style.cursor = 'pointer';
-        });
-        map.current.on('mouseleave', 'unclustered-point', () => {
+        map.current.on('mouseleave', 'opportunity-points', () => {
           if (map.current && !isPinModeRef.current) map.current.getCanvas().style.cursor = '';
         });
 
@@ -489,9 +411,9 @@ const OpportunityMap = () => {
       map.current.on('click', (e) => {
         if (!isPinModeRef.current || !map.current) return;
         
-        // Check if clicked on a cluster or point
+        // Check if clicked on a point
         const features = map.current.queryRenderedFeatures(e.point, {
-          layers: ['clusters', 'unclustered-point'],
+          layers: ['opportunity-points'],
         });
         
         if (features.length > 0) return; // Don't place pin if clicking on a feature

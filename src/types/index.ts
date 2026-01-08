@@ -168,6 +168,26 @@ export interface SavedOpportunityWithDetails {
   scheduled_interview?: boolean;
   deadline?: string;
   notes?: string;
+  is_active_experience?: boolean;
   opportunities?: Opportunity & { distance?: number };
+}
+
+// Experience entry for tracking hours and moments at a location
+export interface ExperienceEntry {
+  id: string;
+  user_id: string;
+  opportunity_id: string;
+  hours: number | null;
+  moment: string | null;
+  entry_date: string;
+  created_at: string;
+}
+
+// Experience with aggregated data for display
+export interface ExperienceWithDetails {
+  opportunity: Opportunity;
+  savedOpportunityId: string;
+  totalHours: number;
+  entries: ExperienceEntry[];
 }
 
