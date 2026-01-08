@@ -91,8 +91,19 @@ function inferOpportunityType(name: string): 'hospital' | 'clinic' | 'hospice' |
 }
 
 async function callEdgeFunction(body: object): Promise<{ success: boolean; imported?: number; error?: string }> {
+  // Get current session to ensure auth token is available
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  
+  if (!token) {
+    throw new Error('No authentication session found. Please log in again.');
+  }
+  
   const { data, error } = await supabase.functions.invoke('import-csv-hospitals', {
     body,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   
   if (error) {
