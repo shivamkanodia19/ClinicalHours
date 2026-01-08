@@ -150,6 +150,13 @@ const dataSources: DataSource[] = [
     description: '494 hospitals from Iowa, Missouri, Arkansas, and more (OpenStreetMap data)',
     isOSMFormat: false,
   },
+  {
+    id: 'batch5',
+    name: 'Batch 5 (Amrit)',
+    csvPath: '/data/batch5-hospitals.csv',
+    description: '2473 hospitals from Michigan, Tennessee, West Virginia, and more (OpenStreetMap data)',
+    isOSMFormat: true,
+  },
 ];
 
 const AdminImport = () => {
