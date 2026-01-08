@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Map, List, MapPin, RotateCcw } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { Opportunity } from '@/types';
-import { calculateDistance } from '@/lib/geolocation';
 
 interface SavedOpportunity {
   opportunity_id: string;
@@ -85,55 +84,105 @@ const OpportunityMap = () => {
   // The active center is either custom pin or user location
   const activeCenter = customPin || userLocation;
 
-  // Fetch opportunities with coordinates for map display
-  // Use reasonable limit with clustering for performance
-  // Mapbox clustering handles large datasets efficiently
-  useEffect(() => {
-    const fetchOpportunities = async () => {
-      setDataLoading(true);
-      try {
-        // Load opportunities in batches, but limit total for performance
-        // Clustering will handle display efficiently even with large datasets
-        const MAX_OPPORTUNITIES = 2000; // Reasonable limit for map performance with clustering
+  // Fetch opportunities with server-side distance filtering
+  // When user has a location, only fetch opportunities within radius (much faster)
+  // When no location, fetch all opportunities (with reasonable limit for initial view)
+  const fetchOpportunitiesForMap = useCallback(async () => {
+    setDataLoading(true);
+    try {
+      // If we have an active center (user location or custom pin), use server-side distance filtering
+      if (activeCenter) {
+        // Use RPC with distance filter - no arbitrary cap needed since we're filtering by radius
+        const { data, error } = await supabase.rpc('get_opportunities_by_distance', {
+          user_lat: activeCenter.lat,
+          user_lon: activeCenter.lng,
+          max_distance_miles: radiusMiles,
+          page_limit: 10000, // High limit since we're filtering by distance
+          page_offset: 0,
+        });
+
+        if (error) throw error;
+
+        const mappedData: Opportunity[] = (data || []).map((opp: {
+          id: string;
+          name: string;
+          type: string;
+          location: string;
+          address?: string;
+          latitude?: number;
+          longitude?: number;
+          hours_required: string;
+          acceptance_likelihood: string;
+          description?: string;
+          requirements?: string[];
+          phone?: string;
+          email?: string;
+          website?: string;
+          avg_rating?: number;
+          review_count?: number;
+          distance_miles?: number;
+        }) => ({
+          id: opp.id,
+          name: opp.name,
+          type: opp.type,
+          location: opp.location,
+          latitude: opp.latitude,
+          longitude: opp.longitude,
+          hours_required: opp.hours_required,
+          acceptance_likelihood: opp.acceptance_likelihood,
+          description: opp.description,
+          requirements: opp.requirements || [],
+          phone: opp.phone,
+          email: opp.email,
+          website: opp.website,
+          avg_rating: opp.avg_rating,
+          review_count: opp.review_count,
+          distance: opp.distance_miles,
+        }));
+
+        logger.debug('Map: Loaded', mappedData.length, 'opportunities within', radiusMiles, 'miles (server-side filtered)');
+        setOpportunities(mappedData);
+      } else {
+        // No location - load all opportunities (with batching for large datasets)
         const allData: Opportunity[] = [];
         let from = 0;
         const batchSize = 1000;
         let hasMore = true;
-        
-        while (hasMore && allData.length < MAX_OPPORTUNITIES) {
-          const remaining = MAX_OPPORTUNITIES - allData.length;
-          const currentBatchSize = Math.min(batchSize, remaining);
-          
+
+        while (hasMore) {
           const { data, error } = await supabase
             .from('opportunities')
             .select('*')
             .not('latitude', 'is', null)
             .not('longitude', 'is', null)
-            .range(from, from + currentBatchSize - 1);
+            .range(from, from + batchSize - 1);
 
           if (error) throw error;
-          
+
           if (data && data.length > 0) {
             allData.push(...data);
-            from += currentBatchSize;
-            hasMore = data.length === currentBatchSize && allData.length < MAX_OPPORTUNITIES;
+            from += batchSize;
+            hasMore = data.length === batchSize;
           } else {
             hasMore = false;
           }
         }
-        
-        logger.debug('Map: Loaded', allData.length, 'opportunities with coordinates (clustered for performance)');
-        setOpportunities(allData);
-      } catch (err: unknown) {
-        logger.error('Error fetching opportunities', err);
-        setMapError('Failed to load opportunities. Please refresh the page.');
-      } finally {
-        setDataLoading(false);
-      }
-    };
 
-    fetchOpportunities();
-  }, []);
+        logger.debug('Map: Loaded all', allData.length, 'opportunities (no location filter)');
+        setOpportunities(allData);
+      }
+    } catch (err: unknown) {
+      logger.error('Error fetching opportunities', err);
+      setMapError('Failed to load opportunities. Please refresh the page.');
+    } finally {
+      setDataLoading(false);
+    }
+  }, [activeCenter, radiusMiles]);
+
+  // Fetch opportunities when location or radius changes
+  useEffect(() => {
+    fetchOpportunitiesForMap();
+  }, [fetchOpportunitiesForMap]);
 
   // Fetch saved opportunities if user is logged in and auth is ready
   useEffect(() => {
@@ -196,36 +245,18 @@ const OpportunityMap = () => {
     }
   }, []);
 
-  // Memoize base opportunities to avoid recalculation
-  const baseOpportunities = useMemo(() => {
-    return viewMode === 'all' 
-      ? opportunities 
-      : savedOpportunities.map(s => s.opportunities).filter(Boolean);
-  }, [viewMode, opportunities, savedOpportunities]);
-
-  // Filter opportunities within radius (or show all if no center)
-  // Memoized to prevent unnecessary recalculations
-  const getFilteredOpportunities = useCallback(() => {
-    if (!activeCenter) {
-      return baseOpportunities.filter(opp => opp.latitude && opp.longitude);
-    }
-
-    return baseOpportunities.filter(opp => {
-      if (!opp.latitude || !opp.longitude) return false;
-      const distance = calculateDistance(
-        activeCenter.lat,
-        activeCenter.lng,
-        opp.latitude,
-        opp.longitude
-      );
-      return distance <= radiusMiles;
-    });
-  }, [activeCenter, baseOpportunities, radiusMiles]);
-
-  // Memoize filtered opportunities to avoid recalculating on every render
+  // Get the opportunities to display based on view mode
+  // When viewing 'all', opportunities are already filtered server-side by distance
+  // When viewing 'saved', we show all saved opportunities (they may be outside radius)
   const filteredOpportunities = useMemo(() => {
-    return getFilteredOpportunities();
-  }, [getFilteredOpportunities]);
+    if (viewMode === 'saved') {
+      return savedOpportunities
+        .map(s => s.opportunities)
+        .filter((opp): opp is Opportunity => Boolean(opp && opp.latitude && opp.longitude));
+    }
+    // 'all' mode - opportunities are already server-side filtered by distance when activeCenter exists
+    return opportunities.filter(opp => opp.latitude && opp.longitude);
+  }, [viewMode, opportunities, savedOpportunities]);
 
   // Initialize map with clustering layers
   useEffect(() => {

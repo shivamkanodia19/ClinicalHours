@@ -712,6 +712,7 @@ export type Database = {
       get_opportunities_by_distance: {
         Args: {
           filter_type?: string
+          max_distance_miles?: number
           page_limit?: number
           page_offset?: number
           search_term?: string
@@ -737,6 +738,16 @@ export type Database = {
           type: string
           website: string
         }[]
+      }
+      count_opportunities_within_distance: {
+        Args: {
+          filter_type?: string
+          max_distance_miles?: number
+          search_term?: string
+          user_lat: number
+          user_lon: number
+        }
+        Returns: number
       }
       has_role: {
         Args: {
