@@ -91,8 +91,19 @@ function inferOpportunityType(name: string): 'hospital' | 'clinic' | 'hospice' |
 }
 
 async function callEdgeFunction(body: object): Promise<{ success: boolean; imported?: number; error?: string }> {
+  // Get current session to ensure auth token is available
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  
+  if (!token) {
+    throw new Error('No authentication session found. Please log in again.');
+  }
+  
   const { data, error } = await supabase.functions.invoke('import-csv-hospitals', {
     body,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   
   if (error) {
@@ -141,6 +152,55 @@ const dataSources: DataSource[] = [
     name: 'Batch 4 (Central/South)',
     csvPath: '/data/batch4-hospitals.csv',
     description: 'Hospitals from Iowa, Missouri, Arkansas and surrounding states',
+    isOSMFormat: false,
+  },
+  {
+    id: 'batch-shirt',
+    name: 'Batch Shirt',
+    csvPath: '/data/hospitals_lovable_ready_shivam.csv',
+    description: '1339 hospitals from Michigan, Tennessee, and more (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
+  {
+    id: 'batch5',
+    name: 'Batch 5 (Amrit)',
+    csvPath: '/data/batch5-hospitals.csv',
+    description: '2473 hospitals from Michigan, Tennessee, West Virginia, and more (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
+  {
+    id: 'batch-csv-5-raghav',
+    name: 'Batch CSV 5 (Raghav)',
+    csvPath: '/data/hospitals_lovable_ready_raghav.csv',
+    description: '1339 hospitals from Michigan, Tennessee, and more (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
+  {
+    id: 'laptop',
+    name: 'Laptop',
+    csvPath: '/data/lovablelaptop.csv',
+    description: '1176 hospitals from various states (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
+  {
+    id: 'desktop',
+    name: 'Desktop',
+    csvPath: '/data/hospitals_lovable_ready_desktop.csv',
+    description: '816 hospitals from Northeast states (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
+  {
+    id: 'domdom',
+    name: 'Dom Dom',
+    csvPath: '/data/hospitals_lovable_ready_domdom.csv',
+    description: '127 hospitals from Northeast states (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
+  {
+    id: 'randy',
+    name: 'Randy',
+    csvPath: '/data/hospitals_lovable_ready_randy.csv',
+    description: '174 hospitals from various states (OpenStreetMap data)',
     isOSMFormat: false,
   },
 ];
@@ -397,9 +457,14 @@ const AdminImport = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Tabs value={selectedSource} onValueChange={setSelectedSource}>
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="flex flex-wrap h-auto gap-1 p-1">
                 {dataSources.map(source => (
-                  <TabsTrigger key={source.id} value={source.id} disabled={importing}>
+                  <TabsTrigger 
+                    key={source.id} 
+                    value={source.id} 
+                    disabled={importing}
+                    className="text-xs px-2 py-1.5 whitespace-nowrap"
+                  >
                     {source.name}
                   </TabsTrigger>
                 ))}

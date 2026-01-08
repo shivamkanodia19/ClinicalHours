@@ -739,16 +739,6 @@ export type Database = {
           website: string
         }[]
       }
-      count_opportunities_within_distance: {
-        Args: {
-          filter_type?: string
-          max_distance_miles?: number
-          search_term?: string
-          user_lat: number
-          user_lon: number
-        }
-        Returns: number
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

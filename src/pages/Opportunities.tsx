@@ -141,14 +141,16 @@ const Opportunities = () => {
     });
   };
 
-  const getAcceptanceColor = (likelihood: string) => {
-    switch (likelihood) {
-      case "high":
-        return "bg-green-500/20 text-green-300 border-green-500/30";
-      case "medium":
-        return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
-      case "low":
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "hospital":
         return "bg-red-500/20 text-red-300 border-red-500/30";
+      case "clinic":
+        return "bg-blue-500/20 text-blue-300 border-blue-500/30";
+      case "hospice":
+        return "bg-purple-500/20 text-purple-300 border-purple-500/30";
+      case "emt":
+        return "bg-orange-500/20 text-orange-300 border-orange-500/30";
       default:
         return "bg-gray-500/20 text-gray-300 border-gray-500/30";
     }
@@ -245,11 +247,8 @@ const Opportunities = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <h3 className="text-lg font-semibold text-foreground">{opportunity.name}</h3>
-                          <Badge variant="outline">
+<Badge className={getTypeColor(opportunity.type)}>
                             {opportunity.type === 'emt' ? 'EMT' : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}
-                          </Badge>
-                          <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
-                            {opportunity.acceptance_likelihood} acceptance
                           </Badge>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
