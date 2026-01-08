@@ -51,10 +51,11 @@ const generateCSPPolicy = (isDev: boolean, supabaseUrl: string): string => {
 
   // Base directives shared between dev and prod
   // img-src restricted to specific trusted domains instead of wildcard https:
+  // Fonts are self-hosted via @fontsource-variable, no external font CDNs needed
   const baseDirectives = [
     "default-src 'self'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
     `img-src 'self' data: blob: ${supabaseWildcard} https://*.tiles.mapbox.com https://api.mapbox.com https://storage.googleapis.com https://lovable.dev https://*.r2.dev`,
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
@@ -197,7 +198,7 @@ export default defineConfig(({ mode }) => {
 
   return {
   server: {
-    host: "127.0.0.1",
+    host: "localhost",
     port: 8080,
     strictPort: false,
     open: false,

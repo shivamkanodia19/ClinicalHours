@@ -8,11 +8,11 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Font Stack */
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-                 "Inter", "DM Sans", "Segoe UI", sans-serif;
-    --font-heading: "Plus Jakarta Sans", "DM Sans", system-ui, -apple-system,
-                    BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    /* Font Stack - Self-hosted via @fontsource-variable */
+    --font-sans: "Inter Variable", "DM Sans Variable", system-ui, -apple-system,
+                 BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    --font-heading: "Plus Jakarta Sans Variable", "DM Sans Variable", system-ui,
+                    -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     
     /* Light Theme - White background, dark text */
     --background: 0 0% 100%;

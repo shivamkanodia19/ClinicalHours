@@ -9,8 +9,12 @@ if (!RESEND_API_KEY) {
 }
 
 // No CORS headers needed - this function is only invoked by cron jobs (server-side)
+// Security headers still included for defense in depth
 const responseHeaders = {
   "Content-Type": "application/json",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 };
 
 const handler = async (req: Request): Promise<Response> => {
