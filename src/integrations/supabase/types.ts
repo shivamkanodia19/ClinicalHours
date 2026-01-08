@@ -448,6 +448,44 @@ export type Database = {
           },
         ]
       }
+      experience_entries: {
+        Row: {
+          id: string
+          user_id: string
+          opportunity_id: string
+          hours: number | null
+          moment: string | null
+          entry_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          opportunity_id: string
+          hours?: number | null
+          moment?: string | null
+          entry_date?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          opportunity_id?: string
+          hours?: number | null
+          moment?: string | null
+          entry_date?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_entries_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_opportunities: {
         Row: {
           applied: boolean | null
@@ -456,6 +494,7 @@ export type Database = {
           deadline: string | null
           heard_back: boolean | null
           id: string
+          is_active_experience: boolean | null
           notes: string | null
           opportunity_id: string
           scheduled_interview: boolean | null
@@ -469,6 +508,7 @@ export type Database = {
           deadline?: string | null
           heard_back?: boolean | null
           id?: string
+          is_active_experience?: boolean | null
           notes?: string | null
           opportunity_id: string
           scheduled_interview?: boolean | null
@@ -482,6 +522,7 @@ export type Database = {
           deadline?: string | null
           heard_back?: boolean | null
           id?: string
+          is_active_experience?: boolean | null
           notes?: string | null
           opportunity_id?: string
           scheduled_interview?: boolean | null

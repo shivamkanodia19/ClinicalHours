@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 interface VerifyEmailRequest {
   token: string;
@@ -76,15 +76,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token for POST requests
-  const csrfValidation = validateCSRFToken(req);
-  if (!csrfValidation.valid) {
-    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-    return new Response(
-      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
-  }
+  // Note: CSRF validation is intentionally skipped for email verification
+  // The verification token itself acts as a secure, one-time secret that protects against CSRF
+  // Users clicking email links won't have CSRF cookies set in their new browser context
 
   // Get client IP for rate limiting
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 

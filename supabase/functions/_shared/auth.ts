@@ -124,6 +124,7 @@ export function validateOrigin(req: Request): { valid: boolean; error?: string }
     source === allowed ||
     source.endsWith('.lovableproject.com') ||
     source.endsWith('.lovable.dev') ||
+    source.endsWith('.lovable.app') ||
     source.endsWith('.clinicalhours.org')
   );
 
@@ -210,6 +211,7 @@ export function getCorsHeaders(origin: string | null): Record<string, string> {
     origin === allowed ||
     origin.endsWith('.lovableproject.com') ||
     origin.endsWith('.lovable.dev') ||
+    origin.endsWith('.lovable.app') ||
     origin.endsWith('.clinicalhours.org')
   );
 
