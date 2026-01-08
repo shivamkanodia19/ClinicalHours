@@ -244,7 +244,7 @@ const OpportunityDetail = () => {
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{opportunity.type}</Badge>
+                <Badge variant="outline">{opportunity.type === 'emt' ? 'EMT' : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}</Badge>
                 <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
                   {opportunity.acceptance_likelihood} Acceptance
                 </Badge>

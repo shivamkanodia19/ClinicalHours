@@ -15,21 +15,48 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   );
 }
 
-// Use sessionStorage instead of localStorage for Supabase sessions
-// sessionStorage is cleared when tab closes, reducing XSS risk while allowing session persistence
-// We still use httpOnly cookies as the primary security mechanism
-const sessionStorageAdapter = {
+// Key for storing "remember me" preference (must match useAuth.tsx)
+const REMEMBER_ME_KEY = "auth_remember_me";
+
+// Check if user wants to stay signed in
+function shouldRememberUser(): boolean {
+  try {
+    return typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+// Dynamic storage adapter that uses localStorage when "remember me" is enabled,
+// otherwise uses sessionStorage (cleared when tab closes)
+const dynamicStorageAdapter = {
   getItem: (key: string) => {
     try {
-      return typeof window !== 'undefined' ? sessionStorage.getItem(key) : null;
+      if (typeof window === 'undefined') return null;
+      // Check both storages - localStorage first if remember me is set, then sessionStorage
+      // This handles the case where user logs in without remember me, then checks it
+      if (shouldRememberUser()) {
+        const localValue = localStorage.getItem(key);
+        if (localValue) return localValue;
+      }
+      return sessionStorage.getItem(key);
     } catch {
       return null;
     }
   },
   setItem: (key: string, value: string) => {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window === 'undefined') return;
+      if (shouldRememberUser()) {
+        // Store in localStorage for persistence across browser closes
+        localStorage.setItem(key, value);
+        // Clean up sessionStorage if it exists
+        sessionStorage.removeItem(key);
+      } else {
+        // Store in sessionStorage (cleared on tab close)
         sessionStorage.setItem(key, value);
+        // Clean up localStorage if it exists
+        localStorage.removeItem(key);
       }
     } catch {
       // Ignore errors (e.g., quota exceeded)
@@ -37,9 +64,10 @@ const sessionStorageAdapter = {
   },
   removeItem: (key: string) => {
     try {
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(key);
-      }
+      if (typeof window === 'undefined') return;
+      // Remove from both storages to ensure clean logout
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
     } catch {
       // Ignore errors
     }
@@ -96,8 +124,8 @@ const customFetch = async (url: RequestInfo | URL, options: RequestInit = {}): P
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: sessionStorageAdapter, // Use sessionStorage (cleared on tab close) instead of localStorage
-    persistSession: true, // Allow session persistence in sessionStorage
+    storage: dynamicStorageAdapter, // Uses localStorage when "remember me" is enabled, sessionStorage otherwise
+    persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true, // Detect OAuth tokens from URL after redirect
   },

@@ -245,8 +245,8 @@ const Opportunities = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <h3 className="text-lg font-semibold text-foreground">{opportunity.name}</h3>
-                          <Badge variant="outline" className="capitalize">
-                            {opportunity.type}
+                          <Badge variant="outline">
+                            {opportunity.type === 'emt' ? 'EMT' : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}
                           </Badge>
                           <Badge className={getAcceptanceColor(opportunity.acceptance_likelihood)}>
                             {opportunity.acceptance_likelihood} acceptance
