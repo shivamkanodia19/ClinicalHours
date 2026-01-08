@@ -182,6 +182,13 @@ const dataSources: DataSource[] = [
     description: '1176 hospitals from various states (OpenStreetMap data)',
     isOSMFormat: false,
   },
+  {
+    id: 'desktop',
+    name: 'Desktop',
+    csvPath: '/data/hospitals_lovable_ready_desktop.csv',
+    description: '816 hospitals from Northeast states (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
 ];
 
 const AdminImport = () => {

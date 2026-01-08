@@ -89,7 +89,7 @@ export async function getCSRFToken(): Promise<string | null> {
  * Restore session from httpOnly cookie
  * Returns access token if session is valid
  */
-export async function restoreSessionFromCookie(): Promise<{ success: boolean; accessToken?: string; user?: { id: string; email?: string }; error?: string }> {
+export async function restoreSessionFromCookie(): Promise<{ success: boolean; accessToken?: string; refreshToken?: string; user?: { id: string; email?: string }; error?: string }> {
   try {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/restore-session`, {
       method: "GET",

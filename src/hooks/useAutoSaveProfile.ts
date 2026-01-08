@@ -28,6 +28,7 @@ interface ProfileData {
   research_experience: string;
   linkedin_url: string;
   resume_url: string;
+  [key: string]: string;
 }
 
 /**
