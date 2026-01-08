@@ -255,11 +255,11 @@ const Auth = () => {
   };
 
   const handleResendVerification = async () => {
-    if (!signedUpUserId || !email || !fullName || resendCooldown > 0) return;
+    if (!signedUpUserId || !email || resendCooldown > 0) return;
     
     setResendLoading(true);
     try {
-      const success = await sendVerificationEmail(signedUpUserId, email, fullName);
+      const success = await sendVerificationEmail(signedUpUserId, email, fullName || "User");
       if (success) {
         toast.success("Verification email sent! Please check your inbox.");
         setResendCooldown(60); // Start 60 second cooldown
