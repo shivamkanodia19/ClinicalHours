@@ -175,6 +175,13 @@ const dataSources: DataSource[] = [
     description: '1339 hospitals from Michigan, Tennessee, and more (OpenStreetMap data)',
     isOSMFormat: false,
   },
+  {
+    id: 'laptop',
+    name: 'Laptop',
+    csvPath: '/data/lovablelaptop.csv',
+    description: '1176 hospitals from various states (OpenStreetMap data)',
+    isOSMFormat: false,
+  },
 ];
 
 const AdminImport = () => {
@@ -429,9 +436,14 @@ const AdminImport = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <Tabs value={selectedSource} onValueChange={setSelectedSource}>
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+              <TabsList className="flex flex-wrap h-auto gap-1 p-1">
                 {dataSources.map(source => (
-                  <TabsTrigger key={source.id} value={source.id} disabled={importing}>
+                  <TabsTrigger 
+                    key={source.id} 
+                    value={source.id} 
+                    disabled={importing}
+                    className="text-xs px-2 py-1.5 whitespace-nowrap"
+                  >
                     {source.name}
                   </TabsTrigger>
                 ))}
