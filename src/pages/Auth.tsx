@@ -11,7 +11,7 @@ import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
 import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
 import { z } from "zod";
-import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, Stethoscope, Heart, Activity, Mail, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import logo from "@/assets/logo.png";
 
@@ -58,9 +58,6 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [signedUpUserId, setSignedUpUserId] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
@@ -179,22 +176,24 @@ const Auth = () => {
           .eq("id", data.user.id);
       }
 
-      // Send custom verification email
+      // Send custom verification email and redirect to check-email page
       if (data.user) {
         logAuthEvent("signup", { email: validatedData.email });
-        setSignedUpUserId(data.user.id);
-        const emailSent = await sendVerificationEmail(
+        
+        // Sign out immediately - user must verify email first
+        await supabase.auth.signOut();
+        
+        // Send verification email
+        await sendVerificationEmail(
           data.user.id,
           validatedData.email,
           validatedData.fullName || "User"
         );
 
-        if (emailSent) {
-          setShowVerificationMessage(true);
-          toast.success("Account created! Please check your email to verify your account.");
-        } else {
-          toast.success("Account created! You can now log in.");
-        }
+        toast.success("Account created! Please check your email to verify your account.");
+        
+        // Redirect to dedicated check-email page
+        navigate(`/check-email?email=${encodeURIComponent(validatedData.email)}&uid=${encodeURIComponent(data.user.id)}&name=${encodeURIComponent(validatedData.fullName || "User")}`);
       }
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -238,24 +237,6 @@ const Auth = () => {
     }
   };
 
-  const handleResendVerification = async () => {
-    if (!signedUpUserId || !email || !fullName) return;
-    
-    setResendLoading(true);
-    try {
-      const success = await sendVerificationEmail(signedUpUserId, email, fullName);
-      if (success) {
-        toast.success("Verification email sent! Please check your inbox.");
-      } else {
-        toast.error("Failed to send verification email. Please try again.");
-      }
-    } catch (error) {
-      toast.error("Failed to send verification email. Please try again.");
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -284,22 +265,31 @@ const Auth = () => {
         throw error;
       }
 
-      // Check if email is verified
+      // Check if email is verified - but ONLY for new accounts (created after 2026-01-09)
+      // Existing accounts are grandfathered in and don't need verification
       if (data.user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("email_verified")
+          .select("email_verified, created_at")
           .eq("id", data.user.id)
           .single();
 
-        if (!profile?.email_verified) {
+        // Cutoff date: accounts created before this date are grandfathered in
+        const verificationCutoffDate = new Date("2026-01-09T00:00:00Z");
+        const accountCreatedAt = profile?.created_at ? new Date(profile.created_at) : new Date(0);
+        const isNewAccount = accountCreatedAt >= verificationCutoffDate;
+
+        // Only require verification for NEW accounts that haven't verified
+        if (isNewAccount && !profile?.email_verified) {
           // Sign out the user since they're not verified
           await supabase.auth.signOut();
           
-          // Store user info for resend functionality
-          setSignedUpUserId(data.user.id);
-          setShowVerificationMessage(true);
-          toast.error("Please verify your email before signing in. Check your inbox for the verification link.");
+          // Get user email for the check-email page
+          const userEmail = data.user.email || email;
+          const userName = data.user.user_metadata?.full_name || "User";
+          
+          toast.error("Please verify your email before signing in.");
+          navigate(`/check-email?email=${encodeURIComponent(userEmail)}&uid=${encodeURIComponent(data.user.id)}&name=${encodeURIComponent(userName)}`);
           return;
         }
       }
@@ -417,61 +407,6 @@ const Auth = () => {
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Sign In
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show verification message screen
-  if (showVerificationMessage) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-        <div className="w-full max-w-md text-center space-y-6">
-          <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <Mail className="w-10 h-10 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Check Your Email</h1>
-            <p className="text-muted-foreground">
-              We've sent a verification link to <strong className="text-foreground">{email}</strong>
-            </p>
-          </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-left">
-            <p className="text-sm text-muted-foreground mb-3">
-              Click the link in the email to verify your account. If you don't see it, check your spam folder.
-            </p>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleResendVerification}
-              disabled={resendLoading}
-            >
-              {resendLoading ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Resend Verification Email
-                </>
-              )}
-            </Button>
-          </div>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setShowVerificationMessage(false);
-              setEmail("");
-              setPassword("");
-              setFullName("");
-              setPhone("");
-            }}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Sign Up
           </Button>
         </div>
       </div>
