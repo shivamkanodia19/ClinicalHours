@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import logo from "@/assets/logo.png";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,8 +72,12 @@ const Navigation = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className={`flex items-center gap-3 text-xl tracking-tight font-heading ${logoColor}`}>
-            <span className="font-semibold">ClinicalHours</span>
+          <Link to="/" className={`flex items-center gap-2 text-xl tracking-tight font-heading ${logoColor}`}>
+            <img src={logo} alt="ClinicalHours" className="h-8 w-8 object-contain" />
+            <span>
+              <span className="font-normal">Clinical</span>
+              <span className="font-bold">Hours</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
