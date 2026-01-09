@@ -106,7 +106,7 @@ const Home = () => {
         
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight animate-fade-in-up drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-light text-white leading-[1.05] tracking-wide animate-fade-in-up drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading uppercase">
               Find Your<br />Clinical Future
             </h1>
             <p className="text-lg md:text-xl text-white/70 max-w-xl mx-auto leading-relaxed font-normal animate-fade-in-up-delay-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
@@ -278,7 +278,7 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className={`max-w-3xl mx-auto text-center space-y-10 ${ctaInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white leading-tight drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading">
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-light text-white leading-tight tracking-wide drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading uppercase">
               Ready to Start?
             </h2>
             <p className="text-xl text-white/60 max-w-xl mx-auto font-normal drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
