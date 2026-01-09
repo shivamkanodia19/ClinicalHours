@@ -232,7 +232,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send branded email via Resend HTTP API
     // Use root domain clinicalhours.org since that's what's verified in Resend
     const emailPayload = {
-      from: "ClinicalHours <noreply@clinicalhours.org>",
+      from: "ClinicalHours <support@clinicalhours.org>",
       to: [email],
       subject: "Reset your ClinicalHours password",
       html: `
