@@ -215,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
     
     const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
-    const verificationLink = `${safeOrigin}/verify?token=${verificationToken}`;
+    const verificationLink = `${safeOrigin}/verify-email?token=${verificationToken}`;
 
     // Sanitize fullName for HTML
     const safeName = fullName
