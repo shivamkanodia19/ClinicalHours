@@ -12,25 +12,25 @@ const features: Feature[] = [
   {
     id: "dashboard",
     title: "Dashboard",
-    description: "Track your saved opportunities, monitor application progress, and manage your clinical journey all in one place. See your stats at a glance and stay organized throughout your pre-med experience.",
+    description: "Track saved opportunities, monitor progress, and manage your clinical journey in one place.",
     image: "/screenshots/dashboard.png",
   },
   {
     id: "opportunities",
     title: "Opportunities",
-    description: "Browse thousands of clinical opportunities sorted by distance from your location. Filter by type, view detailed information, and add promising opportunities to your tracker with one click.",
+    description: "Browse thousands of opportunities sorted by distance. Filter by type and add to your tracker.",
     image: "/screenshots/opportunities.png",
   },
   {
     id: "map",
     title: "Map",
-    description: "Explore clinical opportunities across the country with our interactive map. Set a radius, drop custom pins, and visualize where opportunities are clustered near you.",
+    description: "Explore opportunities with our interactive map. Set a radius and visualize clusters near you.",
     image: "/screenshots/map.png",
   },
   {
     id: "profile",
     title: "Profile",
-    description: "Keep your academic and professional information up to date. Your profile helps personalize recommendations and tracks your clinical hours automatically.",
+    description: "Keep your information up to date. Personalize recommendations and track hours automatically.",
     image: "/screenshots/profile.png",
   },
 ];
@@ -102,29 +102,29 @@ const FeatureShowcase = () => {
         </div>
 
         {/* Feature Content */}
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Text Content */}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-5 gap-8 md:gap-12 items-center">
+            {/* Text Content - Takes up less space */}
             <div 
-              className={`space-y-6 transition-all duration-300 ${
+              className={`md:col-span-2 space-y-5 transition-all duration-300 ${
                 isTransitioning ? "opacity-0 translate-x-[-20px]" : "opacity-100 translate-x-0"
               }`}
             >
               <h3 
-                className="text-3xl md:text-4xl text-black"
+                className="text-2xl md:text-3xl text-black"
                 style={{ fontWeight: 700 }}
               >
                 {activeFeature.title}
               </h3>
               <p 
-                className="text-black/60 text-lg leading-relaxed"
+                className="text-black/60 text-base leading-relaxed"
                 style={{ fontWeight: 400 }}
               >
                 {activeFeature.description}
               </p>
               
               {/* Progress dots */}
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 {features.map((_, index) => (
                   <button
                     key={index}
@@ -140,26 +140,26 @@ const FeatureShowcase = () => {
               </div>
             </div>
 
-            {/* Image */}
+            {/* Image - Takes up more space */}
             <div 
-              className={`relative transition-all duration-500 ${
+              className={`md:col-span-3 relative transition-all duration-500 ${
                 isTransitioning ? "opacity-0 translate-x-[20px]" : "opacity-100 translate-x-0"
               }`}
             >
-              <div className="relative rounded-lg overflow-hidden shadow-2xl border border-black/10">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-black/10">
                 <img
                   src={activeFeature.image}
                   alt={`${activeFeature.title} screenshot`}
-                  className="w-full h-auto"
+                  className="w-full h-auto object-cover"
                   style={{ aspectRatio: "16/10" }}
                 />
                 {/* Subtle overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none rounded-2xl" />
               </div>
               
-              {/* Decorative elements */}
-              <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-black/5 -z-10" />
-              <div className="absolute -top-4 -left-4 w-16 h-16 bg-black/5 -z-10" />
+              {/* Decorative elements with rounded corners */}
+              <div className="absolute -bottom-4 -right-4 w-28 h-28 bg-black/5 rounded-xl -z-10" />
+              <div className="absolute -top-4 -left-4 w-20 h-20 bg-black/5 rounded-xl -z-10" />
             </div>
           </div>
         </div>
