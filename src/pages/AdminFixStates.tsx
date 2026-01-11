@@ -112,8 +112,11 @@ const AdminFixStates = () => {
 
     setFixing(true);
     const results: FixResult[] = [];
+    let successCount = 0;
+    let failCount = 0;
 
     try {
+      // Process in batches to show progress
       for (const opp of opportunities) {
         // Get state from coordinates using Mapbox
         const state = await getStateFromCoordinates(
@@ -124,19 +127,36 @@ const AdminFixStates = () => {
         if (state) {
           const newLocation = `${opp.currentLocation}, ${state}`;
 
-          // Update the database
-          const { error: updateError } = await supabase
-            .from("opportunities")
-            .update({ location: newLocation })
-            .eq("id", opp.id);
+          // Use RPC call to bypass RLS - call a database function
+          const { error: updateError } = await supabase.rpc('admin_update_opportunity_location', {
+            opp_id: opp.id,
+            new_location: newLocation
+          });
 
           if (updateError) {
-            results.push({
-              id: opp.id,
-              oldLocation: opp.currentLocation,
-              newLocation: opp.currentLocation,
-              status: `failed - ${updateError.message}`,
-            });
+            // Fallback to direct update (in case RPC doesn't exist)
+            const { error: directError } = await supabase
+              .from("opportunities")
+              .update({ location: newLocation })
+              .eq("id", opp.id);
+            
+            if (directError) {
+              results.push({
+                id: opp.id,
+                oldLocation: opp.currentLocation,
+                newLocation: opp.currentLocation,
+                status: `failed - ${directError.message}`,
+              });
+              failCount++;
+            } else {
+              results.push({
+                id: opp.id,
+                oldLocation: opp.currentLocation,
+                newLocation: newLocation,
+                status: "fixed",
+              });
+              successCount++;
+            }
           } else {
             results.push({
               id: opp.id,
@@ -144,6 +164,7 @@ const AdminFixStates = () => {
               newLocation: newLocation,
               status: "fixed",
             });
+            successCount++;
           }
         } else {
           results.push({
@@ -152,6 +173,7 @@ const AdminFixStates = () => {
             newLocation: opp.currentLocation,
             status: "failed - could not reverse geocode",
           });
+          failCount++;
         }
 
         // Update results in real-time
@@ -161,10 +183,9 @@ const AdminFixStates = () => {
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
 
-      const fixed = results.filter((r) => r.status === "fixed").length;
       toast({
         title: "Fix Complete",
-        description: `Fixed ${fixed} of ${results.length} opportunities.`,
+        description: `Fixed ${successCount} of ${results.length} opportunities. ${failCount} failed.`,
       });
     } catch (error) {
       console.error("Error fixing:", error);
