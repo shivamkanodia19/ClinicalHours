@@ -1,194 +1,306 @@
-import { useState, useEffect, useCallback } from "react";
-import { useInView } from "@/hooks/useInView";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 
-interface Feature {
+/**
+ * SCENES CONFIGURATION
+ * =====================
+ * To update scenes, modify this array:
+ * - title: Main headline text
+ * - subtitle: Description text
+ * - ctaText: Button text
+ * - ctaHref: Button link destination
+ * - bgGradient: CSS gradient for background (full-bleed)
+ * - imageSrc: Path to screenshot image
+ * - imageAlt: Alt text for accessibility
+ */
+interface Scene {
   id: string;
   title: string;
-  description: string;
-  image: string;
+  subtitle: string;
+  ctaText: string;
+  ctaHref: string;
+  bgGradient: string;
+  imageSrc: string;
+  imageAlt: string;
 }
 
-const features: Feature[] = [
+const scenes: Scene[] = [
   {
     id: "dashboard",
-    title: "Dashboard",
-    description: "Track saved opportunities, monitor progress, and manage your clinical journey in one place.",
-    image: "/screenshots/dashboard.png",
+    title: "Your Clinical Journey, Organized",
+    subtitle: "Track saved opportunities, monitor your progress, and manage applications all in one powerful dashboard.",
+    ctaText: "View Dashboard",
+    ctaHref: "/dashboard",
+    // Deep navy to slate gradient
+    bgGradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
+    imageSrc: "/screenshots/dashboard.png",
+    imageAlt: "Clinical Hours Dashboard showing saved opportunities and progress tracking",
   },
   {
     id: "opportunities",
-    title: "Opportunities",
-    description: "Browse thousands of opportunities sorted by distance. Filter by type and add to your tracker.",
-    image: "/screenshots/opportunities.png",
+    title: "Discover Real Opportunities",
+    subtitle: "Browse thousands of clinical positions sorted by distance. Filter by type and add promising ones to your tracker.",
+    ctaText: "Browse Opportunities",
+    ctaHref: "/opportunities",
+    // Warm charcoal gradient
+    bgGradient: "linear-gradient(135deg, #1c1917 0%, #292524 50%, #44403c 100%)",
+    imageSrc: "/screenshots/opportunities.png",
+    imageAlt: "Opportunities page showing clinical volunteer positions",
   },
   {
     id: "map",
-    title: "Map",
-    description: "Explore opportunities with our interactive map. Set a radius and visualize clusters near you.",
-    image: "/screenshots/map.png",
+    title: "Visualize What's Near You",
+    subtitle: "Explore opportunities on an interactive map. Set your radius and see clusters of positions in your area.",
+    ctaText: "Open Map",
+    ctaHref: "/map",
+    // Deep teal to dark gradient
+    bgGradient: "linear-gradient(135deg, #042f2e 0%, #134e4a 50%, #0f766e 100%)",
+    imageSrc: "/screenshots/map.png",
+    imageAlt: "Interactive map showing clinical opportunities near user location",
   },
   {
     id: "profile",
-    title: "Profile",
-    description: "Keep your information up to date. Personalize recommendations and track hours automatically.",
-    image: "/screenshots/profile.png",
+    title: "Personalize Your Experience",
+    subtitle: "Keep your information updated. Get tailored recommendations and track your total hours automatically.",
+    ctaText: "Edit Profile",
+    ctaHref: "/profile",
+    // Deep purple to slate gradient
+    bgGradient: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)",
+    imageSrc: "/screenshots/profile.png",
+    imageAlt: "User profile page with settings and hour tracking",
   },
 ];
 
-// Auto-rotate interval in milliseconds
-const AUTO_ROTATE_INTERVAL = 5000;
+// Auto-rotate interval in milliseconds (adjust timing here)
+const AUTO_ROTATE_INTERVAL = 7000; // 7 seconds per scene
 
 const FeatureShowcase = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const { ref, isInView } = useInView({ threshold: 0.2 });
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const goToFeature = useCallback((index: number) => {
-    if (index === activeIndex || isTransitioning) return;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setActiveIndex(index);
-      setTimeout(() => setIsTransitioning(false), 50);
-    }, 300);
-  }, [activeIndex, isTransitioning]);
-
-  // Auto-rotate
+  // Check for reduced motion preference
   useEffect(() => {
-    if (!isInView) return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
     
-    const interval = setInterval(() => {
-      const nextIndex = (activeIndex + 1) % features.length;
-      goToFeature(nextIndex);
-    }, AUTO_ROTATE_INTERVAL);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
 
+  const goToScene = useCallback((index: number) => {
+    if (index === activeIndex) return;
+    setActiveIndex(index);
+  }, [activeIndex]);
+
+  const nextScene = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % scenes.length);
+  }, []);
+
+  // Auto-rotate when reduced motion not preferred
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    
+    const interval = setInterval(nextScene, AUTO_ROTATE_INTERVAL);
     return () => clearInterval(interval);
-  }, [activeIndex, isInView, goToFeature]);
+  }, [prefersReducedMotion, nextScene]);
 
-  const activeFeature = features[activeIndex];
+  const activeScene = scenes[activeIndex];
+  
+  // Transition classes based on motion preference
+  const transitionClass = prefersReducedMotion 
+    ? "" 
+    : "transition-all duration-700 ease-out";
 
   return (
-    <section 
-      ref={ref}
-      className="py-32 bg-white relative overflow-hidden"
+    <section
+      ref={containerRef}
+      className="relative w-full min-h-screen overflow-hidden"
       style={{ fontFamily: '"Times New Roman", Times, serif' }}
     >
-      <div className="container mx-auto px-6">
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl text-black mb-6" style={{ fontWeight: 400 }}>
-            Everything you need
-          </h2>
-          <p className="text-black/60 text-lg leading-relaxed" style={{ fontWeight: 400 }}>
-            A complete platform to discover, track, and secure clinical experiences.
-          </p>
-        </div>
+      {/* Background layers - Full bleed with crossfade */}
+      {scenes.map((scene, index) => (
+        <div
+          key={scene.id}
+          className={`absolute inset-0 ${transitionClass}`}
+          style={{
+            background: scene.bgGradient,
+            opacity: activeIndex === index ? 1 : 0,
+            zIndex: activeIndex === index ? 1 : 0,
+          }}
+        />
+      ))}
 
-        {/* Feature Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-16">
-          {features.map((feature, index) => (
-            <button
-              key={feature.id}
-              onClick={() => goToFeature(index)}
-              className={`px-6 py-3 text-sm md:text-base transition-all duration-300 border ${
-                activeIndex === index
-                  ? "bg-black text-white border-black"
-                  : "bg-transparent text-black/70 border-black/20 hover:border-black/40 hover:text-black"
-              }`}
-              style={{ fontWeight: activeIndex === index ? 700 : 400 }}
-            >
-              {feature.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Feature Content */}
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-5 gap-8 md:gap-12 items-center">
-            {/* Text Content - Takes up less space */}
-            <div 
-              className={`md:col-span-2 space-y-5 transition-all duration-300 ${
-                isTransitioning ? "opacity-0 translate-x-[-20px]" : "opacity-100 translate-x-0"
-              }`}
-            >
-              <h3 
-                className="text-2xl md:text-3xl text-black"
-                style={{ fontWeight: 700 }}
-              >
-                {activeFeature.title}
-              </h3>
-              <p 
-                className="text-black/60 text-base leading-relaxed"
+      {/* Content container */}
+      <div className="relative z-10 min-h-screen flex items-center">
+        <div className="container mx-auto px-6 lg:px-12 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            
+            {/* Text content - Left side on desktop, top on mobile */}
+            <div className="order-1 lg:order-1 space-y-8">
+              {/* Scene indicator */}
+              <div 
+                className={`text-xs text-white/40 uppercase tracking-[0.3em] ${transitionClass}`}
                 style={{ fontWeight: 400 }}
               >
-                {activeFeature.description}
-              </p>
-              
-              {/* Progress dots */}
-              <div className="flex gap-2 pt-2">
-                {features.map((_, index) => (
+                {String(activeIndex + 1).padStart(2, "0")} / {String(scenes.length).padStart(2, "0")}
+              </div>
+
+              {/* Title with crossfade */}
+              <div className="relative min-h-[120px] md:min-h-[160px]">
+                {scenes.map((scene, index) => (
+                  <h2
+                    key={scene.id}
+                    className={`absolute inset-0 text-4xl md:text-5xl lg:text-6xl text-white leading-tight ${transitionClass}`}
+                    style={{
+                      fontWeight: 400,
+                      opacity: activeIndex === index ? 1 : 0,
+                      transform: activeIndex === index 
+                        ? "translateY(0)" 
+                        : prefersReducedMotion ? "translateY(0)" : "translateY(20px)",
+                    }}
+                  >
+                    {scene.title}
+                  </h2>
+                ))}
+              </div>
+
+              {/* Subtitle with crossfade */}
+              <div className="relative min-h-[80px]">
+                {scenes.map((scene, index) => (
+                  <p
+                    key={scene.id}
+                    className={`absolute inset-0 text-lg md:text-xl text-white/60 leading-relaxed max-w-lg ${transitionClass}`}
+                    style={{
+                      fontWeight: 400,
+                      opacity: activeIndex === index ? 1 : 0,
+                      transform: activeIndex === index 
+                        ? "translateY(0)" 
+                        : prefersReducedMotion ? "translateY(0)" : "translateY(20px)",
+                      transitionDelay: prefersReducedMotion ? "0ms" : "100ms",
+                    }}
+                  >
+                    {scene.subtitle}
+                  </p>
+                ))}
+              </div>
+
+              {/* CTA Button */}
+              <div className="pt-4">
+                <Link
+                  to={activeScene.ctaHref}
+                  className={`group inline-flex items-center gap-3 text-sm uppercase tracking-widest px-8 py-4 bg-white text-black hover:bg-white/90 ${transitionClass}`}
+                  style={{ fontWeight: 500 }}
+                >
+                  <span>{activeScene.ctaText}</span>
+                  <svg 
+                    className={`w-4 h-4 ${prefersReducedMotion ? "" : "group-hover:translate-x-1 transition-transform"}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              </div>
+
+              {/* Navigation dots */}
+              <div className="flex items-center gap-3 pt-8">
+                {scenes.map((scene, index) => (
                   <button
-                    key={index}
-                    onClick={() => goToFeature(index)}
-                    className={`h-2 rounded-full transition-all duration-500 ${
+                    key={scene.id}
+                    onClick={() => goToScene(index)}
+                    className={`relative h-3 rounded-full ${transitionClass} ${
                       activeIndex === index 
-                        ? "w-8 bg-black" 
-                        : "w-2 bg-black/20 hover:bg-black/40"
+                        ? "w-10 bg-white" 
+                        : "w-3 bg-white/30 hover:bg-white/50"
                     }`}
-                    aria-label={`Go to feature ${index + 1}`}
+                    aria-label={`Go to ${scene.title}`}
+                    aria-current={activeIndex === index ? "true" : "false"}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Image - Takes up more space */}
-            <div 
-              className={`md:col-span-3 relative transition-all duration-500 ${
-                isTransitioning ? "opacity-0 translate-x-[20px]" : "opacity-100 translate-x-0"
-              }`}
-            >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-black/10">
-                <img
-                  src={activeFeature.image}
-                  alt={`${activeFeature.title} screenshot`}
-                  className="w-full h-auto object-cover"
-                  style={{ aspectRatio: "16/10" }}
+            {/* Device frame with screenshot - Right side on desktop, bottom on mobile */}
+            <div className="order-2 lg:order-2 flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-2xl">
+                {/* Device frame container */}
+                <div 
+                  className={`relative rounded-2xl overflow-hidden shadow-2xl ${transitionClass}`}
+                  style={{
+                    boxShadow: "0 50px 100px -20px rgba(0, 0, 0, 0.5), 0 30px 60px -30px rgba(0, 0, 0, 0.6)",
+                  }}
+                >
+                  {/* Browser-style top bar */}
+                  <div className="bg-gray-900/80 backdrop-blur px-4 py-3 flex items-center gap-2">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                    </div>
+                    <div className="flex-1 ml-4">
+                      <div className="bg-gray-800 rounded-md px-3 py-1 text-xs text-gray-400 max-w-xs">
+                        clinicalhours.org
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Screenshot images with crossfade */}
+                  <div className="relative" style={{ aspectRatio: "16/10" }}>
+                    {scenes.map((scene, index) => (
+                      <img
+                        key={scene.id}
+                        src={scene.imageSrc}
+                        alt={scene.imageAlt}
+                        className={`absolute inset-0 w-full h-full object-cover object-top ${transitionClass}`}
+                        style={{
+                          opacity: activeIndex === index ? 1 : 0,
+                          transform: activeIndex === index 
+                            ? "scale(1)" 
+                            : prefersReducedMotion ? "scale(1)" : "scale(1.02)",
+                        }}
+                        loading={index === 0 ? "eager" : "lazy"}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Decorative glow effect */}
+                <div 
+                  className={`absolute -inset-4 rounded-3xl opacity-30 blur-3xl -z-10 ${transitionClass}`}
+                  style={{ background: activeScene.bgGradient }}
                 />
-                {/* Subtle overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none rounded-2xl" />
               </div>
-              
-              {/* Decorative elements with rounded corners */}
-              <div className="absolute -bottom-4 -right-4 w-28 h-28 bg-black/5 rounded-xl -z-10" />
-              <div className="absolute -top-4 -left-4 w-20 h-20 bg-black/5 rounded-xl -z-10" />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Navigation arrows */}
-        <div className="flex justify-center gap-4 mt-12">
-          <button
-            onClick={() => goToFeature((activeIndex - 1 + features.length) % features.length)}
-            className="p-3 border border-black/20 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
-            aria-label="Previous feature"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={() => goToFeature((activeIndex + 1) % features.length)}
-            className="p-3 border border-black/20 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
-            aria-label="Next feature"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+      {/* Arrow navigation - Desktop only */}
+      <div className="absolute bottom-8 right-8 hidden lg:flex gap-3 z-20">
+        <button
+          onClick={() => goToScene((activeIndex - 1 + scenes.length) % scenes.length)}
+          className={`p-4 border border-white/20 hover:border-white hover:bg-white hover:text-black text-white ${transitionClass}`}
+          aria-label="Previous scene"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          onClick={() => goToScene((activeIndex + 1) % scenes.length)}
+          className={`p-4 border border-white/20 hover:border-white hover:bg-white hover:text-black text-white ${transitionClass}`}
+          aria-label="Next scene"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </section>
   );
 };
 
 export default FeatureShowcase;
-

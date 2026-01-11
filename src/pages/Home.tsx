@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Hospital, Clock, MapPin, Users, Star, Building2, ClipboardCheck, MessageCircle, Heart, Target } from "lucide-react";
+import { MapPin, Building2, Heart } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import AnimatedCounter from "@/components/AnimatedCounter";
@@ -8,6 +8,8 @@ import { useInView } from "@/hooks/useInView";
 import { useAuth } from "@/hooks/useAuth";
 import HeroVideoCarousel from "@/components/HeroVideoCarousel";
 import FeatureShowcase from "@/components/FeatureShowcase";
+import FeatureShowcaseRail from "@/components/FeatureShowcaseRail";
+import HowItWorksTimeline from "@/components/HowItWorksTimeline";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -22,69 +24,7 @@ const Home = () => {
   
   const { ref: statsRef, isInView: statsInView } = useInView({ threshold: 0.2 });
   const { ref: storyRef, isInView: storyInView } = useInView({ threshold: 0.2 });
-  const { ref: featuresRef, isInView: featuresInView } = useInView({ threshold: 0.1 });
-  const { ref: howItWorksRef, isInView: howItWorksInView } = useInView({ threshold: 0.1 });
   const { ref: ctaRef, isInView: ctaInView } = useInView({ threshold: 0.2 });
-
-  const howItWorksSteps = [
-    {
-      icon: MapPin,
-      step: 1,
-      title: "Discover",
-      description: "Browse opportunities sorted by distance with acceptance likelihood.",
-    },
-    {
-      icon: ClipboardCheck,
-      step: 2,
-      title: "Track",
-      description: "Save and track your application progress in one dashboard.",
-    },
-    {
-      icon: Star,
-      step: 3,
-      title: "Review",
-      description: "Read real ratings from students who've been there.",
-    },
-    {
-      icon: MessageCircle,
-      step: 4,
-      title: "Connect",
-      description: "Ask questions and get answers from the community.",
-    },
-  ];
-
-  const features = [
-    {
-      icon: Hospital,
-      title: "Comprehensive Database",
-      description: "Hospitals, clinics, hospice centers, EMT programs, and volunteering opportunities.",
-    },
-    {
-      icon: Clock,
-      title: "Detailed Requirements",
-      description: "Hours required, contact info, and acceptance likelihood for each opportunity.",
-    },
-    {
-      icon: MapPin,
-      title: "Location-Based Search",
-      description: "Find opportunities near you with interactive maps and powerful filters.",
-    },
-    {
-      icon: Heart,
-      title: "Student-Focused",
-      description: "Built by students who understand the clinical experience hunt.",
-    },
-    {
-      icon: Users,
-      title: "Community-Driven",
-      description: "Learn from real experiences shared by other pre-med students.",
-    },
-    {
-      icon: Target,
-      title: "Transparent Process",
-      description: "Clear information on requirements, hours, and acceptance rates.",
-    },
-  ];
 
   const stats = [
     { value: 4750, suffix: "+", label: "Opportunities", icon: Building2 },
@@ -183,95 +123,11 @@ const Home = () => {
       {/* Feature Showcase - Interactive Squarespace-style section */}
       <FeatureShowcase />
 
-      {/* Features Section - Clean cards on dark background */}
-      <section ref={featuresRef} className="py-32 bg-black relative overflow-hidden" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30 pointer-events-none"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className={`text-center max-w-2xl mx-auto mb-24 ${featuresInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl text-white mb-8" style={{ fontWeight: 400 }}>
-              Built for Pre-Med Success
-            </h2>
-            <p className="text-white/60 text-lg leading-relaxed" style={{ fontWeight: 400 }}>
-              Everything you need to find, evaluate, and secure clinical opportunities.
-            </p>
-          </div>
+      {/* Features Section - Horizontal scrolling rail */}
+      <FeatureShowcaseRail />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/10 max-w-6xl mx-auto">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className={`group relative p-12 bg-black hover:bg-white/5 transition-all duration-500 overflow-hidden ${
-                  featuresInView ? 'animate-fade-in-up' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                {/* Gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                {/* Border glow effect */}
-                <div className="absolute inset-0 border border-transparent group-hover:border-white/10 transition-colors duration-500"></div>
-                
-                {/* Content */}
-                <div className="relative z-10">
-                  <div className="relative inline-block mb-8">
-                    <feature.icon className="h-8 w-8 text-white/60 group-hover:text-white transition-all duration-500 group-hover:scale-110" strokeWidth={1} />
-                    <div className="absolute inset-0 blur-md opacity-0 group-hover:opacity-30 bg-white transition-opacity duration-500"></div>
-                  </div>
-                  <h3 className="text-xl text-white mb-4 group-hover:translate-x-1 transition-transform duration-500" style={{ fontWeight: 400 }}>{feature.title}</h3>
-                  <p className="text-white/50 leading-relaxed group-hover:text-white/70 transition-colors duration-500" style={{ fontWeight: 400 }}>{feature.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section ref={howItWorksRef} className="py-32 bg-black relative overflow-hidden" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-transparent pointer-events-none"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className={`text-center max-w-2xl mx-auto mb-24 ${howItWorksInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl text-white mb-8" style={{ fontWeight: 400 }}>
-              How It Works
-            </h2>
-            <p className="text-white/50 text-lg leading-relaxed" style={{ fontWeight: 400 }}>
-              Four steps to your clinical experience.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-5xl mx-auto">
-            {howItWorksSteps.map((item, index) => (
-              <div
-                key={index}
-                className={`group text-center cursor-default ${
-                  howItWorksInView ? 'animate-fade-in-up' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="relative w-20 h-20 mx-auto mb-8 border border-white/10 flex items-center justify-center group-hover:border-white/30 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                  <item.icon className="h-8 w-8 text-white/60 group-hover:text-white transition-all duration-500 group-hover:scale-110" strokeWidth={1} />
-                  <div className="absolute inset-0 blur-lg opacity-0 group-hover:opacity-20 bg-white transition-opacity duration-500"></div>
-                  {/* Step number badge */}
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-xs text-white/60 group-hover:bg-white/20 group-hover:text-white transition-all duration-500" style={{ fontWeight: 400 }}>
-                    {item.step}
-                  </div>
-                </div>
-                <div className="text-xs text-white/40 uppercase tracking-[0.2em] mb-4 group-hover:text-white/60 transition-colors duration-500" style={{ fontWeight: 400 }}>
-                  Step {item.step}
-                </div>
-                <h3 className="text-2xl text-white mb-4 group-hover:translate-y-[-2px] transition-transform duration-500" style={{ fontWeight: 400 }}>
-                  {item.title}
-                </h3>
-                <p className="text-white/50 leading-relaxed group-hover:text-white/70 transition-colors duration-500" style={{ fontWeight: 400 }}>
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* How It Works Section - Scroll-reveal timeline */}
+      <HowItWorksTimeline />
 
       {/* CTA Section */}
       <section ref={ctaRef} className="py-40 bg-black relative overflow-hidden">
