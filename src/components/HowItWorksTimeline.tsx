@@ -181,7 +181,7 @@ const HowItWorksTimeline = () => {
                 isActive={activeSteps.has(index)}
                 isEven={index % 2 === 0}
                 prefersReducedMotion={prefersReducedMotion}
-                ref={(el) => (stepRefs.current[index] = el)}
+                ref={(el) => { stepRefs.current[index] = el; }}
               />
             ))}
           </div>
