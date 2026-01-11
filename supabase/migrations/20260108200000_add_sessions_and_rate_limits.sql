@@ -112,3 +112,4 @@ GRANT EXECUTE ON FUNCTION clean_expired_rate_limits() TO service_role;
 COMMENT ON TABLE public.sessions IS 'Stores user sessions for secure cookie-based authentication. Only accessible via service role.';
 COMMENT ON TABLE public.rate_limits IS 'Persistent rate limiting storage. Only accessible via service role.';
 
+
