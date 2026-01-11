@@ -752,6 +752,7 @@ export type Database = {
       }
     }
     Functions: {
+      add_admin_by_email: { Args: { admin_email: string }; Returns: boolean }
       calculate_distance_miles: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
