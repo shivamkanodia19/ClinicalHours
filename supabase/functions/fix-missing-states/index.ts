@@ -1,9 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { validateOrigin, getCorsHeaders, authenticateFromCookie, checkAdminRole } from "../_shared/auth.ts";
 
 interface Opportunity {
   id: string;
@@ -43,18 +39,52 @@ async function getStateFromCoordinates(
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate Origin header
+    const originValidation = validateOrigin(req);
+    if (!originValidation.valid) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid origin" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Authenticate user
+    const authResult = await authenticateFromCookie(req);
+    if (!authResult.success || !authResult.user) {
+      return new Response(
+        JSON.stringify({ success: false, error: authResult.error || "Authentication required" }),
+        { status: authResult.statusCode || 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Check admin role
+    const adminCheck = await checkAdminRole(authResult.user.id);
+    if (!adminCheck.isAdmin) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Admin access required" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const mapboxToken = Deno.env.get("MAPBOX_PUBLIC_TOKEN") || "pk.eyJ1IjoicmFnaGF2dDIwMDciLCJhIjoiY21rYTl4dGhoMGNqNjNlcHpoNG9mMDEzdSJ9.P6bq2u6zmsWVA2rWL6hYOw";
+    const mapboxToken = Deno.env.get("MAPBOX_PUBLIC_TOKEN");
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
+    }
+
+    if (!mapboxToken) {
+      throw new Error("MAPBOX_PUBLIC_TOKEN environment variable is not configured");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -98,7 +128,7 @@ Deno.serve(async (req) => {
           message: `Found ${missingState.length} opportunities missing state. Use action=fix to update them.`,
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
     }
@@ -187,7 +217,7 @@ Deno.serve(async (req) => {
           results,
         }),
         {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
     }
@@ -198,11 +228,13 @@ Deno.serve(async (req) => {
       }),
       {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   } catch (error) {
     console.error("Error:", error);
+    const origin = req.headers.get("origin");
+    const errorCorsHeaders = getCorsHeaders(origin);
     return new Response(
       JSON.stringify({
         success: false,
@@ -210,7 +242,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...errorCorsHeaders },
       }
     );
   }

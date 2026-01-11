@@ -1,4 +1,19 @@
--- Create a function to auto-assign admin role to specific emails on signup
+-- Create app_config table to store admin emails (not hardcoded)
+CREATE TABLE IF NOT EXISTS public.app_config (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on app_config
+ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+
+-- Only service role can read/write app_config
+CREATE POLICY "Service role only" ON public.app_config
+  FOR ALL USING (false);
+
+-- Create a function to auto-assign admin role based on config table
 CREATE OR REPLACE FUNCTION public.handle_new_user_admin_check()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -6,8 +21,19 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  admin_emails TEXT[] := ARRAY['shivamkanodia77@gmail.com', 'ragtirup07@gmail.com'];
+  admin_emails TEXT[];
 BEGIN
+  -- Get admin emails from config table
+  SELECT ARRAY(SELECT jsonb_array_elements_text(value))
+  INTO admin_emails
+  FROM public.app_config
+  WHERE key = 'admin_emails';
+  
+  -- If no config found or empty, skip
+  IF admin_emails IS NULL OR array_length(admin_emails, 1) IS NULL THEN
+    RETURN NEW;
+  END IF;
+  
   -- If the new user's email is in the admin list, assign admin role
   IF NEW.email = ANY(admin_emails) THEN
     INSERT INTO public.user_roles (user_id, role)
@@ -54,3 +80,8 @@ BEGIN
   RETURN TRUE;
 END;
 $$;
+
+-- NOTE: To configure admin emails, run this SQL with service role:
+-- INSERT INTO public.app_config (key, value) 
+-- VALUES ('admin_emails', '["admin1@example.com", "admin2@example.com"]')
+-- ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();

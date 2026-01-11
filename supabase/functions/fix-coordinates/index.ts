@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders, authenticateFromCookie, checkAdminRole } from "../_shared/auth.ts";
 
-const MAPBOX_TOKEN = Deno.env.get("MAPBOX_PUBLIC_TOKEN") || "";
+const MAPBOX_TOKEN = Deno.env.get("MAPBOX_PUBLIC_TOKEN") ?? "";
 
 async function geocodeAddress(address: string): Promise<{ latitude: number; longitude: number } | null> {
   if (!MAPBOX_TOKEN) {
@@ -111,6 +111,24 @@ const handler = async (req: Request): Promise<Response> => {
   if (!originValidation.valid) {
     return new Response(
       JSON.stringify({ success: false, error: "Invalid origin" }),
+      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Authenticate user
+  const authResult = await authenticateFromCookie(req);
+  if (!authResult.success || !authResult.user) {
+    return new Response(
+      JSON.stringify({ success: false, error: authResult.error || "Authentication required" }),
+      { status: authResult.statusCode || 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
+
+  // Check admin role
+  const adminCheck = await checkAdminRole(authResult.user.id);
+  if (!adminCheck.isAdmin) {
+    return new Response(
+      JSON.stringify({ success: false, error: "Admin access required" }),
       { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
