@@ -11,7 +11,7 @@ import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
 import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
 import { z } from "zod";
-import { ArrowLeft, Stethoscope, Heart, Activity, Mail, Loader2, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Stethoscope, Heart, Activity, Mail, Loader2, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import logo from "@/assets/logo.png";
 
@@ -533,18 +533,13 @@ const Auth = () => {
                       disabled={loading || googleLoading}
                       className="h-11 pr-10"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      tabIndex={-1}
+                    <div
+                      onMouseEnter={() => setShowPassword(true)}
+                      onMouseLeave={() => setShowPassword(false)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+                      <Eye className="h-4 w-4" />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -644,18 +639,13 @@ const Auth = () => {
                       disabled={loading || googleLoading}
                       className="h-11 pr-10"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      tabIndex={-1}
+                    <div
+                      onMouseEnter={() => setShowPassword(true)}
+                      onMouseLeave={() => setShowPassword(false)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+                      <Eye className="h-4 w-4" />
+                    </div>
                   </div>
                 </div>
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading || googleLoading}>
