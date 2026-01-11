@@ -8,7 +8,6 @@ import { useInView } from "@/hooks/useInView";
 import { useAuth } from "@/hooks/useAuth";
 import HeroVideoCarousel from "@/components/HeroVideoCarousel";
 import FeatureShowcase from "@/components/FeatureShowcase";
-import communityImage from "@/assets/community-illustration.png";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -302,25 +301,25 @@ const Home = () => {
       {/* Our Story Section */}
       <section ref={storyRef} className="py-32 bg-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
         <div className="container mx-auto px-6 relative z-10">
-          <div className={`max-w-5xl mx-auto ${storyInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-              <div className="order-2 md:order-1 space-y-8">
-                <div className="text-xs text-white/40 uppercase tracking-[0.2em]" style={{ fontWeight: 400 }}>Our Story</div>
-                <h2 className="text-4xl md:text-5xl text-white" style={{ fontWeight: 400 }}>How It Started</h2>
-                <p className="text-white/50 leading-relaxed" style={{ fontWeight: 400 }}>
-                  As college students—one pre-med, one engineering—we saw how frustrating it was to find real clinical experience. The pre-med among us spent weeks calling hospitals and clinics, only to learn that many didn't accept volunteers, had limited spots, or required certifications that were hard to get.
-                </p>
-                <p className="text-white/50 leading-relaxed" style={{ fontWeight: 400 }}>
-                  Together, we set out to build a centralized platform where students could share verified opportunities and insights to make the process smoother for everyone pursuing healthcare.
-                </p>
-              </div>
-              <div className="order-1 md:order-2 flex justify-center">
-                <div className="relative w-80 h-80 bg-white/5 flex items-center justify-center group hover:bg-white/10 transition-all duration-500 hover:scale-105">
-                  <div className="absolute inset-0 border border-white/10 group-hover:border-white/20 transition-colors duration-500"></div>
-                  <img src={communityImage} alt="" className="w-56 opacity-60 group-hover:opacity-80 transition-opacity duration-500 relative z-10" loading="lazy" />
-                  <div className="absolute inset-0 blur-2xl opacity-0 group-hover:opacity-20 bg-white transition-opacity duration-500"></div>
-                </div>
-              </div>
+          <div className={`max-w-3xl mx-auto text-center ${storyInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <div className="space-y-8">
+              <div className="text-xs text-white/40 uppercase tracking-[0.2em]" style={{ fontWeight: 400 }}>Our Story</div>
+              <h2 className="text-4xl md:text-5xl text-white" style={{ fontWeight: 400 }}>How It Started</h2>
+              <p className="text-white/50 leading-relaxed" style={{ fontWeight: 400 }}>
+                Clinical Hours started with a simple problem.
+              </p>
+              <p className="text-white/50 leading-relaxed" style={{ fontWeight: 400 }}>
+                As a premed student, finding clinical experience was harder than it needed to be. Opportunities were scattered across hospital websites, outdated lists, and word of mouth, with no clear way to know what was real or accessible.
+              </p>
+              <p className="text-white/50 leading-relaxed" style={{ fontWeight: 400 }}>
+                At the same time, an engineering student saw a system that lacked structure. The information existed, but it was disorganized, inefficient, and difficult to navigate.
+              </p>
+              <p className="text-white/50 leading-relaxed" style={{ fontWeight: 400 }}>
+                We realized this was not just a personal frustration. It was a shared problem for students everywhere. So we built Clinical Hours to bring real clinical opportunities into one clear, reliable place.
+              </p>
+              <p className="text-white/50 leading-relaxed italic" style={{ fontWeight: 400 }}>
+                Built by students who have gone through the process, for students who are still navigating it.
+              </p>
             </div>
           </div>
         </div>

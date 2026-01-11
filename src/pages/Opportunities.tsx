@@ -25,7 +25,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { supabase } from "@/integrations/supabase/client";
-import opportunitiesAccent from "@/assets/opportunities-accent.png";
 import { logger } from "@/lib/logger";
 
 const Opportunities = () => {
@@ -174,16 +173,11 @@ const Opportunities = () => {
 
       <div className="container mx-auto px-4 pt-28 pb-12">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-12 flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-4 scroll-mt-28">Clinical Opportunities Near You</h1>
-              <p className="text-lg text-muted-foreground">
-                Discover clinical opportunities sorted by distance from your location.
-              </p>
-            </div>
-            <div className="w-32 h-32 flex-shrink-0">
-              <img src={opportunitiesAccent} alt="" className="w-full h-full object-contain opacity-70" />
-            </div>
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold mb-4 scroll-mt-28">Clinical Opportunities Near You</h1>
+            <p className="text-lg text-muted-foreground">
+              Discover clinical opportunities sorted by distance from your location.
+            </p>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 mb-8">

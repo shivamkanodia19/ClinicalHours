@@ -11,7 +11,7 @@ import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
 import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
 import { z } from "zod";
-import { ArrowLeft, Stethoscope, Heart, Activity, Mail, Loader2, Eye } from "lucide-react";
+import { ArrowLeft, Mail, Loader2, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import logo from "@/assets/logo.png";
 
@@ -415,19 +415,6 @@ const Auth = () => {
     <div className="min-h-screen flex">
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-accent">
-        {/* Decorative floating elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-20 h-20 rounded-full bg-background/10 animate-float" />
-          <div className="absolute top-40 right-20 w-32 h-32 rounded-full bg-background/5 animate-float-slow" />
-          <div className="absolute bottom-32 left-20 w-16 h-16 rounded-full bg-background/10 animate-float" style={{ animationDelay: "1s" }} />
-          <div className="absolute bottom-20 right-10 w-24 h-24 rounded-full bg-background/5 animate-float-slow" style={{ animationDelay: "0.5s" }} />
-          
-          {/* Decorative icons */}
-          <Stethoscope className="absolute top-1/4 right-1/4 w-12 h-12 text-background/20 animate-float" style={{ animationDelay: "0.3s" }} />
-          <Heart className="absolute bottom-1/3 left-1/4 w-10 h-10 text-background/15 animate-float-slow" style={{ animationDelay: "0.7s" }} />
-          <Activity className="absolute top-1/2 right-1/3 w-14 h-14 text-background/10 animate-float" style={{ animationDelay: "1.2s" }} />
-        </div>
-
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground mb-6">
