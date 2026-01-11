@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const mapboxToken = Deno.env.get("MAPBOX_TOKEN") || "pk.eyJ1IjoicmFnaGF2dDIwMDciLCJhIjoiY21oeTJzb2dvMDhsdDJ3cTZqMzVtc3Q4cCJ9.DXBjsf0TdbDT_KFXcc2mpg";
+    const mapboxToken = Deno.env.get("MAPBOX_PUBLIC_TOKEN") || "pk.eyJ1IjoicmFnaGF2dDIwMDciLCJhIjoiY21rYTl4dGhoMGNqNjNlcHpoNG9mMDEzdSJ9.P6bq2u6zmsWVA2rWL6hYOw";
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase environment variables");
