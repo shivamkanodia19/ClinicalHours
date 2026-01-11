@@ -67,11 +67,9 @@ const features: Feature[] = [
   },
 ];
 
-// How much to scroll when arrow buttons are clicked (in pixels)
-const SCROLL_AMOUNT = 400;
-
 const FeatureShowcaseRail = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -97,11 +95,22 @@ const FeatureShowcaseRail = () => {
     setCanScrollLeft(scrollLeft > 10);
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
 
-    // Calculate which card is most centered
-    const cardWidth = 420; // Approximate card width + gap
-    const centerOffset = scrollLeft + clientWidth / 2;
-    const newActiveIndex = Math.round((centerOffset - clientWidth / 2) / cardWidth);
-    setActiveIndex(Math.max(0, Math.min(features.length - 1, newActiveIndex)));
+    // Find which card is most centered
+    const containerCenter = scrollLeft + clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+
+    cardRefs.current.forEach((card, index) => {
+      if (!card) return;
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const distance = Math.abs(containerCenter - cardCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    setActiveIndex(closestIndex);
   }, []);
 
   useEffect(() => {
@@ -114,15 +123,30 @@ const FeatureShowcaseRail = () => {
     return () => container.removeEventListener("scroll", updateScrollState);
   }, [updateScrollState]);
 
-  const scroll = (direction: "left" | "right") => {
+  // Scroll to center a specific card
+  const scrollToCard = useCallback((index: number) => {
     const container = scrollContainerRef.current;
-    if (!container) return;
+    const card = cardRefs.current[index];
+    if (!container || !card) return;
 
-    const scrollAmount = direction === "left" ? -SCROLL_AMOUNT : SCROLL_AMOUNT;
-    container.scrollBy({
-      left: scrollAmount,
+    const containerWidth = container.clientWidth;
+    const cardLeft = card.offsetLeft;
+    const cardWidth = card.offsetWidth;
+    
+    // Calculate scroll position to center the card
+    const scrollTo = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+
+    container.scrollTo({
+      left: scrollTo,
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
+  }, [prefersReducedMotion]);
+
+  const scroll = (direction: "left" | "right") => {
+    const newIndex = direction === "left" 
+      ? Math.max(0, activeIndex - 1)
+      : Math.min(features.length - 1, activeIndex + 1);
+    scrollToCard(newIndex);
   };
 
   // Keyboard navigation
@@ -212,12 +236,17 @@ const FeatureShowcaseRail = () => {
             aria-label="Feature cards"
           >
             {features.map((feature, index) => (
-              <FeatureCard
+              <div
                 key={feature.id}
-                feature={feature}
-                isActive={index === activeIndex}
-                prefersReducedMotion={prefersReducedMotion}
-              />
+                ref={(el) => (cardRefs.current[index] = el)}
+                className="flex-shrink-0 snap-center"
+              >
+                <FeatureCard
+                  feature={feature}
+                  isActive={index === activeIndex}
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -227,15 +256,7 @@ const FeatureShowcaseRail = () => {
           {features.map((feature, index) => (
             <button
               key={feature.id}
-              onClick={() => {
-                const container = scrollContainerRef.current;
-                if (!container) return;
-                const cardWidth = 420;
-                container.scrollTo({
-                  left: index * cardWidth,
-                  behavior: prefersReducedMotion ? "auto" : "smooth",
-                });
-              }}
+              onClick={() => scrollToCard(index)}
               className={`h-2 rounded-full transition-all duration-500 ${
                 index === activeIndex
                   ? "w-8 bg-white"
@@ -270,7 +291,6 @@ const FeatureCard = ({ feature, isActive, prefersReducedMotion }: FeatureCardPro
 
   return (
     <div
-      className="flex-shrink-0 snap-center"
       style={{
         transform: isActive ? "scale(1)" : "scale(0.95)",
         opacity: isActive ? 1 : 0.6,
