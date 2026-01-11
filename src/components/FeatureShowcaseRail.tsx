@@ -238,7 +238,7 @@ const FeatureShowcaseRail = () => {
             {features.map((feature, index) => (
               <div
                 key={feature.id}
-                ref={(el) => (cardRefs.current[index] = el)}
+                ref={(el) => { cardRefs.current[index] = el; }}
                 className="flex-shrink-0 snap-center"
               >
                 <FeatureCard
