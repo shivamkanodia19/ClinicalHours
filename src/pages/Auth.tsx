@@ -11,7 +11,7 @@ import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
 import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
 import { z } from "zod";
-import { ArrowLeft, Stethoscope, Heart, Activity, Mail, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Loader2, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import logo from "@/assets/logo.png";
 
@@ -58,12 +58,10 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [signedUpUserId, setSignedUpUserId] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
+  const [showPassword, setShowPassword] = useState(false);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -179,22 +177,24 @@ const Auth = () => {
           .eq("id", data.user.id);
       }
 
-      // Send custom verification email
+      // Send verification email and redirect to check-email page
       if (data.user) {
         logAuthEvent("signup", { email: validatedData.email });
-        setSignedUpUserId(data.user.id);
-        const emailSent = await sendVerificationEmail(
+        
+        // Sign out immediately - user must verify email first
+        await supabase.auth.signOut();
+        
+        // Send verification email via our custom edge function (sends from clinicalhours.org)
+        await sendVerificationEmail(
           data.user.id,
           validatedData.email,
           validatedData.fullName || "User"
         );
 
-        if (emailSent) {
-          setShowVerificationMessage(true);
-          toast.success("Account created! Please check your email to verify your account.");
-        } else {
-          toast.success("Account created! You can now log in.");
-        }
+        toast.success("Account created! Please check your email to verify your account.");
+        
+        // Redirect to check-email page
+        navigate(`/check-email?email=${encodeURIComponent(validatedData.email)}&uid=${encodeURIComponent(data.user.id)}&name=${encodeURIComponent(validatedData.fullName || "User")}`);
       }
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -238,24 +238,6 @@ const Auth = () => {
     }
   };
 
-  const handleResendVerification = async () => {
-    if (!signedUpUserId || !email || !fullName) return;
-    
-    setResendLoading(true);
-    try {
-      const success = await sendVerificationEmail(signedUpUserId, email, fullName);
-      if (success) {
-        toast.success("Verification email sent! Please check your inbox.");
-      } else {
-        toast.error("Failed to send verification email. Please try again.");
-      }
-    } catch (error) {
-      toast.error("Failed to send verification email. Please try again.");
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -284,22 +266,28 @@ const Auth = () => {
         throw error;
       }
 
-      // Check if email is verified
+      // Check if email is verified for new accounts (created after 2026-01-09)
+      // Existing accounts are grandfathered in
       if (data.user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("email_verified")
+          .select("email_verified, created_at")
           .eq("id", data.user.id)
           .single();
 
-        if (!profile?.email_verified) {
-          // Sign out the user since they're not verified
+        const verificationCutoffDate = new Date("2026-01-09T00:00:00Z");
+        const accountCreatedAt = profile?.created_at ? new Date(profile.created_at) : new Date(0);
+        const isNewAccount = accountCreatedAt >= verificationCutoffDate;
+
+        // Only require verification for NEW accounts that haven't verified
+        if (isNewAccount && !profile?.email_verified) {
           await supabase.auth.signOut();
           
-          // Store user info for resend functionality
-          setSignedUpUserId(data.user.id);
-          setShowVerificationMessage(true);
-          toast.error("Please verify your email before signing in. Check your inbox for the verification link.");
+          const userEmail = data.user.email || email;
+          const userName = data.user.user_metadata?.full_name || "User";
+          
+          toast.error("Please verify your email before signing in.");
+          navigate(`/check-email?email=${encodeURIComponent(userEmail)}&uid=${encodeURIComponent(data.user.id)}&name=${encodeURIComponent(userName)}`);
           return;
         }
       }
@@ -423,78 +411,10 @@ const Auth = () => {
     );
   }
 
-  // Show verification message screen
-  if (showVerificationMessage) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-        <div className="w-full max-w-md text-center space-y-6">
-          <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <Mail className="w-10 h-10 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Check Your Email</h1>
-            <p className="text-muted-foreground">
-              We've sent a verification link to <strong className="text-foreground">{email}</strong>
-            </p>
-          </div>
-          <div className="bg-muted/50 rounded-lg p-4 text-left">
-            <p className="text-sm text-muted-foreground mb-3">
-              Click the link in the email to verify your account. If you don't see it, check your spam folder.
-            </p>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleResendVerification}
-              disabled={resendLoading}
-            >
-              {resendLoading ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Resend Verification Email
-                </>
-              )}
-            </Button>
-          </div>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setShowVerificationMessage(false);
-              setEmail("");
-              setPassword("");
-              setFullName("");
-              setPhone("");
-            }}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Sign Up
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-accent">
-        {/* Decorative floating elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-20 h-20 rounded-full bg-background/10 animate-float" />
-          <div className="absolute top-40 right-20 w-32 h-32 rounded-full bg-background/5 animate-float-slow" />
-          <div className="absolute bottom-32 left-20 w-16 h-16 rounded-full bg-background/10 animate-float" style={{ animationDelay: "1s" }} />
-          <div className="absolute bottom-20 right-10 w-24 h-24 rounded-full bg-background/5 animate-float-slow" style={{ animationDelay: "0.5s" }} />
-          
-          {/* Decorative icons */}
-          <Stethoscope className="absolute top-1/4 right-1/4 w-12 h-12 text-background/20 animate-float" style={{ animationDelay: "0.3s" }} />
-          <Heart className="absolute bottom-1/3 left-1/4 w-10 h-10 text-background/15 animate-float-slow" style={{ animationDelay: "0.7s" }} />
-          <Activity className="absolute top-1/2 right-1/3 w-14 h-14 text-background/10 animate-float" style={{ animationDelay: "1.2s" }} />
-        </div>
-
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground mb-6">
@@ -589,16 +509,25 @@ const Auth = () => {
                       Forgot Password?
                     </button>
                   </div>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading || googleLoading}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading || googleLoading}
+                      className="h-11 pr-10"
+                    />
+                    <div
+                      onMouseEnter={() => setShowPassword(true)}
+                      onMouseLeave={() => setShowPassword(false)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -686,16 +615,25 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading || googleLoading}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading || googleLoading}
+                      className="h-11 pr-10"
+                    />
+                    <div
+                      onMouseEnter={() => setShowPassword(true)}
+                      onMouseLeave={() => setShowPassword(false)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </div>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading || googleLoading}>
                   {loading ? "Creating account..." : "Sign Up"}

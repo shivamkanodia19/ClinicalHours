@@ -67,23 +67,6 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 
-  // Validate CSRF token (skip if authenticating via Authorization header during sign-up)
-  // During sign-up, users don't have CSRF tokens yet, so we allow Authorization header auth without CSRF
-  const authHeader = req.headers.get('authorization');
-  const isSignUpFlow = authHeader && authHeader.startsWith('Bearer ');
-  
-  if (!isSignUpFlow) {
-    // For authenticated requests (with cookies), require CSRF token
-    const csrfValidation = validateCSRFToken(req);
-    if (!csrfValidation.valid) {
-      console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-      return new Response(
-        JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-  }
-
   // Cleanup old entries occasionally
   if (Math.random() < 0.01) {
     cleanupRateLimitMap();
@@ -93,59 +76,36 @@ const handler = async (req: Request): Promise<Response> => {
     // Parse request body first
     const { userId, email, fullName, origin: requestOrigin }: SendVerificationEmailRequest = await req.json();
 
-    // Authenticate user (try cookie first, fallback to Authorization header during migration)
-    let authenticatedUser: { id: string; email?: string } | null = null;
-    
-    const authResult = await authenticateFromCookie(req);
-    if (authResult.success && authResult.user) {
-      authenticatedUser = authResult.user;
-    } else {
-      // Fallback to Authorization header during migration
-      const authHeader = req.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.replace('Bearer ', '');
-        const supabaseAdmin = createClient(
-          Deno.env.get("SUPABASE_URL") ?? "",
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-          { auth: { autoRefreshToken: false, persistSession: false } }
-        );
-
-        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-        
-        if (userError || !user) {
-          console.error('Invalid token or user not found:', userError);
-          return new Response(
-            JSON.stringify({ error: "Invalid authentication" }),
-            { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
-        }
-        
-        authenticatedUser = { id: user.id, email: user.email };
-      }
-    }
-
-    if (!authenticatedUser) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Validate that the request is for the authenticated user
-    if (userId !== authenticatedUser.id) {
-      console.error(`User ${authenticatedUser.id} attempted to send verification email for different user ${userId}`);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
     // Create Supabase admin client for database operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
+
+    // Validate the userId exists in the database (prevents abuse)
+    const { data: userProfile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email_verified")
+      .eq("id", userId)
+      .single();
+
+    if (profileError || !userProfile) {
+      console.error(`User not found: ${userId}`);
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Don't send if already verified
+    if (userProfile.email_verified) {
+      console.log(`User ${userId} is already verified, skipping email`);
+      return new Response(
+        JSON.stringify({ success: true, alreadyVerified: true }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log(`Sending verification email to ${email} for user ${userId}`);
 
@@ -215,7 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
     
     const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
-    const verificationLink = `${safeOrigin}/verify?token=${verificationToken}`;
+    const verificationLink = `${safeOrigin}/verify-email?token=${verificationToken}`;
 
     // Sanitize fullName for HTML
     const safeName = fullName
@@ -242,7 +202,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClinicalHours <support@send.clinicalhours.org>",
+        from: "ClinicalHours <support@clinicalhours.org>",
         to: [email],
         subject: "Verify your ClinicalHours account",
         html: `

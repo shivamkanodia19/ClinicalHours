@@ -179,7 +179,7 @@ export default defineConfig(({ mode }) => {
   const DEFAULT_VITE_SUPABASE_PUBLISHABLE_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5c2J0Y2lrcmJycmdhZmZmb2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNTc5MzUsImV4cCI6MjA3ODYzMzkzNX0.5jN1B2RIscA42w7FYfwxaQHFW6ROldslPzUFYtQCgLc";
   const DEFAULT_VITE_MAPBOX_PUBLIC_TOKEN =
-    "pk.eyJ1IjoicmFnaGF2dDIwMDciLCJhIjoiY21oeTJzb2dvMDhsdDJ3cTZqMzVtc3Q4cCJ9.DXBjsf0TdbDT_KFXcc2mpg";
+    "pk.eyJ1IjoicmFnaGF2dDIwMDciLCJhIjoiY21rYTl4dGhoMGNqNjNlcHpoNG9mMDEzdSJ9.P6bq2u6zmsWVA2rWL6hYOw";
 
   const VITE_SUPABASE_URL =
     env.VITE_SUPABASE_URL ??
