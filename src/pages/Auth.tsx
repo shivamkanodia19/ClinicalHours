@@ -11,7 +11,7 @@ import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
 import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
 import { z } from "zod";
-import { ArrowLeft, Stethoscope, Heart, Activity, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Stethoscope, Heart, Activity, Mail, Loader2, Eye, EyeOff } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import logo from "@/assets/logo.png";
 
@@ -61,6 +61,7 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
+  const [showPassword, setShowPassword] = useState(false);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -119,6 +120,28 @@ const Auth = () => {
     }
   };
 
+  const sendVerificationEmail = async (userId: string, userEmail: string, userName: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-verification-email", {
+        body: {
+          userId,
+          email: userEmail,
+          fullName: userName,
+          origin: window.location.origin,
+        },
+      });
+
+      if (error) {
+        // Error logged silently - user will see toast message
+        return false;
+      }
+      return true;
+    } catch (error) {
+      // Error logged silently - user will see toast message
+      return false;
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -162,18 +185,11 @@ const Auth = () => {
         await supabase.auth.signOut();
         
         // Send verification email via our custom edge function (sends from clinicalhours.org)
-        try {
-          await supabase.functions.invoke("send-verification-email", {
-            body: {
-              userId: data.user.id,
-              email: validatedData.email,
-              fullName: validatedData.fullName || "User",
-              origin: window.location.origin,
-            },
-          });
-        } catch (emailError) {
-          console.error("Failed to send verification email:", emailError);
-        }
+        await sendVerificationEmail(
+          data.user.id,
+          validatedData.email,
+          validatedData.fullName || "User"
+        );
 
         toast.success("Account created! Please check your email to verify your account.");
         
@@ -506,16 +522,30 @@ const Auth = () => {
                       Forgot Password?
                     </button>
                   </div>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading || googleLoading}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading || googleLoading}
+                      className="h-11 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -603,16 +633,30 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading || googleLoading}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading || googleLoading}
+                      className="h-11 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading || googleLoading}>
                   {loading ? "Creating account..." : "Sign Up"}
