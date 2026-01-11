@@ -119,28 +119,6 @@ const Auth = () => {
     }
   };
 
-  const sendVerificationEmail = async (userId: string, userEmail: string, userName: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("send-verification-email", {
-        body: {
-          userId,
-          email: userEmail,
-          fullName: userName,
-          origin: window.location.origin,
-        },
-      });
-
-      if (error) {
-        // Error logged silently - user will see toast message
-        return false;
-      }
-      return true;
-    } catch (error) {
-      // Error logged silently - user will see toast message
-      return false;
-    }
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -176,24 +154,20 @@ const Auth = () => {
           .eq("id", data.user.id);
       }
 
-      // Send custom verification email and redirect to check-email page
+      // Log the user in and redirect to dashboard
       if (data.user) {
         logAuthEvent("signup", { email: validatedData.email });
         
-        // Sign out immediately - user must verify email first
-        await supabase.auth.signOut();
-        
-        // Send verification email
-        await sendVerificationEmail(
-          data.user.id,
-          validatedData.email,
-          validatedData.fullName || "User"
-        );
+        // Mark email as verified since we're auto-logging them in
+        await supabase
+          .from("profiles")
+          .update({ email_verified: true })
+          .eq("id", data.user.id);
 
-        toast.success("Account created! Please check your email to verify your account.");
+        toast.success("Account created! Welcome to ClinicalHours.");
         
-        // Redirect to dedicated check-email page
-        navigate(`/check-email?email=${encodeURIComponent(validatedData.email)}&uid=${encodeURIComponent(data.user.id)}&name=${encodeURIComponent(validatedData.fullName || "User")}`);
+        // Redirect to dashboard - user is already logged in
+        navigate("/dashboard");
       }
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -263,35 +237,6 @@ const Auth = () => {
       if (error) {
         logAuthEvent("login_failure", { email: validatedData.email });
         throw error;
-      }
-
-      // Check if email is verified - but ONLY for new accounts (created after 2026-01-09)
-      // Existing accounts are grandfathered in and don't need verification
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("email_verified, created_at")
-          .eq("id", data.user.id)
-          .single();
-
-        // Cutoff date: accounts created before this date are grandfathered in
-        const verificationCutoffDate = new Date("2026-01-09T00:00:00Z");
-        const accountCreatedAt = profile?.created_at ? new Date(profile.created_at) : new Date(0);
-        const isNewAccount = accountCreatedAt >= verificationCutoffDate;
-
-        // Only require verification for NEW accounts that haven't verified
-        if (isNewAccount && !profile?.email_verified) {
-          // Sign out the user since they're not verified
-          await supabase.auth.signOut();
-          
-          // Get user email for the check-email page
-          const userEmail = data.user.email || email;
-          const userName = data.user.user_metadata?.full_name || "User";
-          
-          toast.error("Please verify your email before signing in.");
-          navigate(`/check-email?email=${encodeURIComponent(userEmail)}&uid=${encodeURIComponent(data.user.id)}&name=${encodeURIComponent(userName)}`);
-          return;
-        }
       }
 
       logAuthEvent("login_success", { email: validatedData.email });
