@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { validateOrigin, getCorsHeaders, getSessionCookie, deleteSession } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 // Create cookie clearing strings
 function createClearCookie(name: string, isProduction: boolean): string {
@@ -43,16 +43,8 @@ const handler = async (req: Request): Promise<Response> => {
     const clearCSRFCookie = createClearCookie("csrf-token", isProduction);
     const clearRefreshTokenCookie = createClearCookie("refresh-token", isProduction);
 
-    // Invalidate session in database
-    const sessionToken = getSessionCookie(req);
-    if (sessionToken) {
-      const deleteResult = await deleteSession(sessionToken);
-      if (deleteResult.success) {
-        console.log("Session deleted from database");
-      } else {
-        console.warn("Failed to delete session from database (continuing with cookie clear)");
-      }
-    }
+    // TODO: Invalidate session in database if you're storing sessions server-side
+    // For now, clearing cookies is sufficient
 
     // Return response with cleared cookies
     return new Response(

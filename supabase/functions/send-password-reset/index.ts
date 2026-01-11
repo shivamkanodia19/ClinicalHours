@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validateOrigin, getCorsHeaders, checkRateLimit, RATE_LIMIT_CONFIGS } from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -12,6 +12,39 @@ if (!RESEND_API_KEY) {
 interface SendPasswordResetRequest {
   email: string;
   origin: string;
+}
+
+// Rate limiting per email to prevent abuse
+const emailRateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const EMAIL_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_RESETS_PER_EMAIL = 3; // 3 reset requests per email per hour
+
+function isEmailRateLimited(email: string): boolean {
+  const now = Date.now();
+  const normalizedEmail = email.toLowerCase().trim();
+  const record = emailRateLimitMap.get(normalizedEmail);
+
+  if (!record || now > record.resetTime) {
+    emailRateLimitMap.set(normalizedEmail, { count: 1, resetTime: now + EMAIL_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (record.count >= MAX_RESETS_PER_EMAIL) {
+    return true;
+  }
+
+  record.count++;
+  return false;
+}
+
+// Clean up old entries periodically
+function cleanupRateLimitMap(): void {
+  const now = Date.now();
+  for (const [key, value] of emailRateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      emailRateLimitMap.delete(key);
+    }
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -37,6 +70,11 @@ const handler = async (req: Request): Promise<Response> => {
   // for unauthenticated users who don't have CSRF tokens yet.
   // Security is provided by: rate limiting, email validation, token expiration, and origin validation.
 
+  // Cleanup old entries occasionally
+  if (Math.random() < 0.01) {
+    cleanupRateLimitMap();
+  }
+
   try {
     // Password reset doesn't require authentication (user forgot password)
     const { email, origin }: SendPasswordResetRequest = await req.json();
@@ -59,12 +97,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check rate limit per email (using database-backed rate limiting)
-    const normalizedEmail = email.toLowerCase().trim();
-    const rateLimitKey = `password_reset:${normalizedEmail}`;
-    const rateLimitResult = await checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.PASSWORD_RESET);
-    
-    if (!rateLimitResult.allowed) {
+    // Check rate limit per email
+    if (isEmailRateLimited(email)) {
       console.warn(`Rate limit exceeded for email: ${email}`);
       // Still return success to prevent email enumeration
       return new Response(

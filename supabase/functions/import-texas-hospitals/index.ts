@@ -1,13 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { 
-  validateOrigin, 
-  validateCSRFToken,
-  getCorsHeaders, 
-  authenticateFromCookie, 
-  checkAdminRole,
-  checkRateLimit,
-  RATE_LIMIT_CONFIGS 
-} from "../_shared/auth.ts";
+import { validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 interface HospitalCSVRow {
   name: string;
@@ -122,57 +114,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Validate CSRF token for state-changing requests
-  const csrfValidation = validateCSRFToken(req);
-  if (!csrfValidation.valid) {
-    console.warn(`CSRF validation failed: ${csrfValidation.error}`);
-    return new Response(
-      JSON.stringify({ error: csrfValidation.error || "CSRF validation failed" }),
-      { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
-  }
-
   try {
-    // Authenticate user
-    const authResult = await authenticateFromCookie(req);
-    if (!authResult.success || !authResult.user) {
-      console.warn("Authentication failed:", authResult.error);
-      return new Response(
-        JSON.stringify({ error: authResult.error || "Authentication required" }),
-        { status: authResult.statusCode || 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    const userId = authResult.user.id;
-    console.log(`User ${userId} attempting Texas hospital import`);
-
-    // Check if user has admin role
-    const adminCheck = await checkAdminRole(userId);
-    if (!adminCheck.isAdmin) {
-      console.warn(`User ${userId} is not an admin. Access denied.`);
-      return new Response(
-        JSON.stringify({ error: adminCheck.error || "Admin access required" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Check rate limit for admin imports (using database-backed rate limiting)
-    const rateLimitKey = `admin_import:${userId}`;
-    const rateLimitResult = await checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.ADMIN_IMPORT);
-    
-    if (!rateLimitResult.allowed) {
-      console.warn(`Admin ${userId} rate limited for Texas hospital import`);
-      return new Response(
-        JSON.stringify({ 
-          error: rateLimitResult.blockReason || "Rate limit exceeded. Please try again later.",
-          resetAt: rateLimitResult.resetAt.toISOString()
-        }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    console.log(`Admin user ${userId} authorized for Texas hospital import`);
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     

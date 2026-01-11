@@ -1,26 +1,52 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { 
-  validateCSRFToken, 
-  validateOrigin, 
-  getCorsHeaders, 
-  checkRateLimit, 
-  recordFailedAttempt as recordDbFailedAttempt,
-  clearFailedAttempts
-} from "../_shared/auth.ts";
+import { validateCSRFToken, validateOrigin, getCorsHeaders } from "../_shared/auth.ts";
 
 interface ResetPasswordRequest {
   token: string;
   newPassword: string;
 }
 
-// Rate limit config for password reset
-const RESET_PASSWORD_RATE_LIMIT = {
-  windowSeconds: 60,
-  maxRequests: 5,
-  blockDurationSeconds: 1800, // 30 minutes
-  maxFailedAttempts: 5
-};
+// Rate limiting for password reset attempts
+const rateLimitMap = new Map<string, { count: number; resetTime: number; failedAttempts: number }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 5; // 5 requests per minute per IP
+const MAX_FAILED_ATTEMPTS = 5; // Block after 5 failed attempts
+const BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minute block after too many failures
+
+function getRateLimitStatus(clientIp: string): { blocked: boolean; reason?: string } {
+  const now = Date.now();
+  const record = rateLimitMap.get(clientIp);
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(clientIp, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS, failedAttempts: 0 });
+    return { blocked: false };
+  }
+
+  // Check if blocked due to too many failed attempts
+  if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+    return { blocked: true, reason: "Too many failed attempts. Please try again later." };
+  }
+
+  // Check rate limit
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { blocked: true, reason: "Too many requests. Please try again later." };
+  }
+
+  record.count++;
+  return { blocked: false };
+}
+
+function recordFailedAttempt(clientIp: string): void {
+  const record = rateLimitMap.get(clientIp);
+  if (record) {
+    record.failedAttempts++;
+    // Extend block time on failures
+    if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+      record.resetTime = Date.now() + BLOCK_DURATION_MS;
+    }
+  }
+}
 
 // Validate password strength
 // Requirements: letters and numbers (both required) and at least 8 characters
@@ -45,6 +71,16 @@ function validatePasswordStrength(password: string): { valid: boolean; error?: s
   }
 
   return { valid: true };
+}
+
+// Clean up old entries periodically
+function cleanupRateLimitMap(): void {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -81,16 +117,19 @@ const handler = async (req: Request): Promise<Response> => {
                    req.headers.get("cf-connecting-ip") || 
                    "unknown";
 
-  // Check rate limit (using database-backed rate limiting)
-  const rateLimitKey = `reset_password:${clientIp}`;
-  const rateLimitResult = await checkRateLimit(rateLimitKey, RESET_PASSWORD_RATE_LIMIT);
-  
-  if (!rateLimitResult.allowed) {
-    console.warn(`Rate limit/block for IP ${clientIp}: ${rateLimitResult.blockReason}`);
+  // Check rate limit
+  const rateLimitStatus = getRateLimitStatus(clientIp);
+  if (rateLimitStatus.blocked) {
+    console.warn(`Rate limit/block for IP ${clientIp}: ${rateLimitStatus.reason}`);
     return new Response(
-      JSON.stringify({ error: rateLimitResult.blockReason || "Too many requests. Please try again later." }),
+      JSON.stringify({ error: rateLimitStatus.reason }),
       { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
+  }
+
+  // Cleanup old entries occasionally
+  if (Math.random() < 0.01) {
+    cleanupRateLimitMap();
   }
 
   try {
@@ -100,7 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Validate token format
     if (!token || typeof token !== 'string' || token.length < 10 || token.length > 200) {
-      await recordDbFailedAttempt(rateLimitKey, RESET_PASSWORD_RATE_LIMIT);
+      recordFailedAttempt(clientIp);
       return new Response(
         JSON.stringify({ error: "Invalid token format" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -141,7 +180,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (tokenError || !tokenData) {
       console.error("Token not found or already used:", tokenError);
-      await recordDbFailedAttempt(rateLimitKey, RESET_PASSWORD_RATE_LIMIT);
+      recordFailedAttempt(clientIp);
       return new Response(
         JSON.stringify({ error: "Invalid or expired reset link" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
