@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -173,11 +173,23 @@ const Opportunities = () => {
 
       <div className="container mx-auto px-4 pt-28 pb-12">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-12">
+          <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4 scroll-mt-28">Clinical Opportunities Near You</h1>
             <p className="text-lg text-muted-foreground">
               Discover clinical opportunities sorted by distance from your location.
             </p>
+          </div>
+
+          {/* Contact notice for broken links */}
+          <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
+            <Mail className="h-4 w-4 flex-shrink-0" />
+            <span>
+              Found a broken link or outdated info?{" "}
+              <Link to="/contact" className="text-primary hover:underline">
+                Let us know
+              </Link>
+              {" "}and we'll fix it.
+            </span>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 mb-8">

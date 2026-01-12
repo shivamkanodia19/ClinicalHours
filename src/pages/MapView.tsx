@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { Mail } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import OpportunityMap from "@/components/OpportunityMap";
@@ -13,6 +15,18 @@ const MapView = () => {
             <p className="text-muted-foreground">
               Explore clinical opportunities across the country. Switch between viewing all opportunities or just your saved ones.
             </p>
+          </div>
+
+          {/* Contact notice for broken links */}
+          <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+            <Mail className="h-4 w-4 flex-shrink-0" />
+            <span>
+              Found a broken link or outdated info?{" "}
+              <Link to="/contact" className="text-primary hover:underline">
+                Let us know
+              </Link>
+              {" "}and we'll fix it.
+            </span>
           </div>
 
           <OpportunityMap />
