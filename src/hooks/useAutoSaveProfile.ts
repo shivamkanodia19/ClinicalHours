@@ -28,7 +28,8 @@ interface ProfileData {
   research_experience: string;
   linkedin_url: string;
   resume_url: string;
-  [key: string]: string;
+  email_opt_in?: boolean;
+  [key: string]: string | boolean | undefined;
 }
 
 /**
