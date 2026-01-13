@@ -277,6 +277,7 @@ export type Database = {
           city: string | null
           clinical_hours: number | null
           created_at: string
+          email_opt_in: boolean | null
           email_verified: boolean | null
           full_name: string
           gpa: number | null
@@ -299,6 +300,7 @@ export type Database = {
           city?: string | null
           clinical_hours?: number | null
           created_at?: string
+          email_opt_in?: boolean | null
           email_verified?: boolean | null
           full_name: string
           gpa?: number | null
@@ -321,6 +323,7 @@ export type Database = {
           city?: string | null
           clinical_hours?: number | null
           created_at?: string
+          email_opt_in?: boolean | null
           email_verified?: boolean | null
           full_name?: string
           gpa?: number | null
