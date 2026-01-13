@@ -13,7 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { REQUIRED_FIELDS } from "@/hooks/useProfileComplete";
 import { toast } from "sonner";
-import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle, Mail, Cloud, CloudOff, Check, LogOut } from "lucide-react";
+import { Upload, Loader2, ExternalLink, CheckCircle2, AlertCircle, Mail, Cloud, CloudOff, Check, LogOut, Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { logger } from "@/lib/logger";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logProfileUpdate, logFileAccess } from "@/lib/auditLogger";
@@ -55,6 +56,7 @@ const Profile = () => {
     research_experience: "",
     linkedin_url: "",
     resume_url: "",
+    email_opt_in: false,
   });
 
   // Calculate profile completeness for required fields
@@ -187,6 +189,7 @@ const Profile = () => {
           research_experience: data.research_experience || "",
           linkedin_url: data.linkedin_url || "",
           resume_url: data.resume_url || "",
+          email_opt_in: data.email_opt_in || false,
         });
         
         // Generate signed URL for viewing resume
@@ -331,6 +334,7 @@ const Profile = () => {
           research_experience: sanitizedData.research_experience,
           linkedin_url: sanitizedData.linkedin_url,
           resume_url: sanitizedData.resume_url,
+          email_opt_in: profile.email_opt_in,
         });
 
       if (error) throw error;
@@ -743,6 +747,38 @@ const Profile = () => {
 
 
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Email Preferences */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Email Preferences
+              </CardTitle>
+              <CardDescription>
+                Manage your email communication preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="email-opt-in-toggle" className="font-medium">
+                    Email Updates
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive updates about new clinical opportunities and platform features
+                  </p>
+                </div>
+                <Switch
+                  id="email-opt-in-toggle"
+                  checked={profile.email_opt_in}
+                  onCheckedChange={(checked) => {
+                    setProfile({ ...profile, email_opt_in: checked });
+                  }}
+                />
+              </div>
             </CardContent>
           </Card>
 

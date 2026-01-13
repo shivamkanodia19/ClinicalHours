@@ -62,6 +62,7 @@ const Auth = () => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => getRememberMePreference());
   const [showPassword, setShowPassword] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(false);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -169,11 +170,18 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Update phone number in profile if provided
-      if (data.user && validatedData.phone) {
+      // Update phone number and email opt-in preference in profile
+      if (data.user) {
+        const profileUpdates: Record<string, unknown> = {
+          email_opt_in: emailOptIn,
+        };
+        if (validatedData.phone) {
+          profileUpdates.phone = validatedData.phone;
+        }
+        
         await supabase
           .from("profiles")
-          .update({ phone: validatedData.phone })
+          .update(profileUpdates)
           .eq("id", data.user.id);
       }
 
@@ -634,6 +642,21 @@ const Auth = () => {
                       <Eye className="h-4 w-4" />
                     </div>
                   </div>
+                </div>
+                <div className="flex items-start space-x-3 pt-2">
+                  <Checkbox
+                    id="email-opt-in"
+                    checked={emailOptIn}
+                    onCheckedChange={(checked) => setEmailOptIn(checked === true)}
+                    disabled={loading || googleLoading}
+                    className="mt-0.5"
+                  />
+                  <Label
+                    htmlFor="email-opt-in"
+                    className="text-sm font-normal text-muted-foreground cursor-pointer leading-tight"
+                  >
+                    Send me updates about new clinical opportunities and platform features
+                  </Label>
                 </div>
                 <Button type="submit" className="w-full h-11 text-base" disabled={loading || googleLoading}>
                   {loading ? "Creating account..." : "Sign Up"}
