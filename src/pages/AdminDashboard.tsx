@@ -10,10 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   Shield,
@@ -23,13 +23,13 @@ import {
   Link2,
   Trash2,
   RefreshCw,
-  Activity,
   Users,
-  Building2,
   AlertTriangle,
   CheckCircle,
   Loader2,
   FileSpreadsheet,
+  Mail,
+  Send,
 } from 'lucide-react';
 
 interface OperationResult {
@@ -38,22 +38,10 @@ interface OperationResult {
   details?: unknown;
 }
 
-interface StatsData {
-  totalOpportunities: number;
-  missingWebsites: number;
-  missingEmails: number;
-  missingCoordinates: number;
-  missingStates: number;
-  totalUsers: number;
-}
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
-  
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
   
   // Import state
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -66,6 +54,13 @@ export default function AdminDashboard() {
   const [findingLinks, setFindingLinks] = useState(false);
   const [removingDuplicates, setRemovingDuplicates] = useState(false);
   const [fixingCoordinates, setFixingCoordinates] = useState(false);
+  
+  // Mass email states
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+  const [loadingCount, setLoadingCount] = useState(false);
   
   // Results
   const [operationResult, setOperationResult] = useState<OperationResult | null>(null);
@@ -132,48 +127,90 @@ export default function AdminDashboard() {
     );
   }
 
-  // Fetch stats
-  async function fetchStats() {
-    setStatsLoading(true);
-    try {
-      const [
-        { count: totalOpportunities },
-        { count: missingWebsites },
-        { count: missingEmails },
-        { count: missingCoordinates },
-        { count: totalUsers },
-      ] = await Promise.all([
-        supabase.from('opportunities').select('*', { count: 'exact', head: true }),
-        supabase.from('opportunities').select('*', { count: 'exact', head: true }).is('website', null),
-        supabase.from('opportunities').select('*', { count: 'exact', head: true }).is('email', null),
-        supabase.from('opportunities').select('*', { count: 'exact', head: true }).or('latitude.is.null,longitude.is.null'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      ]);
-
-      // Count missing states (location without comma)
-      const { data: allOpps } = await supabase.from('opportunities').select('location');
-      const missingStates = allOpps?.filter(o => o.location && !o.location.includes(',')).length || 0;
-
-      setStats({
-        totalOpportunities: totalOpportunities || 0,
-        missingWebsites: missingWebsites || 0,
-        missingEmails: missingEmails || 0,
-        missingCoordinates: missingCoordinates || 0,
-        missingStates,
-        totalUsers: totalUsers || 0,
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      toast.error('Failed to fetch statistics');
-    } finally {
-      setStatsLoading(false);
-    }
-  }
-
   // Get session token
   async function getAuthToken(): Promise<string | null> {
     const { data: { session } } = await supabase.auth.getSession();
     return session?.access_token || null;
+  }
+
+  // Fetch subscriber count
+  async function fetchSubscriberCount() {
+    setLoadingCount(true);
+    try {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('email_opt_in', true);
+      
+      if (error) throw error;
+      setSubscriberCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching subscriber count:', error);
+      toast.error('Failed to fetch subscriber count');
+    } finally {
+      setLoadingCount(false);
+    }
+  }
+
+  // Send mass email
+  async function handleSendMassEmail() {
+    if (!emailSubject.trim()) {
+      toast.error('Please enter an email subject');
+      return;
+    }
+    if (!emailBody.trim()) {
+      toast.error('Please enter an email body');
+      return;
+    }
+
+    setSendingEmail(true);
+    setOperationResult(null);
+
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-mass-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            subject: emailSubject,
+            body: emailBody,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send emails');
+      }
+
+      setOperationResult({
+        success: true,
+        message: `Successfully sent emails to ${result.sent} subscribers`,
+        details: result,
+      });
+      toast.success(`Emails sent to ${result.sent} subscribers!`);
+      
+      // Clear the form
+      setEmailSubject('');
+      setEmailBody('');
+    } catch (error) {
+      console.error('Send mass email error:', error);
+      setOperationResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to send emails',
+      });
+      toast.error('Failed to send emails');
+    } finally {
+      setSendingEmail(false);
+    }
   }
 
   // CSV Import
@@ -248,7 +285,6 @@ export default function AdminDashboard() {
         details: result,
       });
       toast.success(`Imported ${result.imported} opportunities`);
-      fetchStats();
     } catch (error) {
       console.error('Import error:', error);
       setOperationResult({
@@ -298,7 +334,6 @@ export default function AdminDashboard() {
 
       if (!preview) {
         toast.success(`Fixed ${result.fixed} missing states`);
-        fetchStats();
       }
     } catch (error) {
       console.error('Fix states error:', error);
@@ -345,7 +380,6 @@ export default function AdminDashboard() {
         details: result,
       });
       toast.success(`Found links for ${result.updated} opportunities`);
-      fetchStats();
     } catch (error) {
       console.error('Find links error:', error);
       setOperationResult({
@@ -389,7 +423,6 @@ export default function AdminDashboard() {
         details: result,
       });
       toast.success(`Removed ${result.removed} duplicates`);
-      fetchStats();
     } catch (error) {
       console.error('Remove duplicates error:', error);
       setOperationResult({
@@ -433,7 +466,6 @@ export default function AdminDashboard() {
         details: result,
       });
       toast.success(`Fixed ${result.fixed || 0} coordinates`);
-      fetchStats();
     } catch (error) {
       console.error('Fix coordinates error:', error);
       setOperationResult({
@@ -465,97 +497,13 @@ export default function AdminDashboard() {
                 Admin Dashboard
               </h1>
               <p className="text-muted-foreground mt-1">
-                Manage opportunities, data quality, and system operations
+                Manage opportunities, send emails, and system operations
               </p>
             </div>
             <Badge variant="outline" className="text-sm">
               {user.email}
             </Badge>
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <span className="text-sm text-muted-foreground">Total</span>
-                </div>
-                <p className="text-2xl font-bold">
-                  {statsLoading ? '-' : stats?.totalOpportunities.toLocaleString() || '-'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-muted-foreground">Users</span>
-                </div>
-                <p className="text-2xl font-bold">
-                  {statsLoading ? '-' : stats?.totalUsers.toLocaleString() || '-'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Link2 className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm text-muted-foreground">No Website</span>
-                </div>
-                <p className="text-2xl font-bold text-orange-500">
-                  {statsLoading ? '-' : stats?.missingWebsites.toLocaleString() || '-'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm text-muted-foreground">No Email</span>
-                </div>
-                <p className="text-2xl font-bold text-yellow-500">
-                  {statsLoading ? '-' : stats?.missingEmails.toLocaleString() || '-'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-red-500" />
-                  <span className="text-sm text-muted-foreground">No Coords</span>
-                </div>
-                <p className="text-2xl font-bold text-red-500">
-                  {statsLoading ? '-' : stats?.missingCoordinates.toLocaleString() || '-'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm text-muted-foreground">No State</span>
-                </div>
-                <p className="text-2xl font-bold text-purple-500">
-                  {statsLoading ? '-' : stats?.missingStates.toLocaleString() || '-'}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Button onClick={fetchStats} disabled={statsLoading} className="mb-8">
-            {statsLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Refresh Stats
-          </Button>
 
           {/* Operation Result */}
           {operationResult && (
@@ -581,8 +529,12 @@ export default function AdminDashboard() {
           )}
 
           {/* Tabs */}
-          <Tabs defaultValue="import" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="email" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </TabsTrigger>
               <TabsTrigger value="import" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
                 Import
@@ -600,6 +552,107 @@ export default function AdminDashboard() {
                 Users
               </TabsTrigger>
             </TabsList>
+
+            {/* Email Tab */}
+            <TabsContent value="email">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Send className="h-5 w-5" />
+                    Send Mass Email
+                  </CardTitle>
+                  <CardDescription>
+                    Send an email to all users who have opted in to receive updates.
+                    This will only send to users with email notifications enabled.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Subscriber count */}
+                  <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                    <Mail className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Subscribed Users</p>
+                      <p className="text-2xl font-bold">
+                        {loadingCount ? (
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        ) : subscriberCount !== null ? (
+                          subscriberCount.toLocaleString()
+                        ) : (
+                          '—'
+                        )}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={fetchSubscriberCount}
+                      disabled={loadingCount}
+                      className="ml-auto"
+                    >
+                      {loadingCount ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Email form */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email-subject">Subject</Label>
+                      <Input
+                        id="email-subject"
+                        placeholder="Enter email subject..."
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        disabled={sendingEmail}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email-body">Email Body</Label>
+                      <Textarea
+                        id="email-body"
+                        placeholder="Write your email content here...
+
+You can use basic formatting:
+- Line breaks will be preserved
+- Keep it concise and valuable for subscribers"
+                        value={emailBody}
+                        onChange={(e) => setEmailBody(e.target.value)}
+                        disabled={sendingEmail}
+                        rows={10}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {emailBody.length} characters
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <Button
+                        onClick={handleSendMassEmail}
+                        disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+                        className="flex-1"
+                      >
+                        {sendingEmail ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Send className="h-4 w-4 mr-2" />
+                        )}
+                        {sendingEmail ? 'Sending...' : 'Send to All Subscribers'}
+                      </Button>
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">
+                      ⚠️ This will send an email to all users who have opted in. 
+                      Make sure your content is ready before sending.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Import Tab */}
             <TabsContent value="import">
