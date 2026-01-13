@@ -79,6 +79,7 @@ export function useAutoSaveProfile(
           research_experience: sanitizedData.research_experience,
           linkedin_url: sanitizedData.linkedin_url,
           resume_url: sanitizedData.resume_url,
+          email_opt_in: data.email_opt_in ?? false,
         });
 
       if (error) throw error;
