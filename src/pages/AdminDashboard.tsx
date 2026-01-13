@@ -31,6 +31,7 @@ import {
   Mail,
   Send,
 } from 'lucide-react';
+import AdminUserList from '@/components/admin/AdminUserList';
 
 interface OperationResult {
   success: boolean;
@@ -864,32 +865,7 @@ You can use basic formatting:
 
             {/* Users Tab */}
             <TabsContent value="users">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    User Management
-                  </CardTitle>
-                  <CardDescription>
-                    View and manage user accounts and roles.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    User management features coming soon. Current admins:
-                  </p>
-                  <ul className="mt-4 space-y-2">
-                    <li className="flex items-center gap-2">
-                      <Badge>Admin</Badge>
-                      shivamkanodia77@gmail.com
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Badge>Admin</Badge>
-                      ragtirup07@gmail.com
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
+              <AdminUserList />
             </TabsContent>
           </Tabs>
         </div>
