@@ -539,134 +539,257 @@ const Dashboard = () => {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-foreground">Name</TableHead>
-                      <TableHead className="text-foreground">Type</TableHead>
-                      <TableHead className="text-foreground">Website</TableHead>
-                      <TableHead className="text-foreground">Contacted</TableHead>
-                      <TableHead className="text-foreground">Applied</TableHead>
-                      <TableHead className="text-foreground">Heard Back</TableHead>
-                      <TableHead className="text-foreground">Interview</TableHead>
-                      <TableHead className="text-foreground">Deadline</TableHead>
-                      <TableHead className="text-foreground">Notes</TableHead>
-                      <TableHead className="text-foreground">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {savedOpportunities.map((saved) => (
-                      <TableRow key={saved.id}>
-                        <TableCell className="font-medium text-foreground">
-                          {saved.opportunities.name}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {saved.opportunities.type === 'emt' ? 'EMT' : saved.opportunities.type.charAt(0).toUpperCase() + saved.opportunities.type.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {saved.opportunities?.website ? (
-                            <a
-                              href={saved.opportunities.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
-                            >
-                              <Globe className="h-3 w-3" />
-                              Visit
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
+              <>
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {savedOpportunities.map((saved) => (
+                    <div key={saved.id} className="border border-border rounded-lg p-4 space-y-4 bg-card">
+                      {/* Header with name, type, and actions */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-foreground truncate">{saved.opportunities.name}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {saved.opportunities.type === 'emt' ? 'EMT' : saved.opportunities.type.charAt(0).toUpperCase() + saved.opportunities.type.slice(1)}
+                            </Badge>
+                            {saved.opportunities?.website && (
+                              <a
+                                href={saved.opportunities.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+                              >
+                                <Globe className="h-3 w-3" />
+                                Website
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <ReminderDialog
+                            opportunityId={saved.opportunity_id}
+                            opportunityName={saved.opportunities.name}
+                            opportunityLocation={saved.opportunities.location}
+                            opportunityWebsite={saved.opportunities.website}
+                            userId={user?.id || ""}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 w-9 p-0"
+                            onClick={() => handleRemoveClick(saved.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Progress checkboxes in a 2x2 grid */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
                           <Checkbox
                             checked={saved.contacted}
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "contacted", checked as boolean)
                             }
-                            aria-label={`Mark ${saved.opportunities.name} as contacted`}
+                            className="h-5 w-5"
                           />
-                        </TableCell>
-                        <TableCell>
+                          <span className="text-sm text-foreground">Contacted</span>
+                        </label>
+                        <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
                           <Checkbox
                             checked={saved.applied}
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "applied", checked as boolean)
                             }
-                            aria-label={`Mark ${saved.opportunities.name} as applied`}
+                            className="h-5 w-5"
                           />
-                        </TableCell>
-                        <TableCell>
+                          <span className="text-sm text-foreground">Applied</span>
+                        </label>
+                        <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
                           <Checkbox
                             checked={saved.heard_back}
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "heard_back", checked as boolean)
                             }
-                            aria-label={`Mark ${saved.opportunities.name} as heard back`}
+                            className="h-5 w-5"
                           />
-                        </TableCell>
-                        <TableCell>
+                          <span className="text-sm text-foreground">Heard Back</span>
+                        </label>
+                        <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
                           <Checkbox
                             checked={saved.scheduled_interview}
                             onCheckedChange={(checked) =>
                               updateTrackerField(saved.id, "scheduled_interview", checked as boolean)
                             }
-                            aria-label={`Mark ${saved.opportunities.name} as scheduled interview`}
+                            className="h-5 w-5"
                           />
-                        </TableCell>
-                        <TableCell>
+                          <span className="text-sm text-foreground">Interview</span>
+                        </label>
+                      </div>
+
+                      {/* Deadline and Notes */}
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Deadline</label>
                           <Input
                             type="date"
                             value={saved.deadline || ""}
                             onChange={(e) =>
                               updateTrackerField(saved.id, "deadline", e.target.value || null)
                             }
-                            className="w-40"
+                            className="w-full h-11"
                           />
-                        </TableCell>
-                        <TableCell>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
                           <Input
                             placeholder="Add notes..."
                             value={localNotes[saved.id] ?? saved.notes ?? ""}
                             onChange={(e) => {
                               const newValue = e.target.value;
-                              // Update local state immediately for smooth typing
                               setLocalNotes((prev) => ({
                                 ...prev,
                                 [saved.id]: newValue,
                               }));
-                              // Debounce database update
                               saveNotesToDatabase(saved.id, newValue);
                             }}
-                            className="w-48"
+                            className="w-full h-11"
                           />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <ReminderDialog
-                              opportunityId={saved.opportunity_id}
-                              opportunityName={saved.opportunities.name}
-                              opportunityLocation={saved.opportunities.location}
-                              opportunityWebsite={saved.opportunities.website}
-                              userId={user?.id || ""}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveClick(saved.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-foreground">Name</TableHead>
+                        <TableHead className="text-foreground">Type</TableHead>
+                        <TableHead className="text-foreground">Website</TableHead>
+                        <TableHead className="text-foreground">Contacted</TableHead>
+                        <TableHead className="text-foreground">Applied</TableHead>
+                        <TableHead className="text-foreground">Heard Back</TableHead>
+                        <TableHead className="text-foreground">Interview</TableHead>
+                        <TableHead className="text-foreground">Deadline</TableHead>
+                        <TableHead className="text-foreground">Notes</TableHead>
+                        <TableHead className="text-foreground">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {savedOpportunities.map((saved) => (
+                        <TableRow key={saved.id}>
+                          <TableCell className="font-medium text-foreground">
+                            {saved.opportunities.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {saved.opportunities.type === 'emt' ? 'EMT' : saved.opportunities.type.charAt(0).toUpperCase() + saved.opportunities.type.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {saved.opportunities?.website ? (
+                              <a
+                                href={saved.opportunities.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                              >
+                                <Globe className="h-3 w-3" />
+                                Visit
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox
+                              checked={saved.contacted}
+                              onCheckedChange={(checked) =>
+                                updateTrackerField(saved.id, "contacted", checked as boolean)
+                              }
+                              aria-label={`Mark ${saved.opportunities.name} as contacted`}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox
+                              checked={saved.applied}
+                              onCheckedChange={(checked) =>
+                                updateTrackerField(saved.id, "applied", checked as boolean)
+                              }
+                              aria-label={`Mark ${saved.opportunities.name} as applied`}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox
+                              checked={saved.heard_back}
+                              onCheckedChange={(checked) =>
+                                updateTrackerField(saved.id, "heard_back", checked as boolean)
+                              }
+                              aria-label={`Mark ${saved.opportunities.name} as heard back`}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox
+                              checked={saved.scheduled_interview}
+                              onCheckedChange={(checked) =>
+                                updateTrackerField(saved.id, "scheduled_interview", checked as boolean)
+                              }
+                              aria-label={`Mark ${saved.opportunities.name} as scheduled interview`}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="date"
+                              value={saved.deadline || ""}
+                              onChange={(e) =>
+                                updateTrackerField(saved.id, "deadline", e.target.value || null)
+                              }
+                              className="w-40"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              placeholder="Add notes..."
+                              value={localNotes[saved.id] ?? saved.notes ?? ""}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                setLocalNotes((prev) => ({
+                                  ...prev,
+                                  [saved.id]: newValue,
+                                }));
+                                saveNotesToDatabase(saved.id, newValue);
+                              }}
+                              className="w-48"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <ReminderDialog
+                                opportunityId={saved.opportunity_id}
+                                opportunityName={saved.opportunities.name}
+                                opportunityLocation={saved.opportunities.location}
+                                opportunityWebsite={saved.opportunities.website}
+                                userId={user?.id || ""}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveClick(saved.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

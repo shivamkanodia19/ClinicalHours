@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Map, List, MapPin, RotateCcw } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Loader2, Map, List, MapPin, RotateCcw, Settings2, ChevronUp } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { Opportunity } from '@/types';
 
@@ -636,9 +637,12 @@ const OpportunityMap = () => {
 
   const displayCount = filteredOpportunities.length;
 
+  // State for mobile legend visibility
+  const [showMobileLegend, setShowMobileLegend] = useState(false);
+
   if (mapError) {
     return (
-      <div className="w-full h-[600px] rounded-xl bg-card border border-border flex items-center justify-center">
+      <div className="w-full h-[450px] sm:h-[600px] rounded-xl bg-card border border-border flex items-center justify-center">
         <div className="text-center">
           <Map className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">{mapError}</p>
@@ -648,7 +652,7 @@ const OpportunityMap = () => {
   }
 
   return (
-    <div className="relative w-full h-[600px] rounded-xl overflow-hidden border border-border">
+    <div className="relative w-full h-[450px] sm:h-[600px] rounded-xl overflow-hidden border border-border">
       {/* Loading overlay */}
       {loading && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-20">
@@ -656,8 +660,135 @@ const OpportunityMap = () => {
         </div>
       )}
 
+      {/* Mobile Controls - Bottom Sheet */}
+      <div className="sm:hidden absolute bottom-4 left-4 right-4 z-10">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full bg-background/95 backdrop-blur-sm h-11 font-semibold"
+            >
+              <Settings2 className="h-4 w-4 mr-2" />
+              Map Controls
+              <Badge variant="secondary" className="ml-2">
+                {displayCount} {activeCenter ? `in ${radiusMiles}mi` : ''}
+              </Badge>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-xl">
+            <SheetHeader>
+              <SheetTitle>Map Controls</SheetTitle>
+            </SheetHeader>
+            <div className="space-y-6 py-4">
+              {/* View Mode Toggle */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">View Mode</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={viewMode === 'all' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('all')}
+                    className="h-11"
+                  >
+                    <Map className="h-4 w-4 mr-2" />
+                    All
+                  </Button>
+                  <Button
+                    variant={viewMode === 'saved' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('saved')}
+                    disabled={!user}
+                    className="h-11"
+                  >
+                    <List className="h-4 w-4 mr-2" />
+                    My Saved
+                  </Button>
+                </div>
+              </div>
+
+              {/* Pin Controls */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Location Pin</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={isPinMode ? 'default' : 'outline'}
+                    onClick={() => setIsPinMode(!isPinMode)}
+                    className="h-11"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {isPinMode ? 'Tap Map...' : 'Drop Pin'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleResetToMyLocation}
+                    disabled={!customPin}
+                    className="h-11"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                </div>
+              </div>
+
+              {/* Radius Slider */}
+              {activeCenter && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-foreground">
+                    Search Radius: {radiusMiles} mile{radiusMiles !== 1 ? 's' : ''}
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max={RADIUS_OPTIONS.length - 1}
+                    step="1"
+                    value={RADIUS_OPTIONS.indexOf(radiusMiles)}
+                    onChange={(e) => setRadiusMiles(RADIUS_OPTIONS[Number(e.target.value)])}
+                    className="w-full h-3 bg-muted rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>1 mi</span>
+                    <span>200 mi</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Legend */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Legend</label>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#EF4444] border border-white"></span>
+                    <span>Hospital</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#3B82F6] border border-white"></span>
+                    <span>Clinic</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#8B5CF6] border border-white"></span>
+                    <span>Hospice</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#F59E0B] border border-white"></span>
+                    <span>EMT</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#3B82F6] border border-white shadow-[0_0_0_2px_rgba(59,130,246,0.3)]"></span>
+                    <span>You</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#EF4444] border border-white text-[6px] flex items-center justify-center">📌</span>
+                    <span>Pin</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Controls - Hidden on mobile */}
       {/* Mode toggle */}
-      <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2">
+      <div className="hidden sm:flex absolute top-4 left-4 z-10 flex-wrap gap-2">
         <Button
           variant={viewMode === 'all' ? 'default' : 'outline'}
           size="sm"
@@ -679,8 +810,8 @@ const OpportunityMap = () => {
         </Button>
       </div>
 
-      {/* Pin controls */}
-      <div className="absolute top-16 left-4 z-10 flex flex-wrap gap-2">
+      {/* Pin controls - Desktop only */}
+      <div className="hidden sm:flex absolute top-16 left-4 z-10 flex-wrap gap-2">
         <Button
           variant={isPinMode ? 'default' : 'outline'}
           size="sm"
@@ -703,16 +834,16 @@ const OpportunityMap = () => {
         )}
       </div>
 
-      {/* Stats badge */}
-      <div className="absolute top-4 right-16 z-10">
+      {/* Stats badge - Desktop only */}
+      <div className="hidden sm:block absolute top-4 right-16 z-10">
         <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm text-foreground">
           {displayCount} {activeCenter ? `within ${radiusMiles} mi` : 'total'}
         </Badge>
       </div>
 
-      {/* Radius control - only show when we have a center */}
+      {/* Radius control - Desktop only */}
       {activeCenter && (
-        <div className="absolute top-28 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border">
+        <div className="hidden sm:block absolute top-28 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border">
           <label className="text-xs font-medium text-foreground mb-2 block">
             Radius: {radiusMiles} mile{radiusMiles !== 1 ? 's' : ''}
           </label>
@@ -728,17 +859,17 @@ const OpportunityMap = () => {
         </div>
       )}
 
-      {/* Location prompt - only show briefly if no location */}
+      {/* Location prompt - Desktop only */}
       {!activeCenter && !loading && opportunities.length > 0 && (
-        <div className="absolute top-28 left-4 z-10 bg-primary/90 backdrop-blur-sm rounded-lg p-3 border border-primary max-w-xs">
+        <div className="hidden sm:block absolute top-28 left-4 z-10 bg-primary/90 backdrop-blur-sm rounded-lg p-3 border border-primary max-w-xs">
           <p className="text-sm text-primary-foreground font-medium">
             📍 Showing all {displayCount} opportunities. Enable location or drop a pin to filter by distance.
           </p>
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border">
+      {/* Legend - Desktop only (mobile has it in the bottom sheet) */}
+      <div className="hidden sm:block absolute bottom-4 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-lg p-3 border border-border">
         <p className="text-xs font-medium text-foreground mb-2">Legend</p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           <div className="flex items-center gap-2">

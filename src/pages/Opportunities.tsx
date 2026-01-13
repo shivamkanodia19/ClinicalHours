@@ -249,31 +249,33 @@ const Opportunities = () => {
                   className="bg-card/50 border-border"
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <h3 className="text-lg font-semibold text-foreground">{opportunity.name}</h3>
-<Badge className={getTypeColor(opportunity.type)}>
+                          <Badge className={getTypeColor(opportunity.type)}>
                             {opportunity.type === 'emt' ? 'EMT' : opportunity.type.charAt(0).toUpperCase() + opportunity.type.slice(1)}
                           </Badge>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{opportunity.location}</span>
-                            {opportunity.distance && (
-                              <span className="text-primary">({opportunity.distance.toFixed(1)} miles away)</span>
-                            )}
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                            <span className="break-words">
+                              {opportunity.location}
+                              {opportunity.distance && (
+                                <span className="text-primary ml-1">({opportunity.distance.toFixed(1)} mi)</span>
+                              )}
+                            </span>
                           </div>
                           {opportunity.description && (
-                            <p className="text-muted-foreground mt-2">{opportunity.description}</p>
+                            <p className="text-muted-foreground mt-2 line-clamp-2 sm:line-clamp-none">{opportunity.description}</p>
                           )}
                           {opportunity.phone && (
                             <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
+                              <Phone className="h-4 w-4 flex-shrink-0" />
                               <a
                                 href={`tel:${opportunity.phone}`}
-                                className="text-primary hover:underline"
+                                className="text-primary hover:underline min-h-[44px] flex items-center sm:min-h-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {opportunity.phone}
@@ -282,10 +284,10 @@ const Opportunities = () => {
                           )}
                           {opportunity.email && (
                             <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4" />
+                              <Mail className="h-4 w-4 flex-shrink-0" />
                               <a
                                 href={`mailto:${opportunity.email}`}
-                                className="text-primary hover:underline"
+                                className="text-primary hover:underline truncate min-h-[44px] flex items-center sm:min-h-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {opportunity.email}
@@ -294,12 +296,12 @@ const Opportunities = () => {
                           )}
                           {opportunity.website && (
                             <div className="flex items-center gap-2">
-                              <Globe className="h-4 w-4" />
+                              <Globe className="h-4 w-4 flex-shrink-0" />
                               <a
                                 href={opportunity.website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary hover:underline"
+                                className="text-primary hover:underline min-h-[44px] flex items-center sm:min-h-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Visit Website
@@ -308,7 +310,7 @@ const Opportunities = () => {
                           )}
                           {opportunity.review_count != null && opportunity.review_count > 0 && (
                             <div className="flex items-center gap-2">
-                              <Star className="h-4 w-4 text-primary fill-primary" />
+                              <Star className="h-4 w-4 text-primary fill-primary flex-shrink-0" />
                               <span>
                                 {opportunity.avg_rating?.toFixed(1) ?? '0.0'} ({opportunity.review_count} review{opportunity.review_count !== 1 ? 's' : ''})
                               </span>
@@ -316,15 +318,16 @@ const Opportunities = () => {
                           )}
                           {opportunity.hours_required && (
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="h-4 w-4 flex-shrink-0" />
                               <span>{opportunity.hours_required}</span>
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                      {/* Buttons: horizontal full-width on mobile, vertical on desktop */}
+                      <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
                         {savedOpportunityIds.has(opportunity.id) ? (
-                          <Button variant="secondary" size="sm" disabled>
+                          <Button variant="secondary" size="sm" disabled className="flex-1 sm:flex-none h-11 sm:h-9">
                             <Check className="h-4 w-4 mr-2" />
                             In Tracker
                           </Button>
@@ -333,6 +336,7 @@ const Opportunities = () => {
                             onClick={() => handleAddToTracker(opportunity.id)}
                             size="sm"
                             disabled={savingIds.has(opportunity.id)}
+                            className="flex-1 sm:flex-none h-11 sm:h-9"
                           >
                             {savingIds.has(opportunity.id) ? (
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -346,6 +350,7 @@ const Opportunities = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => navigate(`/opportunities/${opportunity.id}`)}
+                          className="flex-1 sm:flex-none h-11 sm:h-9"
                         >
                           View Details
                         </Button>

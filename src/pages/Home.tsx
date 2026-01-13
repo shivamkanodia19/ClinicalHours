@@ -44,24 +44,24 @@ const Home = () => {
         {/* Gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 z-[5]"></div>
         
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white leading-[1.05] tracking-wide animate-fade-in-up drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading uppercase">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-white leading-[1.1] sm:leading-[1.05] tracking-wide animate-fade-in-up drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading uppercase">
               Find Your<br />Clinical Future
             </h1>
             
-            <div className="pt-4 animate-fade-in-up-delay-1">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="pt-2 sm:pt-4 animate-fade-in-up-delay-1">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
                 <Link 
                   to="/auth"
-                  className="group inline-block text-sm uppercase tracking-widest px-12 py-5 bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] relative overflow-hidden"
+                  className="group inline-flex items-center justify-center text-sm uppercase tracking-widest px-8 sm:px-12 py-4 sm:py-5 bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] relative overflow-hidden min-h-[52px]"
                 >
                   <span className="relative z-10">Get Started</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
                 </Link>
                 <Link 
                   to="/map"
-                  className="group inline-block text-sm uppercase tracking-widest px-12 py-5 bg-transparent border-2 border-white text-white hover:bg-white/10 transition-all duration-300 hover:scale-105 relative overflow-hidden"
+                  className="group inline-flex items-center justify-center text-sm uppercase tracking-widest px-8 sm:px-12 py-4 sm:py-5 bg-transparent border-2 border-white text-white hover:bg-white/10 transition-all duration-300 hover:scale-105 relative overflow-hidden min-h-[52px]"
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
@@ -69,7 +69,7 @@ const Home = () => {
                   </span>
                 </Link>
               </div>
-              <p className="mt-6 text-xs text-white/50 uppercase tracking-widest animate-pulse">
+              <p className="mt-4 sm:mt-6 text-xs text-white/50 uppercase tracking-widest animate-pulse">
                 Free forever. No credit card required.
               </p>
             </div>
@@ -81,13 +81,13 @@ const Home = () => {
       {/* Stats Section - Minimal, clean */}
       <section 
         ref={statsRef}
-        className="py-32 bg-black relative overflow-hidden"
+        className="py-16 sm:py-24 md:py-32 bg-black relative overflow-hidden"
         style={{ fontFamily: '"Times New Roman", Times, serif' }}
       >
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-transparent pointer-events-none"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col md:flex-row justify-center items-center gap-20 md:gap-32">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <div className="grid grid-cols-3 md:flex md:flex-row justify-center items-center gap-4 sm:gap-12 md:gap-32">
             {stats.map((stat, index) => (
               <div 
                 key={index} 
@@ -96,8 +96,8 @@ const Home = () => {
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="relative inline-block mb-3">
-                  <div className="text-6xl md:text-7xl text-white relative z-10 group-hover:scale-110 transition-transform duration-300" style={{ fontWeight: 400, fontFamily: '"Times New Roman", Times, serif' }}>
+                <div className="relative inline-block mb-2 sm:mb-3">
+                  <div className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-white relative z-10 group-hover:scale-110 transition-transform duration-300" style={{ fontWeight: 400, fontFamily: '"Times New Roman", Times, serif' }}>
                     {statsInView ? (
                       <AnimatedCounter 
                         end={stat.value} 
@@ -110,9 +110,9 @@ const Home = () => {
                   </div>
                   <div className="absolute inset-0 blur-xl opacity-0 group-hover:opacity-30 bg-white transition-opacity duration-300"></div>
                 </div>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <stat.icon className="h-4 w-4 text-white/40 group-hover:text-white/70 transition-colors duration-300" />
-                  <div className="text-xs text-white/50 uppercase tracking-[0.2em] group-hover:text-white/80 transition-colors duration-300" style={{ fontWeight: 400 }}>{stat.label}</div>
+                <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2">
+                  <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 text-white/40 group-hover:text-white/70 transition-colors duration-300" />
+                  <div className="text-[10px] sm:text-xs text-white/50 uppercase tracking-[0.1em] sm:tracking-[0.2em] group-hover:text-white/80 transition-colors duration-300" style={{ fontWeight: 400 }}>{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -130,21 +130,21 @@ const Home = () => {
       <HowItWorksTimeline />
 
       {/* CTA Section */}
-      <section ref={ctaRef} className="py-40 bg-black relative overflow-hidden">
+      <section ref={ctaRef} className="py-20 sm:py-28 md:py-40 bg-black relative overflow-hidden">
         {/* Gradient overlay for emphasis */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className={`max-w-3xl mx-auto text-center space-y-10 ${ctaInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-light text-white leading-tight tracking-wide drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading uppercase">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <div className={`max-w-3xl mx-auto text-center space-y-6 sm:space-y-10 ${ctaInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-light text-white leading-tight tracking-wide drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] font-heading uppercase">
               Ready to Start?
             </h2>
-            <p className="text-xl text-white/60 max-w-xl mx-auto font-normal drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+            <p className="text-base sm:text-lg md:text-xl text-white/60 max-w-xl mx-auto font-normal drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)] px-4 sm:px-0">
               Join students discovering clinical opportunities through our platform.
             </p>
-            <div className="pt-6">
+            <div className="pt-4 sm:pt-6 px-4 sm:px-0">
               <Link 
                 to="/auth"
-                className="group inline-block text-sm uppercase tracking-widest px-16 py-6 bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] relative overflow-hidden"
+                className="group inline-flex items-center justify-center w-full sm:w-auto text-sm uppercase tracking-widest px-8 sm:px-16 py-5 sm:py-6 bg-white text-black hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] relative overflow-hidden min-h-[56px]"
               >
                 <span className="relative z-10">Get Started Free</span>
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
