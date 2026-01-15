@@ -155,27 +155,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to create verification token");
     }
 
-    // Validate origin
-    const allowedOrigins = [
-      'https://clinicalhours.org',
-      'https://www.clinicalhours.org',
-      'https://sysbtcikrbrrgafffody.lovableproject.com',
-      'https://lovable.dev',
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:8080',
-    ];
-    
-    const isAllowedOrigin = origin && (
-      allowedOrigins.includes(origin) || 
-      origin.endsWith('.lovableproject.com') || 
-      origin.endsWith('.lovable.dev') ||
-      origin.endsWith('.clinicalhours.org') ||
-      origin === 'https://clinicalhours.org'
-    );
-    
-    const safeOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
-    const verificationLink = `${safeOrigin}/verify-email?token=${verificationToken}`;
+    // ALWAYS use production domain for verification links
+    // This ensures emails only link to clinicalhours.org regardless of where signup occurred
+    const productionDomain = 'https://clinicalhours.org';
+    const verificationLink = `${productionDomain}/verify-email?token=${verificationToken}`;
 
     // Sanitize fullName for HTML
     const safeName = fullName

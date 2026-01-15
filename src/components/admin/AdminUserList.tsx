@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Loader2,
   Mail,
-  MailOff,
+  MailX,
   GraduationCap,
   Calendar,
   Phone,
@@ -275,7 +275,7 @@ export default function AdminUserList() {
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="w-fit text-xs">
-                            <MailOff className="h-3 w-3 mr-1" />
+                            <MailX className="h-3 w-3 mr-1" />
                             Not subscribed
                           </Badge>
                         )}
