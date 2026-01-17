@@ -1,52 +1,21 @@
-PROPRIETARY SOFTWARE LICENSE
+MIT License
 
-Copyright © 2026 ClinicalHours. All Rights Reserved.
+Copyright (c) 2026 Raghavsai-Tirupati
 
-NOTICE: This software and its associated documentation files (the "Software") are 
-proprietary and confidential. Unauthorized copying, distribution, modification, 
-public display, or public performance of this Software is strictly prohibited.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. OWNERSHIP
-   The Software is owned by ClinicalHours and is protected by copyright laws and 
-   international treaty provisions. You acknowledge that no title to the intellectual 
-   property in the Software is transferred to you.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. RESTRICTIONS
-   You may NOT, without prior written permission from the copyright holder:
-   
-   a) Copy, reproduce, or duplicate the Software or any portion thereof;
-   b) Modify, adapt, translate, reverse engineer, decompile, or disassemble the Software;
-   c) Create derivative works based on the Software;
-   d) Distribute, sublicense, lease, rent, loan, or otherwise transfer the Software 
-      to any third party;
-   e) Remove or alter any proprietary notices, labels, or marks on the Software;
-   f) Use the Software for any commercial purpose without explicit licensing agreement.
-
-3. CONFIDENTIALITY
-   The Software contains trade secrets and proprietary information. You agree to 
-   maintain the confidentiality of the Software using at least the same degree of 
-   care you use to protect your own confidential information.
-
-4. NO WARRANTY
-   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-   PARTICULAR PURPOSE, AND NONINFRINGEMENT.
-
-5. LIMITATION OF LIABILITY
-   IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER 
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, 
-   OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
-   SOFTWARE.
-
-6. TERMINATION
-   This license is effective until terminated. Your rights under this license will 
-   terminate automatically without notice if you fail to comply with any of its terms.
-
-7. GOVERNING LAW
-   This license shall be governed by and construed in accordance with the laws of 
-   the United States of America, without regard to its conflict of law provisions.
-
-For licensing inquiries, please contact the copyright holder.
-
----
-This repository and all its contents are protected under this proprietary license.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
