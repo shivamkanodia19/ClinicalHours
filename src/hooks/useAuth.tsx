@@ -13,6 +13,35 @@ let csrfToken: string | null = null;
 // Key for storing "remember me" preference
 const REMEMBER_ME_KEY = "auth_remember_me";
 
+// Key for storing guest mode preference
+const GUEST_MODE_KEY = "clinicalhours_guest_mode";
+
+/**
+ * Check if guest mode is active
+ */
+export function getGuestModePreference(): boolean {
+  try {
+    return localStorage.getItem(GUEST_MODE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Set guest mode preference
+ */
+export function setGuestModePreference(isGuest: boolean): void {
+  try {
+    if (isGuest) {
+      localStorage.setItem(GUEST_MODE_KEY, "true");
+    } else {
+      localStorage.removeItem(GUEST_MODE_KEY);
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
 /**
  * Get the user's "remember me" preference
  */
@@ -44,9 +73,30 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const [isGuest, setIsGuest] = useState<boolean>(() => getGuestModePreference());
   const lastActivityRef = useRef<number>(Date.now());
   const sessionRef = useRef<Session | null>(null);
   const initializingRef = useRef(false);
+
+  // Clear guest mode when user signs in
+  useEffect(() => {
+    if (user) {
+      setGuestModePreference(false);
+      setIsGuest(false);
+    }
+  }, [user]);
+
+  // Enter guest mode - allows browsing without account
+  const enterGuestMode = useCallback(() => {
+    setGuestModePreference(true);
+    setIsGuest(true);
+  }, []);
+
+  // Exit guest mode
+  const exitGuestMode = useCallback(() => {
+    setGuestModePreference(false);
+    setIsGuest(false);
+  }, []);
 
   // Keep session ref in sync
   useEffect(() => {
@@ -296,6 +346,9 @@ export const useAuth = () => {
     void logAuthEvent("logout");
     // Clear "remember me" preference on explicit logout
     setRememberMePreference(false);
+    // Clear guest mode on logout
+    setGuestModePreference(false);
+    setIsGuest(false);
     // Clear cookies first
     await logoutCookie();
     csrfToken = null;
@@ -303,7 +356,7 @@ export const useAuth = () => {
     await supabase.auth.signOut();
   };
 
-  return { user, session, loading, isReady, signOut };
+  return { user, session, loading, isReady, signOut, isGuest, enterGuestMode, exitGuestMode };
 };
 
 // Export function to get CSRF token (for use in API requests)

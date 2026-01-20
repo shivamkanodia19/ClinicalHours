@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ReviewForm from "@/components/ReviewForm";
 import ReviewsList from "@/components/ReviewsList";
 import { QASection } from "@/components/QASection";
+import { GuestGate } from "@/components/GuestGate";
 import { logger } from "@/lib/logger";
 
 interface Opportunity {
@@ -37,19 +38,20 @@ interface Opportunity {
 const OpportunityDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading, isReady } = useAuth();
+  const { user, loading: authLoading, isReady, isGuest } = useAuth();
   const { toast } = useToast();
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
+  const [guestGateOpen, setGuestGateOpen] = useState(false);
 
   useEffect(() => {
-    if (isReady && !user) {
+    if (isReady && !user && !isGuest) {
       navigate("/auth");
     }
-  }, [user, isReady, navigate]);
+  }, [user, isReady, isGuest, navigate]);
 
   useEffect(() => {
     const fetchOpportunity = async () => {
@@ -118,6 +120,10 @@ const OpportunityDetail = () => {
   }, [user, id]);
 
   const handleAddToTracker = async () => {
+    if (isGuest) {
+      setGuestGateOpen(true);
+      return;
+    }
     if (!user || !id) return;
 
     setSaving(true);
@@ -380,6 +386,13 @@ const OpportunityDetail = () => {
         </Card>
       </div>
       <Footer />
+
+      {/* Guest Gate Dialog */}
+      <GuestGate
+        open={guestGateOpen}
+        onOpenChange={setGuestGateOpen}
+        action="save opportunities to your tracker"
+      />
     </div>
   );
 };

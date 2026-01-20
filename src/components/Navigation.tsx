@@ -20,13 +20,13 @@ const Navigation = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownTimeoutRef = useRef<number | null>(null);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
 
   // Check if we're on the home page for transparent nav
   const isHomePage = location.pathname === "/";
 
-  // Show hover dropdown only on homepage when not logged in
-  const showHoverDropdown = isHomePage && !user;
+  // Show hover dropdown only on homepage when not logged in (guests count as not logged in for nav)
+  const showHoverDropdown = isHomePage && !user && !isGuest;
 
   // Handle scroll effect
   useEffect(() => {
@@ -72,7 +72,8 @@ const Navigation = () => {
     { name: "Contact", path: "/contact" },
   ];
 
-  const links = user ? authenticatedLinks : publicLinks;
+  // Guests see authenticated links (Dashboard, Opportunities, etc.) but with Sign Up instead of Profile
+  const links = (user || isGuest) ? authenticatedLinks : publicLinks;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -123,7 +124,7 @@ const Navigation = () => {
                     {link.name}
                   </Link>
                 ))}
-                {user ? (
+                {user && !isGuest ? (
                   <Link
                     to="/profile"
                     className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
@@ -135,7 +136,7 @@ const Navigation = () => {
                     to="/auth"
                     className={`text-xs font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                   >
-                    Login / Sign Up
+                    {isGuest ? "Sign Up" : "Login / Sign Up"}
                   </Link>
                 )}
                 <ThemeToggle />
@@ -192,7 +193,7 @@ const Navigation = () => {
                   {link.name}
                 </Link>
               ))}
-              {user ? (
+              {user && !isGuest ? (
                 <Link
                   to="/profile"
                   onClick={() => setIsOpen(false)}
@@ -206,7 +207,7 @@ const Navigation = () => {
                   onClick={() => setIsOpen(false)}
                   className={`block text-xs font-semibold uppercase tracking-widest py-2 transition-opacity hover:opacity-70 opacity-80 font-heading ${textColor}`}
                 >
-                  Login / Sign Up
+                  {isGuest ? "Sign Up" : "Login / Sign Up"}
                 </Link>
               )}
               <div className="pt-2 border-t border-border">

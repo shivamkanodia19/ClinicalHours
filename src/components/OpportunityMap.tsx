@@ -67,7 +67,7 @@ const OpportunityMap = () => {
   const customPinMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const isPinModeRef = useRef(false);
   
-  const { user, isReady } = useAuth();
+  const { user, isReady, isGuest } = useAuth();
   const [mapLoading, setMapLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('all');
@@ -209,7 +209,7 @@ const OpportunityMap = () => {
   // Fetch saved opportunities if user is logged in and auth is ready
   useEffect(() => {
     const fetchSavedOpportunities = async () => {
-      if (!user || !isReady) {
+      if (!user || !isReady || isGuest) {
         setSavedOpportunities([]);
         return;
       }
@@ -696,7 +696,7 @@ const OpportunityMap = () => {
                   <Button
                     variant={viewMode === 'saved' ? 'default' : 'outline'}
                     onClick={() => setViewMode('saved')}
-                    disabled={!user}
+                    disabled={!user || isGuest}
                     className="h-11"
                   >
                     <List className="h-4 w-4 mr-2" />
@@ -802,7 +802,7 @@ const OpportunityMap = () => {
           variant={viewMode === 'saved' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setViewMode('saved')}
-          disabled={!user}
+          disabled={!user || isGuest}
           className="bg-background/90 backdrop-blur-sm !text-[#EF4444] font-semibold"
         >
           <List className="h-4 w-4 mr-2" />

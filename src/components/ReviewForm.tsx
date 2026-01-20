@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { ProfileGate } from "@/components/ProfileGate";
+import { GuestGate } from "@/components/GuestGate";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -34,10 +35,11 @@ interface RatingCategory {
 }
 
 const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: ReviewFormProps) => {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const { isComplete, isLoading: profileLoading, missingFields } = useProfileComplete();
   const [open, setOpen] = useState(false);
   const [showProfileGate, setShowProfileGate] = useState(false);
+  const [showGuestGate, setShowGuestGate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [ratings, setRatings] = useState<RatingCategory[]>([
@@ -59,6 +61,11 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
   }, [ratings]);
 
   const handleOpenReviewDialog = () => {
+    if (isGuest) {
+      setShowGuestGate(true);
+      return;
+    }
+
     if (!user) {
       toast.error("Please sign in to write a review");
       return;
@@ -264,6 +271,12 @@ const ReviewForm = ({ opportunityId, opportunityName, onReviewSubmitted }: Revie
         onOpenChange={setShowProfileGate}
         missingFields={missingFields}
         action="leave a review"
+      />
+
+      <GuestGate
+        open={showGuestGate}
+        onOpenChange={setShowGuestGate}
+        action="write a review"
       />
 
       <Dialog open={open} onOpenChange={setOpen}>

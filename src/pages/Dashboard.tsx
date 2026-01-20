@@ -20,8 +20,9 @@ import {
   Loader2, Trash2, 
   Map, Building2, ClipboardCheck, User, BookOpen, 
   Lightbulb, Target, Heart, MessageCircle, ArrowRight,
-  Bookmark, CheckCircle2, Clock, TrendingUp, Globe
+  Bookmark, CheckCircle2, Clock, TrendingUp, Globe, UserPlus
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReminderDialog } from "@/components/ReminderDialog";
 import {
   Table,
@@ -80,7 +81,7 @@ const tips = [
 ];
 
 const Dashboard = () => {
-  const { user, loading: authLoading, isReady } = useAuth();
+  const { user, loading: authLoading, isReady, isGuest } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -117,8 +118,8 @@ const Dashboard = () => {
         }
       }
       
-      // If no OAuth tokens and auth is ready with no user, redirect to auth
-      if (isReady && !user) {
+      // If no OAuth tokens and auth is ready with no user (and not guest), redirect to auth
+      if (isReady && !user && !isGuest) {
         navigate("/auth");
       }
     };
@@ -128,7 +129,7 @@ const Dashboard = () => {
     return () => {
       isMountedRef.current = false;
     };
-  }, [user, isReady, navigate]);
+  }, [user, isReady, isGuest, navigate]);
 
   // Store toast in a ref to avoid recreating fetchData when toast changes
   const toastRef = useRef(toast);
@@ -406,7 +407,8 @@ const Dashboard = () => {
     fetchFirstName();
   }, [user?.id]);
 
-  if (authLoading || !isReady || loading) {
+  // For guests, don't wait for data loading since we'll show demo state
+  if (authLoading || !isReady || (!isGuest && loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -419,10 +421,23 @@ const Dashboard = () => {
       <Navigation />
       
       <main className="flex-1 container mx-auto px-4 pt-28 pb-8">
+        {/* Guest Banner */}
+        {isGuest && (
+          <Alert className="mb-6 bg-primary/5 border-primary/20">
+            <UserPlus className="h-4 w-4" />
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span>You're browsing as a guest. Create an account to save opportunities and track your progress.</span>
+              <Button asChild size="sm" variant="default">
+                <Link to="/auth">Sign Up Free</Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground scroll-mt-28">
-            Welcome back, {firstName}!
+            {isGuest ? "Welcome to ClinicalHours!" : `Welcome back, ${firstName}!`}
           </h1>
         </div>
 
@@ -508,9 +523,9 @@ const Dashboard = () => {
             <span>My Tracker</span>
           </Button>
           <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
-            <Link to="/profile">
+            <Link to={isGuest ? "/auth" : "/profile"}>
               <User className="h-6 w-6" />
-              <span>My Profile</span>
+              <span>{isGuest ? "Sign Up" : "My Profile"}</span>
             </Link>
           </Button>
         </div>
@@ -524,7 +539,24 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {savedOpportunities.length === 0 ? (
+            {isGuest ? (
+              <div className="text-center py-12">
+                <div className="h-16 w-16 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+                  <UserPlus className="h-8 w-8 text-primary" />
+                </div>
+                <p className="text-muted-foreground mb-2">
+                  Create an account to save and track opportunities.
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Keep track of applications, interviews, and notes all in one place.
+                </p>
+                <Button asChild>
+                  <Link to="/auth">
+                    Sign Up Free <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            ) : savedOpportunities.length === 0 ? (
               <div className="text-center py-12">
                 <div className="h-16 w-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
                   <ClipboardCheck className="h-8 w-8 text-muted-foreground" />
@@ -796,7 +828,36 @@ const Dashboard = () => {
 
         {/* Experience Builder */}
         <div className="mb-8">
-          <ExperienceBuilder />
+          {isGuest ? (
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="text-foreground">Experience Builder</CardTitle>
+                <CardDescription>
+                  Log and track your clinical hours
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+                    <BookOpen className="h-8 w-8 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground mb-2">
+                    Create an account to log your clinical hours.
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Track your experiences, calculate total hours, and build your clinical portfolio.
+                  </p>
+                  <Button asChild>
+                    <Link to="/auth">
+                      Sign Up Free <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <ExperienceBuilder />
+          )}
         </div>
 
         {/* Tips & Resources Section */}

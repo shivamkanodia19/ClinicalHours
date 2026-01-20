@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { GuestGate } from "@/components/GuestGate";
 
 const Opportunities = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +34,8 @@ const Opportunities = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<Set<string>>(new Set());
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
-  const { user, loading: authLoading, isReady } = useAuth();
+  const [guestGateOpen, setGuestGateOpen] = useState(false);
+  const { user, loading: authLoading, isReady, isGuest } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -73,10 +75,10 @@ const Opportunities = () => {
   }, [user, isReady]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !isGuest) {
       navigate("/auth");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, isGuest, navigate]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -100,6 +102,10 @@ const Opportunities = () => {
   }, [toast]);
 
   const handleAddToTracker = async (opportunityId: string) => {
+    if (isGuest) {
+      setGuestGateOpen(true);
+      return;
+    }
     if (!user) return;
     
     setSavingIds((prev) => new Set(prev).add(opportunityId));
@@ -156,7 +162,7 @@ const Opportunities = () => {
   };
 
 
-  if (authLoading || !isReady || !user) {
+  if (authLoading || !isReady || (!user && !isGuest)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -390,6 +396,13 @@ const Opportunities = () => {
       </div>
 
       <Footer />
+
+      {/* Guest Gate Dialog */}
+      <GuestGate
+        open={guestGateOpen}
+        onOpenChange={setGuestGateOpen}
+        action="save opportunities to your tracker"
+      />
     </div>
   );
 };

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
-import { setRememberMePreference, getRememberMePreference } from "@/hooks/useAuth";
+import { setRememberMePreference, getRememberMePreference, useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { ArrowLeft, Mail, Loader2, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -52,6 +52,7 @@ const authSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { enterGuestMode } = useAuth();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -64,6 +65,11 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [emailOptIn, setEmailOptIn] = useState(false);
   const isSubmittingRef = useRef(false);
+
+  const handleGuestMode = () => {
+    enterGuestMode();
+    navigate("/dashboard");
+  };
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -698,6 +704,22 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+
+          {/* Guest Mode Option */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-muted-foreground hover:text-foreground"
+              onClick={handleGuestMode}
+              disabled={loading || googleLoading}
+            >
+              Continue as Guest
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Browse opportunities without an account
+            </p>
+          </div>
         </div>
       </div>
     </div>

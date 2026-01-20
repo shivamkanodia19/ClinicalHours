@@ -36,7 +36,7 @@ import { getGraduationYears } from "@/lib/data/graduationYears";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading, isReady, signOut } = useAuth();
+  const { user, loading: authLoading, isReady, signOut, isGuest } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
@@ -146,7 +146,8 @@ const Profile = () => {
     // Wait for auth to be fully ready before taking any action
     if (!isReady) return;
     
-    if (!user) {
+    // Guests cannot access the profile page
+    if (!user || isGuest) {
       navigate("/auth");
     } else {
       loadProfile();
@@ -160,7 +161,7 @@ const Profile = () => {
       }
       // CSRF protection is handled by Supabase's built-in JWT token validation
     }
-  }, [user, isReady, navigate]);
+  }, [user, isReady, isGuest, navigate]);
 
   const loadProfile = async () => {
     try {

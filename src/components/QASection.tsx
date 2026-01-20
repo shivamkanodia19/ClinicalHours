@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useProfileComplete } from "@/hooks/useProfileComplete";
 import { ProfileGate } from "@/components/ProfileGate";
+import { GuestGate } from "@/components/GuestGate";
 import { UserProfileBadge } from "@/components/UserProfileBadge";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rateLimit";
@@ -67,7 +68,7 @@ const LOAD_MORE_COUNT = 5;
 const INITIAL_ANSWERS = 3;
 
 export function QASection({ opportunityId, opportunityName }: QASectionProps) {
-  const { user, loading: authLoading, isReady } = useAuth();
+  const { user, loading: authLoading, isReady, isGuest } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAskForm, setShowAskForm] = useState(false);
@@ -82,6 +83,8 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   const [totalQuestionCount, setTotalQuestionCount] = useState(0);
   const [answerDisplayCount, setAnswerDisplayCount] = useState<Record<string, number>>({});
   const [showProfileGate, setShowProfileGate] = useState(false);
+  const [showGuestGate, setShowGuestGate] = useState(false);
+  const [guestGateAction, setGuestGateAction] = useState("participate");
   const [gateAction, setGateAction] = useState("participate");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: 'question' | 'answer'; id: string } | null>(null);
@@ -242,6 +245,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
       return;
     }
 
+    if (isGuest) {
+      setGuestGateAction("ask a question");
+      setShowGuestGate(true);
+      return;
+    }
+
     if (!userId) {
       toast({ title: "Please sign in to ask a question", variant: "destructive" });
       return;
@@ -384,6 +393,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   };
 
   const handleAnswer = async (questionId: string) => {
+    if (isGuest) {
+      setGuestGateAction("answer a question");
+      setShowGuestGate(true);
+      return;
+    }
+
     const answerText = newAnswer[questionId]?.trim();
     if (!answerText) {
       toast({ title: "Answer cannot be empty", variant: "destructive" });
@@ -485,6 +500,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
   };
 
   const handleVote = async (votableId: string, votableType: "question" | "answer", value: 1 | -1) => {
+    if (isGuest) {
+      setGuestGateAction("vote on Q&A");
+      setShowGuestGate(true);
+      return;
+    }
+
     // Use auth state instead of calling supabase.auth.getUser() to avoid flashes
     if (!user) {
       if (authLoading || !isReady) {
@@ -639,6 +660,12 @@ export function QASection({ opportunityId, opportunityName }: QASectionProps) {
         onOpenChange={setShowProfileGate}
         missingFields={missingFields}
         action={gateAction}
+      />
+
+      <GuestGate
+        open={showGuestGate}
+        onOpenChange={setShowGuestGate}
+        action={guestGateAction}
       />
 
       <div className="flex items-center justify-between">
