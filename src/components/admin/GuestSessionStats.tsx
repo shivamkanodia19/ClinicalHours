@@ -66,14 +66,23 @@ export default function GuestSessionStats() {
       if (weekError) throw weekError;
       setWeekCount(week || 0);
 
-      // Fetch sessions from last 30 days for daily breakdown
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('guest_sessions')
-        .select('created_at')
-        .gte('created_at', thirtyDaysAgo)
-        .order('created_at', { ascending: false });
+      // Fetch sessions from last 30 days for daily breakdown (paginate for accuracy)
+      const sessions: Array<{ created_at: string }> = [];
+      const PAGE_SIZE = 1000;
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const { data, error: sessionsError } = await supabase
+          .from('guest_sessions')
+          .select('created_at')
+          .gte('created_at', thirtyDaysAgo)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
 
-      if (sessionsError) throw sessionsError;
+        if (sessionsError) throw sessionsError;
+        if (!data || data.length === 0) break;
+
+        sessions.push(...data);
+        if (data.length < PAGE_SIZE) break;
+      }
 
       // Group by day
       const dailyMap = new Map<string, number>();

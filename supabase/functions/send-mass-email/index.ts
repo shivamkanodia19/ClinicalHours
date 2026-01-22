@@ -80,7 +80,16 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Parse request body
-    const { subject, body }: MassEmailRequest = await req.json();
+    let payload: MassEmailRequest;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON body" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    const { subject, body } = payload;
 
     // Validate inputs
     if (!subject || !subject.trim()) {
@@ -106,40 +115,71 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get all opted-in users with their emails
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from("profiles")
-      .select("id, full_name")
-      .eq("email_opt_in", true);
+    // Get all opted-in users with their emails (paginate to avoid missing data)
+    const profiles: Array<{ id: string; full_name: string | null }> = [];
+    const PROFILE_PAGE_SIZE = 1000;
+    for (let offset = 0; ; offset += PROFILE_PAGE_SIZE) {
+      const { data, error } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name")
+        .eq("email_opt_in", true)
+        .range(offset, offset + PROFILE_PAGE_SIZE - 1);
 
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
-      throw new Error("Failed to fetch subscribers");
+      if (error) {
+        console.error("Error fetching profiles:", error);
+        throw new Error("Failed to fetch subscribers");
+      }
+
+      if (!data || data.length === 0) {
+        break;
+      }
+
+      profiles.push(...data);
+      if (data.length < PROFILE_PAGE_SIZE) {
+        break;
+      }
     }
 
-    if (!profiles || profiles.length === 0) {
+    if (profiles.length === 0) {
       return new Response(
         JSON.stringify({ success: true, sent: 0, message: "No subscribers found" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Get emails from auth.users for each profile
-    const userIds = profiles.map((p) => p.id);
-    const { data: authUsers, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (authUsersError) {
-      console.error("Error fetching auth users:", authUsersError);
-      throw new Error("Failed to fetch user emails");
-    }
-
-    // Map user IDs to emails
+    // Get emails from auth.users for each profile (paginate and short-circuit)
+    const userIds = new Set(profiles.map((p) => p.id));
     const userEmailMap = new Map<string, string>();
-    authUsers.users.forEach((u) => {
-      if (u.email) {
-        userEmailMap.set(u.id, u.email);
+    const USER_PAGE_SIZE = 1000;
+    for (let page = 1; ; page += 1) {
+      const { data: authUsers, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: USER_PAGE_SIZE,
+      });
+
+      if (authUsersError) {
+        console.error("Error fetching auth users:", authUsersError);
+        throw new Error("Failed to fetch user emails");
       }
-    });
+
+      const users = authUsers?.users ?? [];
+      if (users.length === 0) {
+        break;
+      }
+
+      for (const user of users) {
+        if (user.email && userIds.has(user.id)) {
+          userEmailMap.set(user.id, user.email);
+          if (userEmailMap.size === userIds.size) {
+            break;
+          }
+        }
+      }
+
+      if (users.length < USER_PAGE_SIZE || userEmailMap.size === userIds.size) {
+        break;
+      }
+    }
 
     // Build list of subscribers with emails
     const subscribers = profiles
@@ -148,7 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
         name: p.full_name || "User",
         email: userEmailMap.get(p.id),
       }))
-      .filter((s) => s.email); // Only include users with valid emails
+      .filter((s) => s.email);
 
     console.log(`Sending mass email to ${subscribers.length} subscribers`);
 
