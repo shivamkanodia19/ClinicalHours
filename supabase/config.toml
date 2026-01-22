@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.fix-coordinates]
 verify_jwt = false
+
+[functions.create-test-users]
+verify_jwt = false
