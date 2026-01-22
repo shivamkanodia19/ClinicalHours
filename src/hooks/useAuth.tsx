@@ -16,6 +16,46 @@ const REMEMBER_ME_KEY = "auth_remember_me";
 // Key for storing guest mode preference
 const GUEST_MODE_KEY = "clinicalhours_guest_mode";
 
+// Key for storing guest session ID
+const GUEST_SESSION_ID_KEY = "clinicalhours_guest_session_id";
+
+/**
+ * Generate a UUID v4 for guest session tracking
+ */
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
+ * Get the guest session ID from localStorage
+ */
+function getGuestSessionId(): string | null {
+  try {
+    return localStorage.getItem(GUEST_SESSION_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Set or clear the guest session ID in localStorage
+ */
+function setGuestSessionId(sessionId: string | null): void {
+  try {
+    if (sessionId) {
+      localStorage.setItem(GUEST_SESSION_ID_KEY, sessionId);
+    } else {
+      localStorage.removeItem(GUEST_SESSION_ID_KEY);
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
 /**
  * Check if guest mode is active
  */
@@ -82,19 +122,42 @@ export const useAuth = () => {
   useEffect(() => {
     if (user) {
       setGuestModePreference(false);
+      setGuestSessionId(null);
       setIsGuest(false);
     }
   }, [user]);
 
   // Enter guest mode - allows browsing without account
-  const enterGuestMode = useCallback(() => {
+  const enterGuestMode = useCallback(async () => {
     setGuestModePreference(true);
     setIsGuest(true);
+
+    // Log guest session to Supabase for analytics
+    // Only log if we don't already have a session ID (new guest session)
+    let sessionId = getGuestSessionId();
+    if (!sessionId) {
+      sessionId = generateUUID();
+      setGuestSessionId(sessionId);
+
+      // Fire and forget - don't block on this
+      supabase
+        .from('guest_sessions')
+        .insert({
+          session_id: sessionId,
+          user_agent: navigator.userAgent,
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Failed to log guest session:', error);
+          }
+        });
+    }
   }, []);
 
   // Exit guest mode
   const exitGuestMode = useCallback(() => {
     setGuestModePreference(false);
+    setGuestSessionId(null);
     setIsGuest(false);
   }, []);
 

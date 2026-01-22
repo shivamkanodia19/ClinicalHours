@@ -30,8 +30,10 @@ import {
   FileSpreadsheet,
   Mail,
   Send,
+  BarChart3,
 } from 'lucide-react';
 import AdminUserList from '@/components/admin/AdminUserList';
+import GuestSessionStats from '@/components/admin/GuestSessionStats';
 
 interface OperationResult {
   success: boolean;
@@ -530,8 +532,12 @@ export default function AdminDashboard() {
           )}
 
           {/* Tabs */}
-          <Tabs defaultValue="email" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
               <TabsTrigger value="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 Email
@@ -553,6 +559,11 @@ export default function AdminDashboard() {
                 Users
               </TabsTrigger>
             </TabsList>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics">
+              <GuestSessionStats />
+            </TabsContent>
 
             {/* Email Tab */}
             <TabsContent value="email">
