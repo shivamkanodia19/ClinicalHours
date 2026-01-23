@@ -7,6 +7,9 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 
 interface GetUsersRequest {
   userIds?: string[];
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -63,36 +66,85 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Parse request body
-    const { userIds }: GetUsersRequest = await req.json();
-
-    // Fetch users from auth
-    const { data: authData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers({
-      perPage: 1000,
-    });
-
-    if (authUsersError) {
-      console.error("Error fetching auth users:", authUsersError);
-      throw new Error("Failed to fetch users");
+    let payload: GetUsersRequest;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON body" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    // Filter to requested user IDs if provided
-    let users = authData.users.map(u => ({
-      id: u.id,
-      email: u.email || '',
-      created_at: u.created_at,
-      last_sign_in_at: u.last_sign_in_at,
-    }));
+    const { userIds, page, pageSize, searchTerm } = payload;
+    const currentPage = Math.max(1, Math.floor(Number(page || 1)));
+    const perPage = Math.min(100, Math.max(1, Math.floor(Number(pageSize || 20))));
+    const search = (searchTerm || "").trim();
+
+    // Fetch profiles with pagination (service role bypasses RLS)
+    let profileQuery = supabaseAdmin
+      .from("profiles")
+      .select(
+        "id, full_name, university, major, graduation_year, city, state, phone, clinical_hours, email_opt_in, email_verified, created_at",
+        { count: "exact" }
+      )
+      .order("created_at", { ascending: false })
+      .range((currentPage - 1) * perPage, currentPage * perPage - 1);
+
+    if (search) {
+      profileQuery = profileQuery.or(
+        `full_name.ilike.%${search}%,university.ilike.%${search}%,major.ilike.%${search}%`
+      );
+    }
 
     if (userIds && userIds.length > 0) {
-      const userIdSet = new Set(userIds);
-      users = users.filter(u => userIdSet.has(u.id));
+      profileQuery = profileQuery.in("id", userIds);
+    }
+
+    const { data: profiles, error: profilesError, count } = await profileQuery;
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      throw new Error("Failed to fetch profiles");
+    }
+
+    const profileIds = new Set((profiles || []).map((p) => p.id));
+    const emailMap: Record<string, string> = {};
+
+    if (profileIds.size > 0) {
+      // Fetch auth users with pagination and map emails
+      const AUTH_PAGE_SIZE = 1000;
+      for (let pageIndex = 1; ; pageIndex += 1) {
+        const { data: authData, error: authUsersError } = await supabaseAdmin.auth.admin.listUsers({
+          page: pageIndex,
+          perPage: AUTH_PAGE_SIZE,
+        });
+
+        if (authUsersError) {
+          console.error("Error fetching auth users:", authUsersError);
+          throw new Error("Failed to fetch users");
+        }
+
+        const users = authData?.users ?? [];
+        if (users.length === 0) break;
+
+        for (const user of users) {
+          if (user.email && profileIds.has(user.id)) {
+            emailMap[user.id] = user.email;
+          }
+        }
+
+        if (users.length < AUTH_PAGE_SIZE || Object.keys(emailMap).length === profileIds.size) {
+          break;
+        }
+      }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        users,
-        total: users.length,
+        profiles: profiles || [],
+        emails: emailMap,
+        total: count || 0,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

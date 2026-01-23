@@ -54,23 +54,7 @@ export default function AdminUserList() {
         throw new Error('Not authenticated');
       }
 
-      // Fetch profiles with pagination
-      let query = supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
-
-      // Apply search filter if provided
-      if (searchTerm.trim()) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,university.ilike.%${searchTerm}%,major.ilike.%${searchTerm}%`);
-      }
-
-      const { data: profiles, error: profilesError, count } = await query;
-
-      if (profilesError) throw profilesError;
-
-      // Get all auth users to map emails
+      // Fetch profiles + emails via admin edge function (service role)
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-get-users`,
         {
@@ -80,24 +64,25 @@ export default function AdminUserList() {
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            userIds: profiles?.map(p => p.id) || [],
+            page: currentPage,
+            pageSize,
+            searchTerm: searchTerm.trim(),
           }),
         }
       );
 
-      let emailMap: Record<string, string> = {};
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.users) {
-          result.users.forEach((u: { id: string; email: string }) => {
-            emailMap[u.id] = u.email;
-          });
-        }
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody?.error || 'Failed to fetch users');
       }
 
+      const result = await response.json();
+      const profiles = result.profiles || [];
+      const emailMap: Record<string, string> = result.emails || {};
+      const count = result.total || 0;
+
       // Combine profile data with emails
-      const combinedUsers: UserProfile[] = (profiles || []).map(profile => ({
+      const combinedUsers: UserProfile[] = profiles.map((profile: UserProfile) => ({
         id: profile.id,
         email: emailMap[profile.id] || 'N/A',
         full_name: profile.full_name || 'Unknown',
@@ -114,7 +99,7 @@ export default function AdminUserList() {
       }));
 
       setUsers(combinedUsers);
-      setTotalCount(count || 0);
+      setTotalCount(count);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to fetch users');
