@@ -149,6 +149,9 @@ export const useAuth = () => {
         .then(({ error }) => {
           if (error) {
             console.error('Failed to log guest session:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+          } else {
+            console.log('Guest session logged successfully:', sessionId);
           }
         });
     }

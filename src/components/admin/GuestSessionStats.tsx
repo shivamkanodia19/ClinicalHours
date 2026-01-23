@@ -29,9 +29,11 @@ export default function GuestSessionStats() {
   const [weekCount, setWeekCount] = useState<number>(0);
   const [dailyCounts, setDailyCounts] = useState<DailyCount[]>([]);
   const [hourlyCounts, setHourlyCounts] = useState<HourlyCount[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   async function fetchStats() {
     setLoading(true);
+    setError(null);
     try {
       const now = new Date();
       const todayStart = startOfDay(now).toISOString();
@@ -44,7 +46,10 @@ export default function GuestSessionStats() {
         .from('guest_sessions')
         .select('*', { count: 'exact', head: true });
 
-      if (totalError) throw totalError;
+      if (totalError) {
+        console.error('Error fetching total guest sessions:', totalError);
+        throw totalError;
+      }
       setTotalCount(total || 0);
 
       // Fetch today's count
@@ -123,6 +128,13 @@ export default function GuestSessionStats() {
       setHourlyCounts(hourlyArray);
     } catch (error) {
       console.error('Error fetching guest session stats:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to fetch guest session stats';
+      setError(errorMsg);
+      
+      // Check if table exists
+      if (errorMsg.includes('relation "guest_sessions" does not exist') || errorMsg.includes('does not exist')) {
+        setError('Guest sessions table not found. Please run database migrations.');
+      }
     } finally {
       setLoading(false);
     }
@@ -170,6 +182,14 @@ export default function GuestSessionStats() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg">
+            <p className="font-medium">Error loading guest session data</p>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        )}
+
         {/* Summary Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 bg-muted/50 rounded-lg">
