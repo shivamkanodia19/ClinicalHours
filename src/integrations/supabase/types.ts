@@ -583,6 +583,51 @@ export type Database = {
           },
         ]
       }
+      tracking_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          page_url: string
+          referrer_url: string | null
+          screen_height: number | null
+          screen_width: number | null
+          session_id: string
+          timezone: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          page_url: string
+          referrer_url?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          session_id: string
+          timezone?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          page_url?: string
+          referrer_url?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          session_id?: string
+          timezone?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_projects: {
         Row: {
           created_at: string
