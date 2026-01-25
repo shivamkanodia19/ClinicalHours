@@ -8,7 +8,6 @@ import { HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ScrollToTop from "./components/ScrollToTop";
 import { useAppKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
-import { PageViewTracker } from "./components/PageViewTracker";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -64,7 +63,6 @@ function AppContent() {
       <BrowserRouter>
         <KeyboardShortcuts />
         <ScrollToTop />
-        <PageViewTracker />
         <Suspense fallback={<PageLoader />}>
           <ErrorBoundary>
             <Routes>

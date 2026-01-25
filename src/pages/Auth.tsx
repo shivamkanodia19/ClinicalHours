@@ -9,8 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { sanitizeErrorMessage } from "@/lib/errorUtils";
 import { logAuthEvent } from "@/lib/auditLogger";
-import { setRememberMePreference, getRememberMePreference, useAuth, getGuestModePreference } from "@/hooks/useAuth";
-import { trackButtonClick, trackGuestConversion, trackSignup, trackLogin } from "@/lib/tracking";
+import { setRememberMePreference, getRememberMePreference, useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { ArrowLeft, Mail, Loader2, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -68,8 +67,6 @@ const Auth = () => {
   const isSubmittingRef = useRef(false);
 
   const handleGuestMode = () => {
-    // Track the "Continue as Guest" button click
-    trackButtonClick("continue_as_guest");
     enterGuestMode();
     navigate("/dashboard");
   };
@@ -89,17 +86,6 @@ const Auth = () => {
         });
         
         if (data.session && !error) {
-          // Track Google login/signup
-          if (data.session.user) {
-            trackLogin(data.session.user.id, "google");
-            
-            // Check if this was a guest conversion
-            const wasGuest = getGuestModePreference();
-            if (wasGuest) {
-              trackGuestConversion(data.session.user.id);
-            }
-          }
-          
           // Clear the hash from the URL
           window.history.replaceState(null, '', window.location.pathname);
           navigate("/dashboard");
@@ -208,15 +194,6 @@ const Auth = () => {
       // Send verification email and redirect to check-email page
       if (data.user) {
         logAuthEvent("signup", { email: validatedData.email });
-        
-        // Track signup event
-        trackSignup(data.user.id, "email");
-        
-        // Check if this was a guest conversion (guest user signing up)
-        const wasGuest = getGuestModePreference();
-        if (wasGuest) {
-          trackGuestConversion(data.user.id);
-        }
         
         // Sign out immediately - user must verify email first
         await supabase.auth.signOut();
@@ -330,12 +307,6 @@ const Auth = () => {
       }
 
       logAuthEvent("login_success", { email: validatedData.email });
-      
-      // Track login event
-      if (data.user) {
-        trackLogin(data.user.id, "email");
-      }
-      
       toast.success("Logged in successfully!");
       navigate("/dashboard");
     } catch (error: unknown) {
