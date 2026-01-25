@@ -119,6 +119,30 @@ export type Database = {
           },
         ]
       }
+      guest_sessions: {
+        Row: {
+          converted_to_user_id: string | null
+          created_at: string | null
+          id: string
+          session_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          converted_to_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          session_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          converted_to_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          session_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           acceptance_likelihood: Database["public"]["Enums"]["acceptance_likelihood"]
